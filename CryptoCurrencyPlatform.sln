@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C366C1E4-46EB-4D18-AAE4-4279BC3B5578}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transactions", "src\Transactions\Transactions.csproj", "{BB218487-CB04-4257-9707-87028954FE4C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB218487-CB04-4257-9707-87028954FE4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB218487-CB04-4257-9707-87028954FE4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB218487-CB04-4257-9707-87028954FE4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB218487-CB04-4257-9707-87028954FE4C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BB218487-CB04-4257-9707-87028954FE4C} = {C366C1E4-46EB-4D18-AAE4-4279BC3B5578}
+	EndGlobalSection
+EndGlobal
