@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using Transactions.Facade;
+using Transactions.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +30,11 @@ builder.Services.AddSwaggerGen(options => {
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
+        var jwtSecret = Environment.GetEnvironmentVariable(builder.Configuration.GetSection("AppSettings:WalletJwtSecret").Value);
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetSection("AppSettings:JwtSecret").Value)),
+            
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret ?? string.Empty)),
             RequireExpirationTime = false,
             ValidateAudience = false,
             ValidateIssuer = false,
@@ -38,6 +42,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = false
         };
     });
+
+// Add service dependencies
+builder.Services.AddSingleton<IRestApiFacade, RestApiFacade>();
+builder.Services.AddSingleton<ITransactionsService, TransactionsService>();
 
 var app = builder.Build();
 
@@ -48,7 +56,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
