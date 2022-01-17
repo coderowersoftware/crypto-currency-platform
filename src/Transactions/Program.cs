@@ -2,13 +2,19 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Swashbuckle.AspNetCore.Filters;
 using Transactions.Facade;
 using Transactions.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddNewtonsoftJson(options => 
+    {
+        options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+        options.SerializerSettings.Converters.Add(new StringEnumConverter());
+    });
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

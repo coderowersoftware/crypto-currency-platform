@@ -9,7 +9,7 @@ namespace Transactions.Controllers.Models
     /// TransactionType
     /// </summary>
     [DataContract]
-    public partial class TransactionType : IEquatable<TransactionType>, IValidatableObject
+    public partial class TransactionType : GenericEntity, IEquatable<TransactionType>, IValidatableObject
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TransactionType" /> class.

@@ -1,7 +1,6 @@
 using System.Text;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System.ComponentModel.DataAnnotations;
 using Transactions.Controllers.Models.Enums;
 
@@ -43,7 +42,8 @@ namespace Transactions.Controllers.Models
         /// <param name="onBehalfOfName">onBehalfOfName.</param>
         /// <param name="additionalData">additionalData.</param>
         /// <param name="baseTransaction">baseTransaction.</param>
-        public TransactionResponse(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?)) : base(importHash, tenantId)
+        /// <param name="transactionTypeIdentifier">transactionTypeIdentifier   .</param>
+        public TransactionResponse(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
@@ -65,6 +65,7 @@ namespace Transactions.Controllers.Models
             this.OnBehalfOfName = onBehalfOfName;
             this.AdditionalData = additionalData;
             this.BaseTransaction = baseTransaction;
+            this.TransactionTypeIdentifier = transactionTypeIdentifier;
         }
 
         /// <summary>
@@ -183,6 +184,12 @@ namespace Transactions.Controllers.Models
         public string? BaseTransaction { get; set; }
 
         /// <summary>
+        /// Gets or Sets BaseTransaction
+        /// </summary>
+        [DataMember(Name = "transactionTypeIdentifier", EmitDefaultValue = false)]
+        public string? TransactionTypeIdentifier { get; set; }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -211,6 +218,7 @@ namespace Transactions.Controllers.Models
             sb.Append("  OnBehalfOfName: ").Append(OnBehalfOfName).Append("\n");
             sb.Append("  AdditionalData: ").Append(AdditionalData).Append("\n");
             sb.Append("  BaseTransaction: ").Append(BaseTransaction).Append("\n");
+            sb.Append("  TransactionTypeIdentifier: ").Append(TransactionTypeIdentifier).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -344,6 +352,11 @@ namespace Transactions.Controllers.Models
                     this.BaseTransaction == input.BaseTransaction ||
                     (this.BaseTransaction != null &&
                     this.BaseTransaction.Equals(input.BaseTransaction))
+                ) && base.Equals(input) &&
+                (
+                    this.TransactionTypeIdentifier == input.TransactionTypeIdentifier ||
+                    (this.TransactionTypeIdentifier != null &&
+                    this.TransactionTypeIdentifier.Equals(input.TransactionTypeIdentifier))
                 );
         }
 
@@ -396,6 +409,8 @@ namespace Transactions.Controllers.Models
                     hashCode = hashCode * 59 + this.AdditionalData.GetHashCode();
                 if (this.BaseTransaction != null)
                     hashCode = hashCode * 59 + this.BaseTransaction.GetHashCode();
+                if (this.TransactionTypeIdentifier != null)
+                    hashCode = hashCode * 59 + this.TransactionTypeIdentifier.GetHashCode();
                 return hashCode;
             }
         }

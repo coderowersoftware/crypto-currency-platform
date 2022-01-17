@@ -23,16 +23,17 @@ namespace Transactions.Services
 
         public async Task<TransactionResponse> AddTransactions(string tenantId, TransactionRequest request)
         {
-            var walletHost = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:WalletHost").Value);
-            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:WalletEmail").Value);
-            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:WalletPassword").Value);
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_USER").Value);
+            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_PASS").Value);
+            var tenant = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_TENANT").Value);
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post, 
                 new Uri($"filter[{walletHost}api/tenant/{tenantId}/transaction"),
                 null,
                 request,
                 true, 
                 new Uri($"filter[{walletHost}api/auth/sign-in"), 
-                new Dictionary<string, string> { { "email", email }, { "password", password } }).ConfigureAwait(false);
+                new Dictionary<string, string> { { "email", email }, { "password", password }, { "tenantId", tenant } }).ConfigureAwait(false);
 
             return JsonConvert.DeserializeObject<TransactionResponse>(responseMessage);
         }
@@ -127,16 +128,17 @@ namespace Transactions.Services
             queryString += $"{nameof(limit)}={limit}&";
             queryString += $"{nameof(orderBy)}={orderBy}&";
 
-            var walletHost = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:WalletHost").Value);
-            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:WalletEmail").Value);
-            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:WalletPassword").Value);
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_USER").Value);
+            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_PASS").Value);
+            var tenant = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_TENANT").Value);
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Get,
                 new Uri($"{walletHost}api/tenant/{tenantId}/transaction?{queryString}"),
                 null,
                 null,
                 true, 
                 new Uri($"{walletHost}api/auth/sign-in"), 
-                new Dictionary<string, string> { { "email", email }, { "password", password } }).ConfigureAwait(false);
+                new Dictionary<string, string> { { "email", email }, { "password", password }, { "tenantId", tenant } }).ConfigureAwait(false);
             
             return JsonConvert.DeserializeObject<TransactionsResponse>(responseMessage);
         }
