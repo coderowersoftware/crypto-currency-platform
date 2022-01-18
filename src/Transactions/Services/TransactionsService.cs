@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Transactions.Controllers.Models;
+using Transactions.Controllers.Models.Common;
 using Transactions.Facade;
 
 namespace Transactions.Services
@@ -7,7 +8,7 @@ namespace Transactions.Services
     public interface ITransactionsService
     {
         Task<TransactionResponse> AddTransactions(string tenantId, TransactionRequest request);
-        Task<TransactionsResponse> GetTransactions(string tenantId, string transactionId, string transactionType, List<decimal> amountRange, string currency, List<decimal> virtualValueRange, bool? isCredit, string reference, string paymentMethod, string remark, string description, string productId, string productName, string sku, string payerId, string payerName, string onBehalfOfId, string onBehalfOfName, string additionalData, string baseTransaction, List<string> createdAtRange, int offset, int limit, string orderBy);
+        Task<PagedResponse<List<TransactionResponse>>> GetTransactions(string tenantId, TransactionFilter filter, QueryOptions query);
     }
 
     public class TransactionsService : ITransactionsService
@@ -38,95 +39,91 @@ namespace Transactions.Services
             return JsonConvert.DeserializeObject<TransactionResponse>(responseMessage);
         }
 
-        public async Task<TransactionsResponse> GetTransactions(string tenantId, string transactionId, string transactionType, List<decimal> amountRange, string currency, List<decimal> virtualValueRange, bool? isCredit, string reference, string paymentMethod, string remark, string description, string productId, string productName, string sku, string payerId, string payerName, string onBehalfOfId, string onBehalfOfName, string additionalData, string baseTransaction, List<string> createdAtRange, int offset, int limit, string orderBy)
+        public async Task<PagedResponse<List<TransactionResponse>>> GetTransactions(string tenantId, TransactionFilter filter, QueryOptions query)
         {
             var queryString = string.Empty;
-            if(!string.IsNullOrWhiteSpace(transactionId))
+            if(!string.IsNullOrWhiteSpace(filter?.TransactionId))
             {
-                queryString += $"filter[{nameof(transactionId)}]={transactionId}&";
+                queryString += $"filter[transactionId]={filter.TransactionId}&";
             }
-            if(amountRange?.Any() ?? false)
+            if(filter?.AmountRange?.Any() ?? false)
             {
-                foreach(var amount in amountRange)
-                    queryString += $"filter[{nameof(amountRange)}][]={amount}&";
+                foreach(var amount in filter.AmountRange)
+                    queryString += $"filter[amountRange][]={amount}&";
             }
-            if(!string.IsNullOrWhiteSpace(transactionId))
+            if(!string.IsNullOrWhiteSpace(filter?.Currency))
             {
-                queryString += $"filter[{nameof(transactionId)}]={transactionId}&";
+                queryString += $"filter[currency]={filter.Currency}&";
             }
-            if(!string.IsNullOrWhiteSpace(currency))
+            if(filter?.VirtualValueRange?.Any() ?? false)
             {
-                queryString += $"filter[{nameof(currency)}]={currency}&";
+                foreach(var value in filter?.VirtualValueRange)
+                    queryString += $"filter[virtualValueRange][]={value}&";
             }
-            if(virtualValueRange?.Any() ?? false)
+            if(filter?.IsCredit.HasValue ?? false)
             {
-                foreach(var value in virtualValueRange)
-                    queryString += $"filter[{nameof(virtualValueRange)}][]={value}&";
+                queryString += $"filter[isCredit]={filter?.IsCredit.Value.ToString()}&";
             }
-            if(isCredit.HasValue)
+            if(!string.IsNullOrWhiteSpace(filter?.Reference))
             {
-                queryString += $"filter[{nameof(isCredit)}]={isCredit.Value.ToString()}&";
+                queryString += $"filter[reference]={filter.Reference}&";
             }
-            if(!string.IsNullOrWhiteSpace(reference))
+            if(!string.IsNullOrWhiteSpace(filter?.PaymentMethod))
             {
-                queryString += $"filter[{nameof(reference)}]={reference}&";
+                queryString += $"filter[paymentMethod]={filter.PaymentMethod}&";
             }
-            if(!string.IsNullOrWhiteSpace(paymentMethod))
+            if(!string.IsNullOrWhiteSpace(filter?.Remark))
             {
-                queryString += $"filter[{nameof(paymentMethod)}]={paymentMethod}&";
+                queryString += $"filter[remark]={filter.Remark}&";
             }
-            if(!string.IsNullOrWhiteSpace(remark))
+            if(!string.IsNullOrWhiteSpace(filter?.Description))
             {
-                queryString += $"filter[{nameof(remark)}]={remark}&";
+                queryString += $"filter[description]={filter.Description}&";
             }
-            if(!string.IsNullOrWhiteSpace(description))
+            if(!string.IsNullOrWhiteSpace(filter?.ProductId))
             {
-                queryString += $"filter[{nameof(description)}]={description}&";
+                queryString += $"filter[productId]={filter.ProductId}&";
             }
-            if(!string.IsNullOrWhiteSpace(productId))
+            if(!string.IsNullOrWhiteSpace(filter?.ProductName))
             {
-                queryString += $"filter[{nameof(productId)}]={productId}&";
+                queryString += $"filter[productName]={filter.ProductName}&";
             }
-            if(!string.IsNullOrWhiteSpace(productName))
+            if(!string.IsNullOrWhiteSpace(filter?.Sku))
             {
-                queryString += $"filter[{nameof(productName)}]={productName}&";
+                queryString += $"filter[sku]={filter.Sku}&";
             }
-            if(!string.IsNullOrWhiteSpace(sku))
+            if(!string.IsNullOrWhiteSpace(filter?.PayerId))
             {
-                queryString += $"filter[{nameof(sku)}]={sku}&";
+                queryString += $"filter[payerId]={filter.PayerId}&";
             }
-            if(!string.IsNullOrWhiteSpace(payerId))
+            if(!string.IsNullOrWhiteSpace(filter?.PayerName))
             {
-                queryString += $"filter[{nameof(payerId)}]={payerId}&";
+                queryString += $"filter[payerName]={filter.PayerName}&";
             }
-            if(!string.IsNullOrWhiteSpace(payerName))
+            if(!string.IsNullOrWhiteSpace(filter?.OnBehalfOfId))
             {
-                queryString += $"filter[{nameof(payerName)}]={payerName}&";
+                queryString += $"filter[onBehalfOfId]={filter.OnBehalfOfId}&";
             }
-            if(!string.IsNullOrWhiteSpace(onBehalfOfId))
+            if(!string.IsNullOrWhiteSpace(filter?.OnBehalfOfName))
             {
-                queryString += $"filter[{nameof(onBehalfOfId)}]={onBehalfOfId}&";
+                queryString += $"filter[onBehalfOfName]={filter.OnBehalfOfName}&";
             }
-            if(!string.IsNullOrWhiteSpace(onBehalfOfName))
+            if(!string.IsNullOrWhiteSpace(filter?.AdditionalData))
             {
-                queryString += $"filter[{nameof(onBehalfOfName)}]={onBehalfOfName}&";
+                queryString += $"filter[additionalData]={filter.AdditionalData}&";
             }
-            if(!string.IsNullOrWhiteSpace(additionalData))
+            if(!string.IsNullOrWhiteSpace(filter?.BaseTransaction))
             {
-                queryString += $"filter[{nameof(additionalData)}]={additionalData}&";
+                queryString += $"filter[baseTransaction]={filter.BaseTransaction}&";
             }
-            if(!string.IsNullOrWhiteSpace(baseTransaction))
+            if(filter?.CreatedAtRange?.Any() ?? false)
             {
-                queryString += $"filter[{nameof(baseTransaction)}]={baseTransaction}&";
+                foreach(var createdAt in filter.CreatedAtRange)
+                    queryString += $"filter[createdAtRange][]={createdAt}&";
             }
-            if(createdAtRange?.Any() ?? false)
-            {
-                foreach(var createdAt in createdAtRange)
-                    queryString += $"filter[{nameof(createdAtRange)}][]={createdAt}&";
-            }
-            queryString += $"{nameof(offset)}={offset}&";
-            queryString += $"{nameof(limit)}={limit}&";
-            queryString += $"{nameof(orderBy)}={orderBy}&";
+            queryString += $"offset={query?.Offset}&";
+            queryString += $"limit={query?.Limit}&";
+            queryString += $"orderBy={query?.OrderBy}&";
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
             var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_USER").Value);
@@ -140,7 +137,7 @@ namespace Transactions.Services
                 new Uri($"{walletHost}api/auth/sign-in"), 
                 new Dictionary<string, string> { { "email", email }, { "password", password }, { "tenantId", tenant } }).ConfigureAwait(false);
             
-            return JsonConvert.DeserializeObject<TransactionsResponse>(responseMessage);
+            return JsonConvert.DeserializeObject<PagedResponse<List<TransactionResponse>>>(responseMessage);
         }
     }
 }
