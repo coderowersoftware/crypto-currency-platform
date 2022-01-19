@@ -22,10 +22,10 @@ name: Build and deploy ASP.Net Core app to an Azure Web App
 env:
   AZURE_WEBAPP_NAME: 'crypto-currency-platform'   # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: 'net6.0'                 # set this to the .NET Core version to use
-  CCC_WALLET_TENANT: 0dde86c2-c953-4519-b307-54ea7d69a225
-  CCC_WALLET_CLIENT_ID: CCC_APP_PLATFORM@0dde86c2-c953-4519-b307-54ea7d69a225.wab
-  CCC_WALLET_SECRET: 3e8bc63e-f50b-4c5d-b7ce-b15def8cee4a
+  DOTNET_VERSION: '6.0.x'                 # set this to the .NET Core version to use
+  CCC_WALLET_TENANT: '0dde86c2-c953-4519-b307-54ea7d69a225'
+  CCC_WALLET_CLIENT_ID: 'CCC_APP_PLATFORM@0dde86c2-c953-4519-b307-54ea7d69a225.wab'
+  CCC_WALLET_SECRET: '3e8bc63e-f50b-4c5d-b7ce-b15def8cee4a'
 on:
   push:
     branches:
