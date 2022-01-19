@@ -10,7 +10,7 @@ namespace Transactions.Controllers.Models
     /// AddTransactionRequest
     /// </summary>
     [DataContract]
-    public partial class TransactionRequest : IEquatable<TransactionRequest>, IValidatableObject
+    public class TransactionRequest : IEquatable<TransactionRequest>, IValidatableObject
     {
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Transactions.Controllers.Models
         /// <param name="onBehalfOfName">onBehalfOfName.</param>
         /// <param name="additionalData">additionalData.</param>
         /// <param name="baseTransaction">baseTransaction.</param>
-        public TransactionRequest(Guid? transactionType = default(Guid?), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string))
+        public TransactionRequest(string? transactionType = default(string), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string))
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
@@ -70,7 +70,7 @@ namespace Transactions.Controllers.Models
         /// Gets or Sets TransactionType
         /// </summary>
         [DataMember(Name = "transactionType", EmitDefaultValue = false)]
-        public Guid? TransactionType { get; set; }
+        public string? TransactionType { get; set; }
 
         /// <summary>
         /// Gets or Sets Amount

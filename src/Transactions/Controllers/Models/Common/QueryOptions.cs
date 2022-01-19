@@ -4,7 +4,7 @@ namespace Transactions.Controllers.Models.Common
     {
         public int Offset { get; set; }
         public int Limit { get; set; }
-        public string OrderBy { get; set; }
+        public string? OrderBy { get; set; }
         //setting up default query options
         public QueryOptions()
         {

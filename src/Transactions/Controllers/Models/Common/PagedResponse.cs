@@ -10,8 +10,8 @@ namespace Transactions.Controllers.Models.Common
         public int Count { get; set; }
         //public Uri NextPage { get; set; }
         //public Uri PreviousPage { get; set; }
-        public T Rows { get; set; }
-        public PagedResponse(T data, int pageNumber, int pageSize, string orderBy, int totalRecords)
+        public IEnumerable<T> Rows { get; set; }
+        public PagedResponse(IEnumerable<T> data, int pageNumber, int pageSize, string orderBy, int totalRecords)
         {
             //string route = $"{request.Scheme}://{request.Host}{request.Path.Value}";
             this.Offset = pageNumber;

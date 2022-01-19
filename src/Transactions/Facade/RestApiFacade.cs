@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Transactions.Facade
 {
@@ -53,7 +54,7 @@ namespace Transactions.Facade
                     || httpMethod == HttpMethod.Put
                     || httpMethod == HttpMethod.Patch)
                 {
-                    requestMessage.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                    requestMessage.Content = new StringContent(JsonConvert.SerializeObject(payload, new StringEnumConverter()), Encoding.UTF8, "application/json");
                 }
 
                 HttpResponseMessage responseMessage = await _httpClient.SendAsync(requestMessage).ConfigureAwait(false);

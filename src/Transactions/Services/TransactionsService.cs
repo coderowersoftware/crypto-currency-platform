@@ -7,8 +7,8 @@ namespace Transactions.Services
 {
     public interface ITransactionsService
     {
-        Task<TransactionResponse> AddTransactions(string tenantId, TransactionRequest request);
-        Task<PagedResponse<List<TransactionResponse>>> GetTransactions(string tenantId, TransactionFilter filter, QueryOptions query);
+        Task<TransactionResponse> AddTransactions(TransactionRequest request);
+        Task<PagedResponse<TransactionResponse>> GetTransactions(TransactionFilter filter, QueryOptions query);
     }
 
     public class TransactionsService : ITransactionsService
@@ -22,24 +22,27 @@ namespace Transactions.Services
             _configuration = configuration;
         }
 
-        public async Task<TransactionResponse> AddTransactions(string tenantId, TransactionRequest request)
+        public async Task<TransactionResponse> AddTransactions(TransactionRequest request)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_USER").Value);
-            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_PASS").Value);
-            var tenant = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_TENANT").Value);
+            var tenantId = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:TenantId").Value);
+            var clientId = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:ClientId").Value);
+            var clientSecret = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:ClientSecret").Value);
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post, 
-                new Uri($"filter[{walletHost}api/tenant/{tenantId}/transaction"),
+                new Uri($"{walletHost}api/tenant/{tenantId}/transaction"),
                 null,
-                request,
-                true, 
-                new Uri($"filter[{walletHost}api/auth/sign-in"), 
-                new Dictionary<string, string> { { "email", email }, { "password", password }, { "tenantId", tenant } }).ConfigureAwait(false);
+                new 
+                {
+                    application_id = tenantId, 
+                    client_id = clientId, 
+                    client_secret = clientSecret, 
+                    data = request
+                }).ConfigureAwait(false);
 
             return JsonConvert.DeserializeObject<TransactionResponse>(responseMessage);
         }
 
-        public async Task<PagedResponse<List<TransactionResponse>>> GetTransactions(string tenantId, TransactionFilter filter, QueryOptions query)
+        public async Task<PagedResponse<TransactionResponse>> GetTransactions(TransactionFilter filter, QueryOptions query)
         {
             var queryString = string.Empty;
             if(!string.IsNullOrWhiteSpace(filter?.TransactionId))
@@ -126,18 +129,18 @@ namespace Transactions.Services
             queryString += $"orderBy={query?.OrderBy}&";
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_USER").Value);
-            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_PASS").Value);
-            var tenant = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:CCC_TENANT").Value);
+            var tenantId = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:TenantId").Value);
+            var email = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:Email").Value);
+            var password = Environment.GetEnvironmentVariable(_configuration.GetSection("AppSettings:Password").Value);
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Get,
                 new Uri($"{walletHost}api/tenant/{tenantId}/transaction?{queryString}"),
                 null,
                 null,
                 true, 
                 new Uri($"{walletHost}api/auth/sign-in"), 
-                new Dictionary<string, string> { { "email", email }, { "password", password }, { "tenantId", tenant } }).ConfigureAwait(false);
+                new Dictionary<string, string> { { "email", email }, { "password", password }, { "tenantId", tenantId } }).ConfigureAwait(false);
             
-            return JsonConvert.DeserializeObject<PagedResponse<List<TransactionResponse>>>(responseMessage);
+            return JsonConvert.DeserializeObject<PagedResponse<TransactionResponse>>(responseMessage);
         }
     }
 }

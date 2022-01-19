@@ -7,6 +7,7 @@ using Transactions.Services;
 
 namespace Transactions.AddControllers
 {
+    [ApiController]
     [Authorize]
     [Route("api/transactions")]
     public class TransactionsController : Controller
@@ -18,26 +19,28 @@ namespace Transactions.AddControllers
             _transactionsService = transactionsService;
         }
 
-        [HttpGet("tenants/{TenantId}/transactions")]
-        public async Task<IActionResult> GetTransactions([FromRoute, Required]string TenantId,
-            [FromQuery] TransactionFilter? Filter = null,
+        [HttpGet("")]
+        public async Task<IActionResult> GetTransactions([FromQuery] TransactionFilter? Filter = null,
             [FromQuery] QueryOptions? Query = null)
         {
             if(Query == null)
             {
                 Query = new QueryOptions() { OrderBy = "createdAt_DESC" };
             }
-            var transactions = await _transactionsService.GetTransactions(TenantId, Filter, Query).ConfigureAwait(false);
+            else if(string.IsNullOrWhiteSpace(Query.OrderBy))
+            {
+                Query.OrderBy = "createdAt_DESC";
+            }
+            var transactions = await _transactionsService.GetTransactions(Filter, Query).ConfigureAwait(false);
             transactions.Limit = Query.Limit;
             transactions.Offset = Query.Offset;
             return Ok(transactions);
         }
 
-        [HttpPost("tenants/{TenantId}/transactions")]
-        public async Task<IActionResult> AddTransactions([FromRoute, Required] string TenantId, 
-            [FromBody, Required] TransactionRequest Request)
+        [HttpPost("")]
+        public async Task<IActionResult> AddTransactions([FromBody, Required] TransactionRequest Request)
         {
-            var transactionResponse = await _transactionsService.AddTransactions(TenantId, Request).ConfigureAwait(false);
+            var transactionResponse = await _transactionsService.AddTransactions(Request).ConfigureAwait(false);
             return Ok(transactionResponse);
         }
     }
