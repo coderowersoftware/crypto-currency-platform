@@ -30,7 +30,7 @@ namespace Transactions.AddControllers
             // {
             //     Query.OrderBy = "createdAt_DESC";
             // }
-            var transactions = await _transactionsService.GetTransactionReport(Filter, Query).ConfigureAwait(false);
+            var transactions = await _transactionsService.GetTransactionReport(null, null).ConfigureAwait(false);
             // transactions.Limit = Query.Limit;
             // transactions.Offset = Query.Offset;
             return Ok(transactions);
