@@ -19,7 +19,7 @@ namespace Transactions.AddControllers
             _transactionsService = transactionsService;
         }
 
-        [HttpGet("")]
+        [HttpGet("transaction-report")]
         public async Task<IActionResult> GetTransactionReport()
         {
             // if(Query == null)
