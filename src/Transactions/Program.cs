@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen(options => {
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
-        var jwtSecret = Environment.GetEnvironmentVariable(builder.Configuration.GetSection("AppSettings:WalletJwtSecret").Value);
+        var jwtSecret = builder.Configuration.GetSection("AUTH_JWT_SECRET").Value;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             
@@ -62,7 +62,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 

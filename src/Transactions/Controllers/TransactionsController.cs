@@ -20,27 +20,26 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetTransactions([FromQuery] TransactionFilter? Filter = null,
-            [FromQuery] QueryOptions? Query = null)
+        public async Task<IActionResult> GetTransactionReport()
         {
-            if(Query == null)
-            {
-                Query = new QueryOptions() { OrderBy = "createdAt_DESC" };
-            }
-            else if(string.IsNullOrWhiteSpace(Query.OrderBy))
-            {
-                Query.OrderBy = "createdAt_DESC";
-            }
-            var transactions = await _transactionsService.GetTransactions(Filter, Query).ConfigureAwait(false);
-            transactions.Limit = Query.Limit;
-            transactions.Offset = Query.Offset;
+            // if(Query == null)
+            // {
+            //     Query = new QueryOptions() { OrderBy = "createdAt_DESC" };
+            // }
+            // else if(string.IsNullOrWhiteSpace(Query.OrderBy))
+            // {
+            //     Query.OrderBy = "createdAt_DESC";
+            // }
+            var transactions = await _transactionsService.GetTransactionReport(Filter, Query).ConfigureAwait(false);
+            // transactions.Limit = Query.Limit;
+            // transactions.Offset = Query.Offset;
             return Ok(transactions);
         }
 
         [HttpPost("")]
-        public async Task<IActionResult> AddTransactions([FromBody, Required] TransactionRequest Request)
+        public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
         {
-            var transactionResponse = await _transactionsService.AddTransactions(Request).ConfigureAwait(false);
+            var transactionResponse = await _transactionsService.AddTransaction(Request).ConfigureAwait(false);
             return Ok(transactionResponse);
         }
     }

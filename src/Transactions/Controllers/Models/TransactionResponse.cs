@@ -16,8 +16,8 @@ namespace Transactions.Controllers.Models
         /// <summary>
         /// Gets or Sets Currency
         /// </summary>
-        [DataMember(Name = "currency", EmitDefaultValue = false)]
-        public Currency? Currency { get; set; }
+        [DataMember(Name = "currencyISO", EmitDefaultValue = false)]
+        public Currency? CurrencyISO { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Transaction" /> class.
@@ -47,7 +47,7 @@ namespace Transactions.Controllers.Models
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
-            this.Currency = currency;
+            this.CurrencyISO = currency;
             this.VirtualValue = virtualValue;
             this.IsCredit = isCredit;
             this.Reference = reference;
@@ -200,7 +200,7 @@ namespace Transactions.Controllers.Models
             sb.Append("  ").Append(base.ToString().Replace("\n", "\n  ")).Append("\n");
             sb.Append("  TransactionType: ").Append(TransactionType).Append("\n");
             sb.Append("  Amount: ").Append(Amount).Append("\n");
-            sb.Append("  Currency: ").Append(Currency).Append("\n");
+            sb.Append("  Currency: ").Append(CurrencyISO).Append("\n");
             sb.Append("  VirtualValue: ").Append(VirtualValue).Append("\n");
             sb.Append("  IsCredit: ").Append(IsCredit).Append("\n");
             sb.Append("  Reference: ").Append(Reference).Append("\n");
@@ -264,9 +264,9 @@ namespace Transactions.Controllers.Models
                     this.Amount.Equals(input.Amount))
                 ) && base.Equals(input) &&
                 (
-                    this.Currency == input.Currency ||
-                    (this.Currency != null &&
-                    this.Currency.Equals(input.Currency))
+                    this.CurrencyISO == input.CurrencyISO ||
+                    (this.CurrencyISO != null &&
+                    this.CurrencyISO.Equals(input.CurrencyISO))
                 ) && base.Equals(input) &&
                 (
                     this.VirtualValue == input.VirtualValue ||
@@ -373,8 +373,8 @@ namespace Transactions.Controllers.Models
                     hashCode = hashCode * 59 + this.TransactionType.GetHashCode();
                 if (this.Amount != null)
                     hashCode = hashCode * 59 + this.Amount.GetHashCode();
-                if (this.Currency != null)
-                    hashCode = hashCode * 59 + this.Currency.GetHashCode();
+                if (this.CurrencyISO != null)
+                    hashCode = hashCode * 59 + this.CurrencyISO.GetHashCode();
                 if (this.VirtualValue != null)
                     hashCode = hashCode * 59 + this.VirtualValue.GetHashCode();
                 if (this.IsCredit != null)
