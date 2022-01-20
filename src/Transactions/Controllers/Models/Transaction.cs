@@ -10,14 +10,14 @@ namespace Transactions.Controllers.Models
     /// Transaction
     /// </summary>
     [DataContract]
-    public partial class TransactionResponse : GenericEntity, IEquatable<TransactionResponse>, IValidatableObject
+    public partial class Transaction : GenericEntity, IEquatable<Transaction>, IValidatableObject
     {
         
         /// <summary>
         /// Gets or Sets Currency
         /// </summary>
-        [DataMember(Name = "currencyISO", EmitDefaultValue = false)]
-        public Currency? CurrencyISO { get; set; }
+        [DataMember(Name = "currency", EmitDefaultValue = false)]
+        public Currency? Currency { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Transaction" /> class.
@@ -43,11 +43,11 @@ namespace Transactions.Controllers.Models
         /// <param name="additionalData">additionalData.</param>
         /// <param name="baseTransaction">baseTransaction.</param>
         /// <param name="transactionTypeIdentifier">transactionTypeIdentifier   .</param>
-        public TransactionResponse(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
+        public Transaction(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
-            this.CurrencyISO = currency;
+            this.Currency = currency;
             this.VirtualValue = virtualValue;
             this.IsCredit = isCredit;
             this.Reference = reference;
@@ -200,7 +200,7 @@ namespace Transactions.Controllers.Models
             sb.Append("  ").Append(base.ToString().Replace("\n", "\n  ")).Append("\n");
             sb.Append("  TransactionType: ").Append(TransactionType).Append("\n");
             sb.Append("  Amount: ").Append(Amount).Append("\n");
-            sb.Append("  Currency: ").Append(CurrencyISO).Append("\n");
+            sb.Append("  Currency: ").Append(Currency).Append("\n");
             sb.Append("  VirtualValue: ").Append(VirtualValue).Append("\n");
             sb.Append("  IsCredit: ").Append(IsCredit).Append("\n");
             sb.Append("  Reference: ").Append(Reference).Append("\n");
@@ -239,7 +239,7 @@ namespace Transactions.Controllers.Models
         /// <returns>Boolean</returns>
         public override bool Equals(object? input)
         {
-            return this.Equals(input as TransactionResponse);
+            return this.Equals(input as Transaction);
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace Transactions.Controllers.Models
         /// </summary>
         /// <param name="input">Instance of Transaction to be compared</param>
         /// <returns>Boolean</returns>
-        public bool Equals(TransactionResponse? input)
+        public bool Equals(Transaction? input)
         {
             if (input == null)
                 return false;
@@ -264,9 +264,9 @@ namespace Transactions.Controllers.Models
                     this.Amount.Equals(input.Amount))
                 ) && base.Equals(input) &&
                 (
-                    this.CurrencyISO == input.CurrencyISO ||
-                    (this.CurrencyISO != null &&
-                    this.CurrencyISO.Equals(input.CurrencyISO))
+                    this.Currency == input.Currency ||
+                    (this.Currency != null &&
+                    this.Currency.Equals(input.Currency))
                 ) && base.Equals(input) &&
                 (
                     this.VirtualValue == input.VirtualValue ||
@@ -373,8 +373,8 @@ namespace Transactions.Controllers.Models
                     hashCode = hashCode * 59 + this.TransactionType.GetHashCode();
                 if (this.Amount != null)
                     hashCode = hashCode * 59 + this.Amount.GetHashCode();
-                if (this.CurrencyISO != null)
-                    hashCode = hashCode * 59 + this.CurrencyISO.GetHashCode();
+                if (this.Currency != null)
+                    hashCode = hashCode * 59 + this.Currency.GetHashCode();
                 if (this.VirtualValue != null)
                     hashCode = hashCode * 59 + this.VirtualValue.GetHashCode();
                 if (this.IsCredit != null)

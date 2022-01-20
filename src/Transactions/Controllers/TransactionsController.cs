@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -13,28 +14,46 @@ namespace Transactions.AddControllers
     public class TransactionsController : Controller
     {
         private readonly ITransactionsService _transactionsService;
+        private readonly IMapper _mapper;
 
-        public TransactionsController(ITransactionsService transactionsService)
+        public TransactionsController(ITransactionsService transactionsService,
+            IMapper mapper)
         {
             _transactionsService = transactionsService;
+            _mapper = mapper;
         }
 
         [HttpGet("transaction-report")]
-        public async Task<IActionResult> GetTransactionReport()
+        public async Task<IActionResult> GetTransactionReport([FromQuery] TransactionFilter? Filter = null,
+            [FromQuery] QueryOptions? QueryOptions = null)
         {
-            // if(Query == null)
-            // {
-            //     Query = new QueryOptions() { OrderBy = "createdAt_DESC" };
-            // }
-            // else if(string.IsNullOrWhiteSpace(Query.OrderBy))
-            // {
-            //     Query.OrderBy = "createdAt_DESC";
-            // }
-            var transactions = await _transactionsService.GetTransactionReport(null, null).ConfigureAwait(false);
-            // transactions.Limit = Query.Limit;
-            // transactions.Offset = Query.Offset;
-            return Ok(transactions);
+            var defaultOrderBy = "createdAt_DESC";
+            if(QueryOptions == null)
+            {
+                QueryOptions = new QueryOptions() { OrderBy = defaultOrderBy };
+            }
+            else if(string.IsNullOrWhiteSpace(QueryOptions.OrderBy))
+            {
+                QueryOptions.OrderBy = defaultOrderBy;
+            }
+            var transactionsRoot = await _transactionsService.GetTransactionReport(Filter, QueryOptions).ConfigureAwait(false);
+            var transactions = _mapper.Map<List<Transaction>>(transactionsRoot?.Rows);
+            var pagedResult = new PagedResponse<Transaction>() 
+            { 
+                Rows = transactions, 
+                Count = transactionsRoot?.Count ?? 0,
+                Offset = QueryOptions.Offset,
+                Limit = QueryOptions.Limit
+            };
+            return Ok(pagedResult);
         }
+
+        // [HttpGet("current-balance")]
+        // public async Task<IActionResult> GetCurrentBalance()
+        // {
+        //     var currentBalance = await _transactionsService.GetCurrentBalance().ConfigureAwait(false);
+        //     return Ok(currentBalance);
+        // }
 
         [HttpPost("")]
         public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
