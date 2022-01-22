@@ -42,7 +42,14 @@ namespace Transactions.Controllers.Models
         /// <param name="onBehalfOfName">onBehalfOfName.</param>
         /// <param name="additionalData">additionalData.</param>
         /// <param name="baseTransaction">baseTransaction.</param>
-        public TransactionRequest(string? transactionType = default(string), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string))
+        public TransactionRequest(string transactionType, decimal amount, Currency currency,
+            string currentBalanceFor, string payerId, string payeeId, string reference, bool isCredit,
+            decimal? virtualValue = default(decimal?), string? paymentMethod = default(string),
+            string? remark = default(string), string? description = default(string), string? productId = default(string),
+            string? productName = default(string), string? sku = default(string),
+            string? payerName = default(string), string? payeeName = default(string),
+            string? onBehalfOfId = default(string), string? onBehalfOfName = default(string),
+            string? additionalData = default(string), string? baseTransaction = default(string) )
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
@@ -64,19 +71,20 @@ namespace Transactions.Controllers.Models
             this.OnBehalfOfName = onBehalfOfName;
             this.AdditionalData = additionalData;
             this.BaseTransaction = baseTransaction;
+            this.CurrentBalanceFor = currentBalanceFor;
         }
 
         /// <summary>
         /// Gets or Sets TransactionType
         /// </summary>
         [DataMember(Name = "transactionType", EmitDefaultValue = false)]
-        public string? TransactionType { get; set; }
+        public string TransactionType { get; set; }
 
         /// <summary>
         /// Gets or Sets Amount
         /// </summary>
         [DataMember(Name = "amount", EmitDefaultValue = false)]
-        public decimal? Amount { get; set; }
+        public decimal Amount { get; set; }
 
 
         /// <summary>
@@ -89,13 +97,13 @@ namespace Transactions.Controllers.Models
         /// Gets or Sets IsCredit
         /// </summary>
         [DataMember(Name = "isCredit", EmitDefaultValue = false)]
-        public bool? IsCredit { get; set; }
+        public bool IsCredit { get; set; }
 
         /// <summary>
         /// Gets or Sets Reference
         /// </summary>
         [DataMember(Name = "reference", EmitDefaultValue = false)]
-        public string? Reference { get; set; }
+        public string Reference { get; set; }
 
         /// <summary>
         /// Gets or Sets PaymentMethod
@@ -137,7 +145,7 @@ namespace Transactions.Controllers.Models
         /// Gets or Sets PayerId
         /// </summary>
         [DataMember(Name = "payerId", EmitDefaultValue = false)]
-        public string? PayerId { get; set; }
+        public string PayerId { get; set; }
 
         /// <summary>
         /// Gets or Sets PayerName
@@ -149,7 +157,7 @@ namespace Transactions.Controllers.Models
         /// Gets or Sets PayeeId
         /// </summary>
         [DataMember(Name = "payeeId", EmitDefaultValue = false)]
-        public string? PayeeId { get; set; }
+        public string PayeeId { get; set; }
 
         /// <summary>
         /// Gets or Sets PayeeName
@@ -182,6 +190,12 @@ namespace Transactions.Controllers.Models
         public string? BaseTransaction { get; set; }
 
         /// <summary>
+        /// Gets or Sets BaseTransaction
+        /// </summary>
+        [DataMember(Name = "currentBalanceFor", EmitDefaultValue = false)]
+        public string CurrentBalanceFor { get; set; }
+
+        /// <summary>
         /// Returns the string presentation of the object
         /// </summary>
         /// <returns>String presentation of the object</returns>
@@ -209,6 +223,7 @@ namespace Transactions.Controllers.Models
             sb.Append("  OnBehalfOfName: ").Append(OnBehalfOfName).Append("\n");
             sb.Append("  AdditionalData: ").Append(AdditionalData).Append("\n");
             sb.Append("  BaseTransaction: ").Append(BaseTransaction).Append("\n");
+            sb.Append("  CurrentBalanceFor: ").Append(CurrentBalanceFor).Append("\n");
             sb.Append("}\n");
             return sb.ToString();
         }
@@ -342,6 +357,11 @@ namespace Transactions.Controllers.Models
                     this.BaseTransaction == input.BaseTransaction ||
                     (this.BaseTransaction != null &&
                     this.BaseTransaction.Equals(input.BaseTransaction))
+                ) &&
+                (
+                    this.CurrentBalanceFor == input.CurrentBalanceFor ||
+                    (this.CurrentBalanceFor != null &&
+                    this.CurrentBalanceFor.Equals(input.CurrentBalanceFor))
                 );
         }
 
@@ -394,6 +414,8 @@ namespace Transactions.Controllers.Models
                     hashCode = hashCode * 59 + this.AdditionalData.GetHashCode();
                 if (this.BaseTransaction != null)
                     hashCode = hashCode * 59 + this.BaseTransaction.GetHashCode();
+                if (this.CurrentBalanceFor != null)
+                    hashCode = hashCode * 59 + this.CurrentBalanceFor.GetHashCode();
                 return hashCode;
             }
         }

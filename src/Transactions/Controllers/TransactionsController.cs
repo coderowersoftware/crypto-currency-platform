@@ -9,7 +9,7 @@ using Transactions.Services;
 namespace Transactions.AddControllers
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/transactions")]
     public class TransactionsController : Controller
     {
@@ -28,19 +28,19 @@ namespace Transactions.AddControllers
             [FromQuery] QueryOptions? QueryOptions = null)
         {
             var defaultOrderBy = "createdAt_DESC";
-            if(QueryOptions == null)
+            if (QueryOptions == null)
             {
                 QueryOptions = new QueryOptions() { OrderBy = defaultOrderBy };
             }
-            else if(string.IsNullOrWhiteSpace(QueryOptions.OrderBy))
+            else if (string.IsNullOrWhiteSpace(QueryOptions.OrderBy))
             {
                 QueryOptions.OrderBy = defaultOrderBy;
             }
             var transactionsRoot = await _transactionsService.GetTransactionReport(Filter, QueryOptions).ConfigureAwait(false);
             var transactions = _mapper.Map<List<Transaction>>(transactionsRoot?.Rows);
-            var pagedResult = new PagedResponse<Transaction>() 
-            { 
-                Rows = transactions, 
+            var pagedResult = new PagedResponse<Transaction>()
+            {
+                Rows = transactions,
                 Count = transactionsRoot?.Count ?? 0,
                 Offset = QueryOptions.Offset,
                 Limit = QueryOptions.Limit
@@ -59,6 +59,20 @@ namespace Transactions.AddControllers
         public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
         {
             var transactionResponse = await _transactionsService.AddTransaction(Request).ConfigureAwait(false);
+            return Ok(transactionResponse);
+        }
+
+        [HttpPost("wallet")]
+        public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequest Request)
+        {
+            var transactionResponse = await _transactionsService.InsertTransactions(Request).ConfigureAwait(false);
+            return Ok(transactionResponse);
+        }
+
+        [HttpPost("wallet-balance")]
+        public async Task<IActionResult> GetBalanceByIdentifierForCurrency([FromQuery, Required] string identifier, [FromQuery, Required] string currency)
+        {
+            var transactionResponse = await _transactionsService.GetBalanceByIdentifierForCurrency(identifier,currency).ConfigureAwait(false);
             return Ok(transactionResponse);
         }
     }
