@@ -120,7 +120,7 @@ namespace Transactions.Services
                     cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, request.PayerId);
                     //cmd.Parameters.AddWithValue("payer_name", NpgsqlDbType.Varchar, request.PayerName);
                     cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, request.CurrentBalanceFor);
-                    cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, request.Remark);
+                    cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, request.OnBehalfOfId);
                     cmd.Parameters.AddWithValue("virtual_value", NpgsqlDbType.Numeric, request.VirtualValue);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
