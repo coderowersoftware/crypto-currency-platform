@@ -118,7 +118,7 @@ namespace Transactions.Services
                     cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("f7539e04-fe57-4afa-9d76-2e5f87b8ae42"));
                     cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, DateTime.UtcNow);
                     cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, request.PayerId);
-                    cmd.Parameters.AddWithValue("payer_name", NpgsqlDbType.Varchar, request.PayerName);
+                    //cmd.Parameters.AddWithValue("payer_name", NpgsqlDbType.Varchar, request.PayerName);
                     cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, request.CurrentBalanceFor);
                     cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, request.Remark);
                     cmd.Parameters.AddWithValue("virtual_value", NpgsqlDbType.Numeric, request.VirtualValue);
