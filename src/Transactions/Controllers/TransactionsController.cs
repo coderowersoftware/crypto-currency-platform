@@ -63,9 +63,9 @@ namespace Transactions.AddControllers
         }
 
         [HttpPost("wallet")]
-        public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequest Request)
+        public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequestData data)
         {
-            var transactionResponse = await _transactionsService.InsertTransactions(Request).ConfigureAwait(false);
+            var transactionResponse = await _transactionsService.InsertTransactions(data.Data).ConfigureAwait(false);
             return Ok(transactionResponse);
         }
 
