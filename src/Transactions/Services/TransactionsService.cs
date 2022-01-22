@@ -107,21 +107,21 @@ namespace Transactions.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid("923d95cb-3be0-41a4-997b-a41d2d657467"));
                     cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, request.Currency);
-                    cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, request.Amount);
+                    //cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, request.Amount);
                     cmd.Parameters.AddWithValue("transactiontype_identifier", NpgsqlDbType.Text, request.TransactionType);
                     cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, request.IsCredit);
                     cmd.Parameters.AddWithValue("reference_", NpgsqlDbType.Varchar, request.Reference);
-                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value));
+                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("f7539e04-fe57-4afa-9d76-2e5f87b8ae42"));
                     cmd.Parameters.AddWithValue("created_at", NpgsqlDbType.TimestampTz, DateTime.UtcNow);
-                    cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value));
+                    cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("f7539e04-fe57-4afa-9d76-2e5f87b8ae42"));
                     cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, DateTime.UtcNow);
                     cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, request.PayerId);
                     cmd.Parameters.AddWithValue("payer_name", NpgsqlDbType.Varchar, request.PayerName);
                     cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, request.CurrentBalanceFor);
                     cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, request.Remark);
-                    cmd.Parameters.AddWithValue("virtual_value", NpgsqlDbType.Varchar, request.VirtualValue);
+                    cmd.Parameters.AddWithValue("virtual_value", NpgsqlDbType.Numeric, request.VirtualValue);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);

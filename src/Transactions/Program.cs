@@ -38,7 +38,7 @@ builder.Services.AddSwaggerGen(options => {
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
-        var jwtSecret = builder.Configuration.GetSection("AUTH_JWT_SECRET").Value;
+        var jwtSecret = builder.Configuration.GetSection("AppSettings:AUTH_JWT_SECRET").Value;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             
