@@ -23,6 +23,22 @@ namespace Transactions.AddControllers
             _mapper = mapper;
         }
 
+        [HttpGet("transaction-type/autocomplete")]
+        public async Task<IActionResult> GetTransactionTypes()
+        {
+            var transactionTypes = await _transactionsService.GetTransactionTypes().ConfigureAwait(false);
+
+            return Ok(transactionTypes);
+        }
+
+        [HttpGet("currency/autocomplete")]
+        public async Task<IActionResult> GetCurrencies()
+        {
+            var currencies = await _transactionsService.GetCurrencies().ConfigureAwait(false);
+
+            return Ok(currencies);
+        }
+
         [HttpGet("")]
         public async Task<IActionResult> GetTransactions([FromQuery] TransactionFilter? Filter = null,
         [FromQuery] QueryOptions? QueryOptions = null)

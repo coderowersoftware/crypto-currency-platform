@@ -17,8 +17,9 @@ namespace Transactions.Services
         Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report);
         Task<dynamic> GetCurrentBalance();
         Task<TransactionResponse> InsertTransactions(TransactionRequest request);
-
         Task<IdentifierProfileBalance> GetBalanceByIdentifierForCurrency(string identifier, string currency);
+        Task<List<AutoCompleteResponse>> GetTransactionTypes();
+        Task<List<AutoCompleteResponse>> GetCurrencies();
     }
 
     public class TransactionsService : ITransactionsService
@@ -30,6 +31,44 @@ namespace Transactions.Services
         {
             _restApiFacade = restApiFacade;
             _configuration = configuration;
+        }
+
+        public async Task<List<AutoCompleteResponse>> GetTransactionTypes()
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                new Uri($"{walletHost}api/tenant/{tenantId}/transaction-type/get-autocomplete"),
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
+        }
+
+        public async Task<List<AutoCompleteResponse>> GetCurrencies()
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                new Uri($"{walletHost}api/tenant/{tenantId}/currency/get-autocomplete"),
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
         }
 
         public async Task<Transaction> AddTransaction(TransactionRequest request)
@@ -61,7 +100,7 @@ namespace Transactions.Services
                 queryString = $"{queryString}filter[transactionType]={filter?.TransactionType}&";
             }
 
-            if(filter?.TransactionTypes?.Count > 0)
+            if (filter?.TransactionTypes?.Count > 0)
             {
                 foreach (var item in filter.TransactionTypes)
                 {

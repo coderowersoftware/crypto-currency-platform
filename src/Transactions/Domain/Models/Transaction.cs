@@ -87,6 +87,9 @@ namespace Transactions.Domain.Models
         [JsonProperty("virtualValue")]
         public decimal? VirtualValue { get; set; }
 
+        [JsonProperty("amount")]
+        public decimal? Amount { get; set; }
+
         [JsonProperty("amounts")]
         public object? Amounts { get; set; }
         [JsonProperty("amounts_total")]

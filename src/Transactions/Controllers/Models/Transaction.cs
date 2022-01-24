@@ -43,7 +43,14 @@ namespace Transactions.Controllers.Models
         /// <param name="additionalData">additionalData.</param>
         /// <param name="baseTransaction">baseTransaction.</param>
         /// <param name="transactionTypeIdentifier">transactionTypeIdentifier   .</param>
-        public Transaction(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), object? currency = default(object?), string? currencyISO = default(string?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
+        public Transaction(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), 
+            object? currency = default(object?), string? currencyISO = default(string?), decimal? virtualValue = default(decimal?), 
+            bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), 
+            string? sku = default(string), string? payerId = default(string), string? payerName = default(string), 
+            string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), 
+            string? onBehalfOfName = default(string), string? additionalData = default(string), 
+            string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), 
+            string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
@@ -195,6 +202,18 @@ namespace Transactions.Controllers.Models
         /// </summary>
         [DataMember(Name = "transactionTypeIdentifier", EmitDefaultValue = false)]
         public string? TransactionTypeIdentifier { get; set; }
+
+        /// <summary>
+        /// Gets or Sets BaseTransaction
+        /// </summary>
+        [DataMember(Name = "amounts", EmitDefaultValue = false)]
+        public object? Amounts { get; set; }
+
+        /// <summary>
+        /// Gets or Sets AmountsTotal
+        /// </summary>
+        [DataMember(Name = "amounts_total", EmitDefaultValue = false)]
+        public object? AmountsTotal { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object
