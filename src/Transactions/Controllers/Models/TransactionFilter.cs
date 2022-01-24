@@ -3,6 +3,7 @@ namespace Transactions.Controllers.Models
     public class TransactionFilter
     {
         public string? TransactionType { get; set; }
+        public List<string>? TransactionTypes { get; set; }
         public bool? IsCredit { get; set; }
         public string? Reference { get; set; }
         public string? PaymentMethod { get; set; }
