@@ -12,12 +12,12 @@ namespace Transactions.Controllers.Models
     [DataContract]
     public partial class Transaction : GenericEntity, IEquatable<Transaction>, IValidatableObject
     {
-        
+
         /// <summary>
         /// Gets or Sets Currency
         /// </summary>
         [DataMember(Name = "currency", EmitDefaultValue = false)]
-        public Currency? Currency { get; set; }
+        public object? Currency { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Transaction" /> class.
@@ -43,11 +43,12 @@ namespace Transactions.Controllers.Models
         /// <param name="additionalData">additionalData.</param>
         /// <param name="baseTransaction">baseTransaction.</param>
         /// <param name="transactionTypeIdentifier">transactionTypeIdentifier   .</param>
-        public Transaction(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), Currency? currency = default(Currency?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
+        public Transaction(TransactionType? transactionType = default(TransactionType), decimal? amount = default(decimal?), object? currency = default(object?), string? currencyISO = default(string?), decimal? virtualValue = default(decimal?), bool? isCredit = default(bool?), string? reference = default(string), string? paymentMethod = default(string), string? remark = default(string), string? description = default(string), string? productId = default(string), string? productName = default(string), string? sku = default(string), string? payerId = default(string), string? payerName = default(string), string? payeeId = default(string), string? payeeName = default(string), string? onBehalfOfId = default(string), string? onBehalfOfName = default(string), string? additionalData = default(string), string? baseTransaction = default(string), string? importHash = default(string), Guid? tenantId = default(Guid?), string? transactionTypeIdentifier = default(string)) : base(importHash, tenantId)
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
             this.Currency = currency;
+            this.CurrencyISO = currencyISO;
             this.VirtualValue = virtualValue;
             this.IsCredit = isCredit;
             this.Reference = reference;
@@ -182,6 +183,12 @@ namespace Transactions.Controllers.Models
         /// </summary>
         [DataMember(Name = "baseTransaction", EmitDefaultValue = false)]
         public string? BaseTransaction { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Currency ISO
+        /// </summary>
+        [DataMember(Name = "currencyISO", EmitDefaultValue = false)]
+        public string? CurrencyISO { get; set; }
 
         /// <summary>
         /// Gets or Sets BaseTransaction

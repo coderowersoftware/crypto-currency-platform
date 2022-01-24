@@ -78,8 +78,8 @@ namespace Transactions.Domain.Models
         //[JsonProperty("currencyISO")]
         public string? CurrencyISO { get; set; }
 
-        // [JsonProperty("currency")]
-        // public Currency? Currency { get; set; }
+        [JsonProperty("currency")]
+        public object? Currency { get; set; }
 
         [JsonProperty("transactionType")]
         public TransactionType? TransactionType { get; set; }
@@ -88,12 +88,9 @@ namespace Transactions.Domain.Models
         public decimal? VirtualValue { get; set; }
 
         [JsonProperty("amounts")]
-        public Amounts? Amounts { get; set; }
+        public object? Amounts { get; set; }
+        [JsonProperty("amounts_total")]
+        public object? AmountsTotal { get; set; }
     }
 
-    public class Amounts
-    {
-        [JsonProperty("COINS")]
-        public int COINS { get; set; }
-    }
 }

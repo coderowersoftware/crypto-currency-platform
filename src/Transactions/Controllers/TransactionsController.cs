@@ -23,7 +23,32 @@ namespace Transactions.AddControllers
             _mapper = mapper;
         }
 
-        [HttpGet("transaction-report")]
+        [HttpGet("")]
+        public async Task<IActionResult> GetTransactions([FromQuery] TransactionFilter? Filter = null,
+        [FromQuery] QueryOptions? QueryOptions = null)
+        {
+            var defaultOrderBy = "createdAt_DESC";
+            if (QueryOptions == null)
+            {
+                QueryOptions = new QueryOptions() { OrderBy = defaultOrderBy };
+            }
+            else if (string.IsNullOrWhiteSpace(QueryOptions.OrderBy))
+            {
+                QueryOptions.OrderBy = defaultOrderBy;
+            }
+            var transactionsRoot = await _transactionsService.GetTransactionReport(Filter, QueryOptions, false).ConfigureAwait(false);
+            var transactions = _mapper.Map<List<Transaction>>(transactionsRoot?.Rows);
+            var pagedResult = new PagedResponse<Transaction>()
+            {
+                Rows = transactions,
+                Count = transactionsRoot?.Count ?? 0,
+                Offset = QueryOptions.Offset,
+                Limit = QueryOptions.Limit
+            };
+            return Ok(pagedResult);
+        }
+
+        [HttpGet("report")]
         public async Task<IActionResult> GetTransactionReport([FromQuery] TransactionFilter? Filter = null,
             [FromQuery] QueryOptions? QueryOptions = null)
         {
@@ -36,7 +61,7 @@ namespace Transactions.AddControllers
             {
                 QueryOptions.OrderBy = defaultOrderBy;
             }
-            var transactionsRoot = await _transactionsService.GetTransactionReport(Filter, QueryOptions).ConfigureAwait(false);
+            var transactionsRoot = await _transactionsService.GetTransactionReport(Filter, QueryOptions, true).ConfigureAwait(false);
             var transactions = _mapper.Map<List<Transaction>>(transactionsRoot?.Rows);
             var pagedResult = new PagedResponse<Transaction>()
             {
@@ -72,7 +97,7 @@ namespace Transactions.AddControllers
         [HttpPost("wallet-balance")]
         public async Task<IActionResult> GetBalanceByIdentifierForCurrency([FromQuery, Required] string identifier, [FromQuery, Required] string currency)
         {
-            var transactionResponse = await _transactionsService.GetBalanceByIdentifierForCurrency(identifier,currency).ConfigureAwait(false);
+            var transactionResponse = await _transactionsService.GetBalanceByIdentifierForCurrency(identifier, currency).ConfigureAwait(false);
             return Ok(transactionResponse);
         }
     }
