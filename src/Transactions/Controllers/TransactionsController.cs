@@ -64,6 +64,14 @@ namespace Transactions.AddControllers
             return Ok(pagedResult);
         }
 
+        [HttpGet("id")]
+        public async Task<IActionResult> GetTransactionById([FromQuery] string id)
+        {
+            var transaction = await _transactionsService.GetTransactionById(id).ConfigureAwait(false);
+           
+            return Ok(transaction);
+        }
+
         [HttpGet("report")]
         public async Task<IActionResult> GetTransactionReport([FromQuery] TransactionFilter? Filter = null,
             [FromQuery] QueryOptions? QueryOptions = null)

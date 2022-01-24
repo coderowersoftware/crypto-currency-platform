@@ -20,6 +20,7 @@ namespace Transactions.Services
         Task<IdentifierProfileBalance> GetBalanceByIdentifierForCurrency(string identifier, string currency);
         Task<List<AutoCompleteResponse>> GetTransactionTypes();
         Task<List<AutoCompleteResponse>> GetCurrencies();
+        Task<Transaction> GetTransactionById(string id);
     }
 
     public class TransactionsService : ITransactionsService
@@ -69,6 +70,29 @@ namespace Transactions.Services
                 }).ConfigureAwait(false);
 
             return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
+        }
+
+        public async Task<Transaction> GetTransactionById(string id)
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+
+            Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction/{id}");
+           
+
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                uri,
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
         public async Task<Transaction> AddTransaction(TransactionRequest request)
