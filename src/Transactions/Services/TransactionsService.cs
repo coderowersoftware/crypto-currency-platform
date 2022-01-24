@@ -55,18 +55,62 @@ namespace Transactions.Services
         public async Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions)
         {
             var queryString = string.Empty;
-            if (!string.IsNullOrWhiteSpace(filter?.TransactionId))
+            if (filter?.IsCredit.HasValue ?? false)
             {
-                queryString = $"{queryString}filter[transactionId]={filter?.TransactionId}&";
+                queryString = $"{queryString}filter[isCredit]={filter?.IsCredit.Value.ToString().ToLowerInvariant()}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.Reference))
+            {
+                queryString = $"{queryString}filter[reference]={filter?.Reference}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.PaymentMethod))
+            {
+                queryString = $"{queryString}filter[paymentMethod]={filter?.PaymentMethod}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.Remark))
+            {
+                queryString = $"{queryString}filter[remark]={filter?.Remark}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.ProductId))
+            {
+                queryString = $"{queryString}filter[productId]={filter?.ProductId}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.ProductName))
+            {
+                queryString = $"{queryString}filter[productName]={filter?.ProductName}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.Sku))
+            {
+                queryString = $"{queryString}filter[sku]={filter?.Sku}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.PayerId))
+            {
+                queryString = $"{queryString}filter[payerId]={filter?.PayerId}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.PayerName))
+            {
+                queryString = $"{queryString}filter[payerName]={filter?.PayerName}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.PayeeId))
+            {
+                queryString = $"{queryString}filter[payeeId]={filter?.PayeeId}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.PayeeName))
+            {
+                queryString = $"{queryString}filter[payeeName]={filter?.PayeeName}&";
+            }
+            if(!string.IsNullOrWhiteSpace(filter?.OnBehalfOfId))
+            {
+                queryString = $"{queryString}filter[onBehalfOfId]={filter?.OnBehalfOfId}&";
             }
             queryString = $"{queryString}offset={queryOptions?.Offset}&";
             queryString = $"{queryString}limit={queryOptions?.Limit}&";
             queryString = $"{queryString}orderBy={queryOptions?.OrderBy}&";
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction-report?{queryString}"),
                 null,
