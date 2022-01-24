@@ -54,6 +54,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Add service dependencies
 builder.Services.AddSingleton<IRestApiFacade, RestApiFacade>();
 builder.Services.AddSingleton<ITransactionsService, TransactionsService>();
+builder.Services.AddSingleton<IMiningService,  MiningService>();
 
 var app = builder.Build();
 
