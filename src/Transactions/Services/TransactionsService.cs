@@ -60,6 +60,14 @@ namespace Transactions.Services
             {
                 queryString = $"{queryString}filter[transactionType]={filter?.TransactionType}&";
             }
+
+            if(filter?.TransactionTypes?.Count > 0)
+            {
+                foreach (var item in filter.TransactionTypes)
+                {
+                    queryString = $"{queryString}filter[transactionTypes][]={item}&";
+                }
+            }
             if (filter?.IsCredit.HasValue ?? false)
             {
                 queryString = $"{queryString}filter[isCredit]={filter?.IsCredit.Value.ToString().ToLowerInvariant()}&";
