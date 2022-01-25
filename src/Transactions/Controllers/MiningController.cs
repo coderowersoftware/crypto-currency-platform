@@ -3,6 +3,7 @@ using System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using Transactions.Controllers.Models.Common;
 using Transactions.Controllers.Models.Mining;
 using Transactions.Services;
@@ -25,9 +26,20 @@ namespace Transactions.Controllers
         }
 
         [HttpPost("")]
-        public async Task<IActionResult> MineAsync([FromBody, Required]MineRequest request)
+        public async Task<IActionResult> MineAsync([FromBody, Required]MineRequest MineRequest)
         {
-            await _miningService.MineAsync(request.LicenseId.Value).ConfigureAwait(false);
+            try
+            {
+                await _miningService.MineAsync(MineRequest.LicenseId.Value).ConfigureAwait(false);
+            }
+            catch(PostgresException ex)
+            {
+                if(ex.SqlState == "P0001" && ex.Hint == "MiningAlreadyInProgress")
+                {
+                    return BadRequest(new { ErrorCode = "MiningAlreadyInProgress", Message = $"Mining for license {MineRequest.LicenseId.Value} is already in progress."});
+                }
+            }
+            
             return StatusCode((int) HttpStatusCode.Created);
         }
 
@@ -45,7 +57,7 @@ namespace Transactions.Controllers
                 Offset = QueryOptions.Offset,
                 Limit = QueryOptions.Limit
             };
-            return Ok(pagedResult);
+            return Ok(pagedResult);            
         }
     }
 }
