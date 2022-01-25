@@ -14,11 +14,13 @@ namespace Transactions.Services
     public interface ITransactionsService
     {
         Task<Transaction> AddTransaction(TransactionRequest request);
-        Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions);
+        Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report);
         Task<dynamic> GetCurrentBalance();
         Task<TransactionResponse> InsertTransactions(TransactionRequest request);
-
         Task<IdentifierProfileBalance> GetBalanceByIdentifierForCurrency(string identifier, string currency);
+        Task<List<AutoCompleteResponse>> GetTransactionTypes();
+        Task<List<AutoCompleteResponse>> GetCurrencies();
+        Task<Transaction> GetTransactionById(string id);
     }
 
     public class TransactionsService : ITransactionsService
@@ -30,6 +32,67 @@ namespace Transactions.Services
         {
             _restApiFacade = restApiFacade;
             _configuration = configuration;
+        }
+
+        public async Task<List<AutoCompleteResponse>> GetTransactionTypes()
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                new Uri($"{walletHost}api/tenant/{tenantId}/transaction-type/get-autocomplete"),
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
+        }
+
+        public async Task<List<AutoCompleteResponse>> GetCurrencies()
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                new Uri($"{walletHost}api/tenant/{tenantId}/currency/get-autocomplete"),
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
+        }
+
+        public async Task<Transaction> GetTransactionById(string id)
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+
+            Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction/{id}");
+           
+
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                uri,
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
         public async Task<Transaction> AddTransaction(TransactionRequest request)
@@ -52,56 +115,73 @@ namespace Transactions.Services
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
-        public async Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions)
+        public async Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report)
         {
             var queryString = string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(filter?.TransactionType))
+            {
+                queryString = $"{queryString}filter[transactionType]={filter?.TransactionType}&";
+            }
+
+            if (filter?.TransactionTypes?.Count > 0)
+            {
+                foreach (var item in filter.TransactionTypes)
+                {
+                    queryString = $"{queryString}filter[transactionTypes][]={item}&";
+                }
+            }
             if (filter?.IsCredit.HasValue ?? false)
             {
                 queryString = $"{queryString}filter[isCredit]={filter?.IsCredit.Value.ToString().ToLowerInvariant()}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.Reference))
+            if (!string.IsNullOrWhiteSpace(filter?.Reference))
             {
                 queryString = $"{queryString}filter[reference]={filter?.Reference}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.PaymentMethod))
+            if (!string.IsNullOrWhiteSpace(filter?.PaymentMethod))
             {
                 queryString = $"{queryString}filter[paymentMethod]={filter?.PaymentMethod}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.Remark))
+            if (!string.IsNullOrWhiteSpace(filter?.Remark))
             {
                 queryString = $"{queryString}filter[remark]={filter?.Remark}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.ProductId))
+            if (!string.IsNullOrWhiteSpace(filter?.ProductId))
             {
                 queryString = $"{queryString}filter[productId]={filter?.ProductId}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.ProductName))
+            if (!string.IsNullOrWhiteSpace(filter?.ProductName))
             {
                 queryString = $"{queryString}filter[productName]={filter?.ProductName}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.Sku))
+            if (!string.IsNullOrWhiteSpace(filter?.Sku))
             {
                 queryString = $"{queryString}filter[sku]={filter?.Sku}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.PayerId))
+            if (!string.IsNullOrWhiteSpace(filter?.PayerId))
             {
                 queryString = $"{queryString}filter[payerId]={filter?.PayerId}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.PayerName))
+            if (!string.IsNullOrWhiteSpace(filter?.PayerName))
             {
                 queryString = $"{queryString}filter[payerName]={filter?.PayerName}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.PayeeId))
+            if (!string.IsNullOrWhiteSpace(filter?.PayeeId))
             {
                 queryString = $"{queryString}filter[payeeId]={filter?.PayeeId}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.PayeeName))
+            if (!string.IsNullOrWhiteSpace(filter?.PayeeName))
             {
                 queryString = $"{queryString}filter[payeeName]={filter?.PayeeName}&";
             }
-            if(!string.IsNullOrWhiteSpace(filter?.OnBehalfOfId))
+            if (!string.IsNullOrWhiteSpace(filter?.OnBehalfOfId))
             {
                 queryString = $"{queryString}filter[onBehalfOfId]={filter?.OnBehalfOfId}&";
+            }
+            if (!string.IsNullOrWhiteSpace(filter?.BaseTransaction))
+            {
+                queryString = $"{queryString}filter[baseTransaction]={filter?.BaseTransaction}&";
             }
             queryString = $"{queryString}offset={queryOptions?.Offset}&";
             queryString = $"{queryString}limit={queryOptions?.Limit}&";
@@ -111,8 +191,19 @@ namespace Transactions.Services
             var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
             var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
             var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+
+            Uri uri = null;
+            if (report)
+            {
+                uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction-report?{queryString}");
+            }
+            else
+            {
+                uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction?{queryString}");
+            }
+
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction-report?{queryString}"),
+                uri,
                 null,
                 new
                 {
@@ -146,7 +237,7 @@ namespace Transactions.Services
         public async Task<TransactionResponse> InsertTransactions(TransactionRequest request)
         {
             var query = "insertvirtualvaluetransaction";
-            TransactionResponse response =  null;
+            TransactionResponse response = null;
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres").Value))
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
@@ -186,7 +277,7 @@ namespace Transactions.Services
 
         }
 
-        public async Task<IdentifierProfileBalance>  GetBalanceByIdentifierForCurrency(string identifier, string currency)
+        public async Task<IdentifierProfileBalance> GetBalanceByIdentifierForCurrency(string identifier, string currency)
         {
             var query = "getbalancebyidentifierforcurrency";
             IdentifierProfileBalance response = null;
@@ -197,7 +288,7 @@ namespace Transactions.Services
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value));
                     cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, currency);
                     cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Unknown, identifier);
-                    
+
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
@@ -211,25 +302,6 @@ namespace Transactions.Services
 
                     }
 
-  //                  currency enum_currencies,
-
-  //                "name" text, 
-		//		  "isActive" boolean, 
-		//denomination text,
-  //      "denominator" integer, 
-		//"denominationSeparator" text, 
-		//"virtualValueConversion" integer, 
-		//"defaultStepAmount" numeric, 
-		//"defaultStepVirtualValue" integer ,  
-		//"currentAmount" numeric, 
-		//"currentVirtualValue" numeric, 
-		//"isBlocked" boolean, 
-		//"minTransactionAmount" numeric, 
-		//"maxTransactionAmount" numeric, 
-		//"minTransactionVirtualValue" integer, 
-		//"maxTransactionVirtualValue" integer, 
-		//"stepAmount" numeric, 
-		//"stepVirtualValue" integer
                 }
 
             }
