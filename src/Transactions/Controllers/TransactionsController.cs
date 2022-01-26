@@ -109,7 +109,23 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("report")]
-        public async Task<IActionResult> GetTransactionReport([FromQuery] TransactionFilter? Filter = null,
+        public async Task<IActionResult> GetTransactionReport([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType,
+            [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes,
+            [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit,
+            [FromQuery(Name = "Filter[Reference]")] string? Reference,
+            [FromQuery(Name = "Filter[PaymentMethod]")] string? PaymentMethod,
+            [FromQuery(Name = "Filter[Remark]")] string? Remark,
+            [FromQuery(Name = "Filter[Description]")] string? Description,
+            [FromQuery(Name = "Filter[ProductId]")] string? ProductId,
+            [FromQuery(Name = "Filter[ProductName]")] string? ProductName,
+            [FromQuery(Name = "Filter[Sku]")] string? Sku,
+            [FromQuery(Name = "Filter[PayerId]")] string? PayerId,
+            [FromQuery(Name = "Filter[PayerName]")] string? PayerName,
+            [FromQuery(Name = "Filter[PayeeId]")] string? PayeeId,
+            [FromQuery(Name = "Filter[PayeeName]")] string? PayeeName,
+            [FromQuery(Name = "Filter[OnBehalfOfId]")] string? OnBehalfOfId,
+            [FromQuery(Name = "Filter[OnBehalfOfName]")] string? OnBehalfOfName,
+            [FromQuery(Name = "Filter[BaseTransaction]")] string? BaseTransaction,
             [FromQuery] QueryOptions? QueryOptions = null)
         {
             var defaultOrderBy = "createdAt_DESC";
@@ -121,7 +137,29 @@ namespace Transactions.AddControllers
             {
                 QueryOptions.OrderBy = defaultOrderBy;
             }
-            var transactionsRoot = await _transactionsService.GetTransactionReport(Filter, QueryOptions, true).ConfigureAwait(false);
+
+            var transactionFilter = new TransactionFilter
+            {
+                TransactionType = TransactionType,
+                TransactionTypes = TransactionTypes,
+                IsCredit = IsCredit,
+                Reference = Reference,
+                PaymentMethod = PaymentMethod,
+                Remark = Remark,
+                Description = Description,
+                ProductId = ProductId,
+                ProductName = ProductName,
+                Sku = Sku,
+                PayerId = PayerId,
+                PayerName = PayerName,
+                PayeeId = PayeeId,
+                PayeeName = PayeeName,
+                OnBehalfOfId = OnBehalfOfId,
+                OnBehalfOfName = OnBehalfOfName,
+                BaseTransaction = BaseTransaction
+            };
+
+            var transactionsRoot = await _transactionsService.GetTransactionReport(transactionFilter, QueryOptions, true).ConfigureAwait(false);
             var transactions = _mapper.Map<List<Transaction>>(transactionsRoot?.Rows);
             var pagedResult = new PagedResponse<Transaction>()
             {
