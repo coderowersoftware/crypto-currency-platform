@@ -1,7 +1,10 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Net;
 using Transactions.Controllers.Models;
 using Transactions.Controllers.Models.Common;
 using Transactions.Services;
@@ -15,15 +18,18 @@ namespace Transactions.AddControllers
     {
         private readonly ITransactionsService _transactionsService;
         private readonly IMapper _mapper;
+        private readonly ILogger _logger;
 
         public TransactionsController(ITransactionsService transactionsService,
-            IMapper mapper)
+            IMapper mapper, ILogger<TransactionsController> logger)
         {
             _transactionsService = transactionsService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet("transaction-type/autocomplete")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(AutoCompleteResponse))]
         public async Task<IActionResult> GetTransactionTypes()
         {
             var transactionTypes = await _transactionsService.GetTransactionTypes().ConfigureAwait(false);
@@ -32,6 +38,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("currency/autocomplete")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(AutoCompleteResponse))]
         public async Task<IActionResult> GetCurrencies()
         {
             var currencies = await _transactionsService.GetCurrencies().ConfigureAwait(false);
@@ -40,6 +47,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
         public async Task<IActionResult> GetTransactions([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType, 
             [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, 
             [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit, 
@@ -101,6 +109,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("id")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
         public async Task<IActionResult> GetTransactionById([FromQuery] string id)
         {
             var transaction = await _transactionsService.GetTransactionById(id).ConfigureAwait(false);
@@ -109,6 +118,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("report")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
         public async Task<IActionResult> GetTransactionReport([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType,
             [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes,
             [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit,
@@ -188,7 +198,12 @@ namespace Transactions.AddControllers
         [HttpPost("wallet")]
         public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequestData data)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             var transactionResponse = await _transactionsService.InsertTransactions(data.Data).ConfigureAwait(false);
+            sw.Stop();
+
+            _logger.Log(LogLevel.Information, $"time for wallet transactions is {sw.ElapsedMilliseconds}");
             return Ok(transactionResponse);
         }
 
