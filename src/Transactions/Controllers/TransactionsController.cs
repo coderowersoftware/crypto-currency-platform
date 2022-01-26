@@ -41,7 +41,7 @@ namespace Transactions.AddControllers
 
         [HttpGet("")]
         public async Task<IActionResult> GetTransactions([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType, 
-            [FromQuery(Name = "Filter[TransactionTypes]")] List<string>? TransactionTypes, 
+            [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, 
             [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit, 
             [FromQuery(Name = "Filter[Reference]")] string? Reference, 
             [FromQuery(Name = "Filter[PaymentMethod]")] string? PaymentMethod,
