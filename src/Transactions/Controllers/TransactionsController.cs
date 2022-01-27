@@ -48,10 +48,10 @@ namespace Transactions.AddControllers
 
         [HttpGet("")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
-        public async Task<IActionResult> GetTransactions([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType, 
-            [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, 
-            [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit, 
-            [FromQuery(Name = "Filter[Reference]")] string? Reference, 
+        public async Task<IActionResult> GetTransactions([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType,
+            [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes,
+            [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit,
+            [FromQuery(Name = "Filter[Reference]")] string? Reference,
             [FromQuery(Name = "Filter[PaymentMethod]")] string? PaymentMethod,
             [FromQuery(Name = "Filter[Remark]")] string? Remark,
             [FromQuery(Name = "Filter[Description]")] string? Description,
@@ -113,7 +113,7 @@ namespace Transactions.AddControllers
         public async Task<IActionResult> GetTransactionById([FromQuery] string id)
         {
             var transaction = await _transactionsService.GetTransactionById(id).ConfigureAwait(false);
-           
+
             return Ok(transaction);
         }
 
@@ -181,12 +181,25 @@ namespace Transactions.AddControllers
             return Ok(pagedResult);
         }
 
-        // [HttpGet("current-balance")]
-        // public async Task<IActionResult> GetCurrentBalance()
-        // {
-        //     var currentBalance = await _transactionsService.GetCurrentBalance().ConfigureAwait(false);
-        //     return Ok(currentBalance);
-        // }
+        [HttpGet("transactiontypebalances")]
+        public async Task<IActionResult> GetStatistics([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var obj = new
+            {
+                TransactionTypeBalances = new
+                {
+                    WALLET = new { COINS = 100, INR = 5000 , VIRTUAL = 50000},
+                    FARM = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
+                    MINED = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
+                    MINT = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
+                    UNLOCKED = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
+                    LOCKED = new { COINS = 100, INR = 5000, VIRTUAL = 50000 }
+
+                }
+            };
+            //var currentBalance = await _transactionsService.GetCurrentBalance().ConfigureAwait(false);
+            return Ok(obj);
+        }
 
         [HttpPost("")]
         public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
