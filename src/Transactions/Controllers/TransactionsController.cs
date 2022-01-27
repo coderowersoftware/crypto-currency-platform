@@ -188,12 +188,12 @@ namespace Transactions.AddControllers
             {
                 TransactionTypeBalances = new
                 {
-                    WALLET = new { COINS = 100, INR = 5000 , VIRTUAL = 50000},
-                    FARM = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
-                    MINED = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
-                    MINT = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
-                    UNLOCKED = new { COINS = 100, INR = 5000, VIRTUAL = 50000 },
-                    LOCKED = new { COINS = 100, INR = 5000, VIRTUAL = 50000 }
+                    WALLET = new { COINS = 100, INR = 5000 , VIRTUALVALUE = 50000},
+                    FARM = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
+                    MINED = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
+                    MINT = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
+                    UNLOCKED = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
+                    LOCKED = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 }
 
                 }
             };
