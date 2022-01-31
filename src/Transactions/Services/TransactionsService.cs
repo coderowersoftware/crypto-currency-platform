@@ -21,6 +21,7 @@ namespace Transactions.Services
         Task<List<AutoCompleteResponse>> GetTransactionTypes();
         Task<List<AutoCompleteResponse>> GetCurrencies();
         Task<Transaction> GetTransactionById(string id);
+        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes);
     }
 
     public class TransactionsService : ITransactionsService
@@ -80,7 +81,7 @@ namespace Transactions.Services
             var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
 
             Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction/{id}");
-           
+
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 uri,
@@ -94,6 +95,40 @@ namespace Transactions.Services
 
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
+
+        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes)
+        {
+            var queryString = string.Empty;
+
+            if (TransactionTypes?.Count > 0)
+            {
+                foreach (var item in TransactionTypes)
+                {
+                    queryString = $"{queryString}filter[transactionTypes][]={item}&";
+                }
+            }
+
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+
+            Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-balances-for-transaction-types?{queryString}");
+
+
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                uri,
+                null,
+                new
+                {
+                    application_id = tenantId,
+                    client_id = clientId,
+                    client_secret = clientSecret
+                }).ConfigureAwait(false);
+
+            return JsonConvert.DeserializeObject<List<TransactionTypeBalance>>(responseMessage);
+        }
+
 
         public async Task<Transaction> AddTransaction(TransactionRequest request)
         {

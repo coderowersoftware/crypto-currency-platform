@@ -3,9 +3,9 @@ using System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
+using Swashbuckle.AspNetCore.Annotations;
 using Transactions.Controllers.Models;
 using Transactions.Controllers.Models.Common;
-using Transactions.Controllers.Models.Mining;
 using Transactions.Services;
 
 namespace Transactions.Controllers
@@ -44,6 +44,7 @@ namespace Transactions.Controllers
         }
 
         [HttpGet("")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<License>))]
         public async Task<IActionResult> GetLicensesAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId, 
             [FromQuery] QueryOptions? QueryOptions = null)
         {
