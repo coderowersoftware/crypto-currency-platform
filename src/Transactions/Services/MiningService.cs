@@ -100,9 +100,7 @@ namespace Transactions.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
-                    // TODO: Security flaw. we should have an additional input parameter here (taken from Token not in request)
-                    // using this additional parameter, verify if license belong to the user who is activating it.
-                    // Use customer id, preferably. Validate tenant as well.
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid("3d0b7184-f155-4eb4-9f29-0005c99dcd48")); // TODO: to be taken from token later
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
