@@ -68,6 +68,7 @@ namespace Transactions.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
+                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("b746b411-c799-4d5d-8003-f236e236a1fa")); // TODO: to be taken from token later
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
