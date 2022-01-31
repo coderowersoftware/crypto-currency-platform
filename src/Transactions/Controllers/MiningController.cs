@@ -41,22 +41,5 @@ namespace Transactions.Controllers
             
             return StatusCode((int) HttpStatusCode.Created);
         }
-
-        [HttpGet("get-report")]
-        public async Task<IActionResult> GetMiningReportAsync([FromQuery] Guid? LicenseId, 
-            [FromQuery] bool IsCurrent = false,
-            [FromQuery] QueryOptions? QueryOptions = null)
-        {
-            if(QueryOptions == null) QueryOptions = new QueryOptions();
-            var results = await _miningService.GetMininReportAsync(LicenseId, IsCurrent).ConfigureAwait(false);
-            var pagedResult = new PagedResponse<Mining>()
-            {
-                Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
-                Count = results?.Count() ?? 0,
-                Offset = QueryOptions.Offset,
-                Limit = QueryOptions.Limit
-            };
-            return Ok(pagedResult);            
-        }
     }
 }

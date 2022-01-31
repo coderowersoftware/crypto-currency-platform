@@ -2,14 +2,14 @@ using System.Data;
 using Npgsql;
 using NpgsqlTypes;
 using Transactions.Controllers.Models.Enums;
-using Transactions.Controllers.Models.Mining;
+using License = Transactions.Controllers.Models.License;
 
 namespace Transactions.Services
 {
     public interface IMiningService
     {
         Task MineAsync(Guid licenseId);
-        Task<IEnumerable<Mining>?> GetMininReportAsync(Guid? licenseId, bool isCurrent);
+        Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId);
 
         Task ActivateLicenseAsync(Guid licenseId);
     }
@@ -23,16 +23,15 @@ namespace Transactions.Services
             _configuration = configuration;
         }
 
-        public async Task<IEnumerable<Mining>?> GetMininReportAsync(Guid? licenseId, bool isCurrent)
+        public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId)
         {
-            var query = "getminingreport";
-            List<Mining> results = new List<Mining>();
+            var query = "getlicenses";
+            List<License> results = new List<License>();
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid("b746b411-c799-4d5d-8003-f236e236a1fa")); // TODO: to be picked from auth token
-                    cmd.Parameters.AddWithValue("is_current", NpgsqlDbType.Boolean, isCurrent);
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid("3d0b7184-f155-4eb4-9f29-0005c99dcd48")); // TODO: to be picked from auth token
                     if(licenseId.HasValue)
                     {
                         cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);
@@ -43,17 +42,32 @@ namespace Transactions.Services
 
                     while(reader.Read())
                     {
-                        Mining result = new Mining();
-                        result.UserId = new Guid(Convert.ToString(reader["userid"]));
+                        License result = new License();
+                        result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
-                        result.StartDate = Convert.ToDateTime(reader["startDate"]);
-                        if (reader["endDate"] == DBNull.Value)
+                        result.Title = Convert.ToString(reader["title"]);
+                        var activatedOn = reader["activatedon"];
+                        if(activatedOn != DBNull.Value)
                         {
-                            result.MiningStatus = MiningStatus.InProgress;
+                            result.ActivationDate = Convert.ToDateTime(activatedOn);
                         }
-                        else
+                        var expiresOn = reader["expireson"];
+                        if(expiresOn != DBNull.Value)
                         {
-                            result.MiningStatus = MiningStatus.Completed;
+                            result.ExpirationDate = Convert.ToDateTime(expiresOn);
+                        }
+
+                        if(result.ActivationDate.HasValue
+                            && result.ExpirationDate >= DateTime.Now)
+                        {
+                            if (reader["minedat"] == DBNull.Value)
+                            {
+                                result.MiningStatus = MiningStatus.InProgress;
+                            }
+                            else
+                            {
+                                result.MiningStatus = MiningStatus.Completed;
+                            }
                         }
                         results.Add(result);
                     }
