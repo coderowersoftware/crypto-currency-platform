@@ -10,6 +10,8 @@ namespace Transactions.Services
     {
         Task MineAsync(Guid licenseId);
         Task<IEnumerable<Mining>?> GetMininReportAsync(Guid? licenseId, bool isCurrent);
+
+        Task ActivateLicenseAsync(Guid licenseId);
     }
 
     public class MiningService : IMiningService
@@ -69,6 +71,24 @@ namespace Transactions.Services
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
                     cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("b746b411-c799-4d5d-8003-f236e236a1fa")); // TODO: to be taken from token later
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        public async Task ActivateLicenseAsync(Guid licenseId)
+        {
+            var query = "activatelicense";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
+                    // TODO: Security flaw. we should have an additional input parameter here (taken from Token not in request)
+                    // using this additional parameter, verify if license belong to the user who is activating it.
+                    // Use customer id, preferably. Validate tenant as well.
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

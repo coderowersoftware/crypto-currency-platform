@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Transactions.Controllers.Models.Common;
