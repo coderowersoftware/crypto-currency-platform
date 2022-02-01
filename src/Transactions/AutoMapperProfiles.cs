@@ -13,11 +13,6 @@ namespace Transactions
 
             CreateMap<DomainTransactionType, TransactionType>();
             CreateMap<DomainTransaction, Transaction>();
-                //.AfterMap((src, dest) => 
-                //{
-                //    dest.Currency = Enum.Parse<Currency>(src.CurrencyISO ?? string.Empty);
-                //    dest.Amount = src.Amounts == null ? (decimal?)null : src.Amounts.COINS;
-                //});
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("transaction-type/autocomplete")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(AutoCompleteResponse))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<AutoCompleteResponse>))]
         public async Task<IActionResult> GetTransactionTypes()
         {
             var transactionTypes = await _transactionsService.GetTransactionTypes().ConfigureAwait(false);
@@ -38,7 +38,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("currency/autocomplete")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(AutoCompleteResponse))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<AutoCompleteResponse>))]
         public async Task<IActionResult> GetCurrencies()
         {
             var currencies = await _transactionsService.GetCurrencies().ConfigureAwait(false);
@@ -47,7 +47,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<Transaction>))]
         public async Task<IActionResult> GetTransactions([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType,
             [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes,
             [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit,
@@ -118,7 +118,7 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("report")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<Transaction>))]
         public async Task<IActionResult> GetTransactionReport([FromQuery(Name = "Filter[TransactionType]")] string? TransactionType,
             [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes,
             [FromQuery(Name = "Filter[IsCredit]")] bool? IsCredit,
@@ -182,23 +182,11 @@ namespace Transactions.AddControllers
         }
 
         [HttpGet("transactiontypebalances")]
-        public async Task<IActionResult> GetStatistics([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetBalancesByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
         {
-            var obj = new
-            {
-                TransactionTypeBalances = new
-                {
-                    WALLET = new { COINS = 100, INR = 5000 , VIRTUALVALUE = 50000},
-                    FARM = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
-                    MINED = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
-                    MINT = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
-                    UNLOCKED = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 },
-                    LOCKED = new { COINS = 100, INR = 5000, VIRTUALVALUE = 50000 }
-
-                }
-            };
-            //var currentBalance = await _transactionsService.GetCurrentBalance().ConfigureAwait(false);
-            return Ok(obj);
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes).ConfigureAwait(false);
+            return Ok(balances);
         }
 
         [HttpPost("")]
