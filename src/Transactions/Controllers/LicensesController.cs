@@ -59,5 +59,21 @@ namespace Transactions.Controllers
             };
             return Ok(pagedResult);            
         }
+
+        [HttpGet("logs")]
+        public async Task<IActionResult> GetLicensesLogsAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId, 
+            [FromQuery] QueryOptions? QueryOptions = null)
+        {
+            if(QueryOptions == null) QueryOptions = new QueryOptions();
+            var results = await _miningService.GetLicensesLogsAsync(LicenseId).ConfigureAwait(false);
+            var pagedResult = new PagedResponse<LicenseLog>()
+            {
+                Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
+                Count = results?.Count() ?? 0,
+                Offset = QueryOptions.Offset,
+                Limit = QueryOptions.Limit
+            };
+            return Ok(pagedResult);            
+        }
     }
 }

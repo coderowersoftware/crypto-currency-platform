@@ -1,6 +1,7 @@
 using System.Data;
 using Npgsql;
 using NpgsqlTypes;
+using Transactions.Controllers.Models;
 using Transactions.Controllers.Models.Enums;
 using License = Transactions.Controllers.Models.License;
 
@@ -10,6 +11,8 @@ namespace Transactions.Services
     {
         Task MineAsync(Guid licenseId);
         Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId);
+
+        Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId);
 
         Task ActivateLicenseAsync(Guid licenseId);
     }
@@ -76,9 +79,49 @@ namespace Transactions.Services
             return results;
         }
 
+        public async Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId)
+        {
+            var query = "getlicenseslogs";
+            List<LicenseLog> results = new List<LicenseLog>();
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid("3d0b7184-f155-4eb4-9f29-0005c99dcd48")); // TODO: to be picked from auth token
+                    if(licenseId.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);
+                    }
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while(reader.Read())
+                    {
+                        LicenseLog result = new LicenseLog();
+                        result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
+                        result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
+                        result.Title = Convert.ToString(reader["title"]);
+                        result.MiningStartedAt = Convert.ToDateTime(reader["createdat"]);
+                        if (reader["minedat"] == DBNull.Value)
+                        {
+                            result.MiningStatus = MiningStatus.InProgress;
+                        }
+                        else
+                        {
+                            result.MiningStatus = MiningStatus.Completed;
+                        }
+                        result.MinedBy = Convert.ToString(reader["createdbyname"]);
+                        results.Add(result);
+                    }
+                }
+            }
+            return results;
+        }
+
         public async Task MineAsync(Guid licenseId)
         {
-            var query = "minelicense";
+            var query = "startmining";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
