@@ -121,7 +121,7 @@ namespace Transactions.Services
 
         public async Task MineAsync(Guid licenseId)
         {
-            var query = "minelicense";
+            var query = "startmining";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
