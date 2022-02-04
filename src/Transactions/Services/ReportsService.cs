@@ -40,6 +40,7 @@ namespace CodeRower.CCP.Services
                         result.DisplayName = Convert.ToString(reader["full_name"]);
                         result.Image = Convert.ToString(reader["image_url"]);
                         result.LicensesCount = Convert.ToInt32(reader["licenses_count"]);
+                        result.Variance = 39.69m;
                         topMiners.Add(result);
                     }
                 }

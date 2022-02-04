@@ -6,5 +6,6 @@ namespace CodeRower.CCP.Controllers.Models.Reports
         public string? Name { get; set; }
         public string? DisplayName { get; set; }
         public long LicensesCount { get; set; }
+        public decimal Variance { get; set; }
     }
 }
