@@ -7,4 +7,10 @@ namespace Transactions.Controllers.Models.Mining
         [Required]
         public Guid? LicenseId { get; set; }
     }
+
+    public class MineRequestData
+    {
+        [Required]
+        public MineRequest Data{ get; set; }
+    }
 }
