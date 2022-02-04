@@ -13,7 +13,7 @@ namespace Transactions.Services
         Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId);
         Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId);
         Task ActivateLicenseAsync(Guid licenseId, string userId);
-        Task RegisterLicense(LicenseRequest data, string userId);
+        Task RegisterLicense(LicenseRequest data,string customerId, string userId);
         Task<string> AddLicense(LicenseBuyRequest data, string userId);
         Task EndMiningAsync();
     }
@@ -35,8 +35,9 @@ namespace Transactions.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, data.TransactionId);
-                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(userId));
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -52,7 +53,7 @@ namespace Transactions.Services
 
         }
 
-        public async Task RegisterLicense(LicenseRequest data, string userId)
+        public async Task RegisterLicense(LicenseRequest data, string customerId, string userId)
         {
             var query = "registerlicense";
 
@@ -61,7 +62,9 @@ namespace Transactions.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, data.LicenseId);
-                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(userId));
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

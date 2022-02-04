@@ -29,7 +29,7 @@ namespace Transactions.Controllers
         public async Task<IActionResult> BuyLicense([FromRoute, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var id =  await _miningService.AddLicense(Data.Data, userId).ConfigureAwait(false);
+            var id = await _miningService.AddLicense(Data.Data, userId).ConfigureAwait(false);
 
             return Ok(new { licenseId = id });
         }
@@ -38,7 +38,8 @@ namespace Transactions.Controllers
         public async Task<IActionResult> RegisterLicense([FromRoute, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            await _miningService.RegisterLicense(Data.Data, userId).ConfigureAwait(false);
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            await _miningService.RegisterLicense(Data.Data, customerId, userId).ConfigureAwait(false);
 
             return StatusCode((int)HttpStatusCode.Created);
         }
