@@ -38,9 +38,9 @@ namespace Transactions.Services
         public async Task<List<AutoCompleteResponse>> GetTransactionTypes()
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/transaction-type/get-autocomplete"),
                 null,
@@ -57,9 +57,9 @@ namespace Transactions.Services
         public async Task<List<AutoCompleteResponse>> GetCurrencies()
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/currency/get-autocomplete"),
                 null,
@@ -76,9 +76,9 @@ namespace Transactions.Services
         public async Task<Transaction> GetTransactionById(string id)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
 
             Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction/{id}");
 
@@ -109,9 +109,9 @@ namespace Transactions.Services
             }
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
 
             Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-balances-for-transaction-types?{queryString}");
 
@@ -133,9 +133,9 @@ namespace Transactions.Services
         public async Task<Transaction> AddTransaction(TransactionRequest request)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/transaction"),
                 null,
@@ -223,9 +223,9 @@ namespace Transactions.Services
             queryString = $"{queryString}orderBy={queryOptions?.OrderBy}&";
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
 
             Uri uri = null;
             if (report)
@@ -253,9 +253,9 @@ namespace Transactions.Services
         public async Task<dynamic> GetCurrentBalance()
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("CCC_WALLET_TENANT").Value;
-            var clientId = _configuration.GetSection("CCC_WALLET_CLIENT_ID").Value;
-            var clientSecret = _configuration.GetSection("CCC_WALLET_SECRET").Value;
+            var tenantId = _configuration.GetSection("CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("CCCWalletSecret").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction-report"),
                 null,
@@ -320,7 +320,7 @@ namespace Transactions.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCC_WALLET_TENANT").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCCWalletTenant").Value));
                     cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, currency);
                     cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Unknown, identifier);
 
