@@ -21,7 +21,7 @@ namespace Transactions.Services
         Task<List<AutoCompleteResponse>> GetTransactionTypes();
         Task<List<AutoCompleteResponse>> GetCurrencies();
         Task<Transaction> GetTransactionById(string id);
-        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes);
+        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string userId = null);
     }
 
     public class TransactionsService : ITransactionsService
@@ -96,7 +96,7 @@ namespace Transactions.Services
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
-        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes)
+        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string userId = null)
         {
             var queryString = string.Empty;
 
@@ -106,6 +106,11 @@ namespace Transactions.Services
                 {
                     queryString = $"{queryString}filter[transactionTypes][]={item}&";
                 }
+            }
+
+            if(!string.IsNullOrWhiteSpace(userId))
+            {
+                queryString = $"{queryString}filter[userId]={userId}";
             }
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;

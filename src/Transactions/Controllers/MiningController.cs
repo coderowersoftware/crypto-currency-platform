@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Transactions.Controllers.Models.Common;
@@ -24,12 +25,14 @@ namespace Transactions.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("")]
+        [HttpPost("begin")]
+        [Authorize]
         public async Task<IActionResult> MineAsync([FromBody, Required]MineRequest MineRequest)
         {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             try
             {
-                await _miningService.MineAsync(MineRequest.LicenseId.Value).ConfigureAwait(false);
+                await _miningService.MineAsync(MineRequest.LicenseId.Value, userId).ConfigureAwait(false);
             }
             catch(PostgresException ex)
             {
@@ -40,6 +43,15 @@ namespace Transactions.Controllers
             }
             
             return StatusCode((int) HttpStatusCode.Created);
+        }
+
+        [HttpPatch("end")]
+        public async Task<IActionResult> EndMiningAsync()
+        {
+            await _miningService.EndMiningAsync().ConfigureAwait(false);
+            
+            
+            return StatusCode((int) HttpStatusCode.NoContent);
         }
     }
 }

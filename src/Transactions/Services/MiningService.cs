@@ -9,12 +9,13 @@ namespace Transactions.Services
 {
     public interface IMiningService
     {
-        Task MineAsync(Guid licenseId);
+        Task MineAsync(Guid licenseId, string userId);
         Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId);
 
         Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId);
 
         Task ActivateLicenseAsync(Guid licenseId);
+        Task EndMiningAsync();
     }
 
     public class MiningService : IMiningService
@@ -122,7 +123,7 @@ namespace Transactions.Services
             return results;
         }
 
-        public async Task MineAsync(Guid licenseId)
+        public async Task MineAsync(Guid licenseId, string userId)
         {
             var query = "startmining";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -130,7 +131,8 @@ namespace Transactions.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
-                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("b746b411-c799-4d5d-8003-f236e236a1fa")); // TODO: to be taken from token later
+                    cmd.Parameters.AddWithValue("mined_by_id", NpgsqlDbType.Uuid, new Guid(userId));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -147,6 +149,21 @@ namespace Transactions.Services
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid("3d0b7184-f155-4eb4-9f29-0005c99dcd48")); // TODO: to be taken from token later
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        public async Task EndMiningAsync()
+        {
+            var query = "finishmining";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

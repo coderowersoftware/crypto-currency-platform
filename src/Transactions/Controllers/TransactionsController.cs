@@ -9,6 +9,7 @@ using Transactions.Controllers.Models;
 using Transactions.Controllers.Models.Common;
 using Transactions.Services;
 using System.Security.Claims;
+using CodeRower.CCP.Controllers.Models.Common;
 
 namespace Transactions.AddControllers
 {
@@ -188,6 +189,20 @@ namespace Transactions.AddControllers
         {
             var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes).ConfigureAwait(false);
             return Ok(balances);
+        }
+
+        [HttpGet("transactiontypebalances/me")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        [Authorize]
+        public async Task<IActionResult> GetMyBalanceByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, userId).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
         }
 
         [HttpPost("")]
