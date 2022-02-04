@@ -8,11 +8,12 @@ using System.Net;
 using Transactions.Controllers.Models;
 using Transactions.Controllers.Models.Common;
 using Transactions.Services;
+using System.Security.Claims;
 
 namespace Transactions.AddControllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("api/transactions")]
     public class TransactionsController : Controller
     {

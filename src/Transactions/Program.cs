@@ -10,6 +10,8 @@ using Transactions.Facade;
 using Transactions.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.json",optional:false,reloadOnChange:true);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
 
 builder.Services.AddControllers().AddNewtonsoftJson(options => 
     {
@@ -39,7 +41,7 @@ builder.Services.AddSwaggerGen(options => {
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
-        var jwtSecret = builder.Configuration.GetSection("AppSettings:AUTH_JWT_SECRET").Value;
+        var jwtSecret = builder.Configuration.GetSection("AppSettings:AuthJwtSecret").Value;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             
