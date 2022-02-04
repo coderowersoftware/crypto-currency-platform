@@ -8,7 +8,7 @@ namespace Transactions.Controllers.Models
 
     public class LicenseBuyRequest
     {
-        public Guid TransactionId { get; set; }
+        public string TransactionId { get; set; }
     }
 
 }
