@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Swashbuckle.AspNetCore.Annotations;
@@ -26,7 +27,8 @@ namespace Transactions.Controllers
         }
 
         [HttpPost("buy")]
-        public async Task<IActionResult> BuyLicense([FromRoute, Required] LicenseBuyRequestData Data)
+        [Authorize]
+        public async Task<IActionResult> BuyLicense([FromBody, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var id = await _miningService.AddLicense(Data.Data, userId).ConfigureAwait(false);
@@ -35,7 +37,8 @@ namespace Transactions.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterLicense([FromRoute, Required] LicenseRequestData Data)
+        [Authorize]
+        public async Task<IActionResult> RegisterLicense([FromBody, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
