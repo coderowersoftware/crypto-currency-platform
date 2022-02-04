@@ -1,16 +1,18 @@
+using CodeRower.CCP.Controllers.Models.Common;
+
 namespace Transactions.Controllers.Models.Common
 {
-    public class PagedResponse<T>
+    public class PagedResponse<T> : ListResponse<T>
     {
-        public int Offset { get; set; }
-        public int Limit { get; set; }
+        public int? Offset { get; set; }
+        public int? Limit { get; set; }
         //public Uri FirstPage { get; set; }
         //public Uri LastPage { get; set; }
         //public int TotalPages { get; set; }
-        public int Count { get; set; }
+        public int? Count { get; set; }
         //public Uri NextPage { get; set; }
         //public Uri PreviousPage { get; set; }
-        public IEnumerable<T> Rows { get; set; }
+        
         public PagedResponse()
         {
             

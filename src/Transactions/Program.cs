@@ -1,4 +1,5 @@
 using System.Text;
+using CodeRower.CCP.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -55,6 +56,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddSingleton<IRestApiFacade, RestApiFacade>();
 builder.Services.AddSingleton<ITransactionsService, TransactionsService>();
 builder.Services.AddSingleton<IMiningService,  MiningService>();
+builder.Services.AddSingleton<IReportsService,  ReportsService>();
 
 var app = builder.Build();
 
