@@ -2,8 +2,8 @@ namespace Transactions.Controllers.Models.Enums
 {
     public enum MiningStatus
     {
-        InProgress,
-        Completed,
-        Expired
+        in_progress,
+        completed,
+        expired
     }
 }
