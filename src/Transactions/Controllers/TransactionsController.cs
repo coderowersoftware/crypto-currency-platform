@@ -190,6 +190,16 @@ namespace Transactions.AddControllers
             return Ok(balances);
         }
 
+        [HttpGet("transactiontypebalances/me")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        [Authorize]
+        public async Task<IActionResult> GetMyBalanceByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, userId).ConfigureAwait(false);
+            return Ok(balances);
+        }
+
         [HttpPost("")]
         public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
         {
