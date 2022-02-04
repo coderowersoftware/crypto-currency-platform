@@ -60,10 +60,13 @@ namespace Transactions.Services
                             result.ExpirationDate = Convert.ToDateTime(expiresOn);
                         }
 
-                        if(result.ActivationDate.HasValue
-                            && result.ExpirationDate >= DateTime.Now)
+                        if(result.ActivationDate.HasValue)
                         {
-                            if (reader["minedat"] == DBNull.Value)
+                            if( result.ExpirationDate < DateTime.Now)
+                            {
+                                result.MiningStatus = MiningStatus.Expired;
+                            }
+                            else if (reader["minedat"] == DBNull.Value)
                             {
                                 result.MiningStatus = MiningStatus.InProgress;
                             }
