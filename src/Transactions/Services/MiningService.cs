@@ -10,8 +10,8 @@ namespace Transactions.Services
     public interface IMiningService
     {
         Task MineAsync(Guid licenseId, string userId);
-        Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId);
-        Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId);
+        Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId);
+        Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId, string customerId);
         Task ActivateLicenseAsync(Guid licenseId, string userId);
         Task RegisterLicense(LicenseRequest data,string customerId, string userId);
         Task<string> AddLicense(LicenseBuyRequest data, string userId);
@@ -72,7 +72,7 @@ namespace Transactions.Services
             }
         }
 
-        public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId)
+        public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId)
         {
             var query = "getlicenses";
             List<License> results = new List<License>();
@@ -80,7 +80,7 @@ namespace Transactions.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid("3d0b7184-f155-4eb4-9f29-0005c99dcd48")); // TODO: to be picked from auth token
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
                     if (licenseId.HasValue)
                     {
                         cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);
@@ -128,7 +128,7 @@ namespace Transactions.Services
             return results;
         }
 
-        public async Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId)
+        public async Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId, string customerId)
         {
             var query = "getlicenseslogs";
             List<LicenseLog> results = new List<LicenseLog>();
@@ -136,7 +136,7 @@ namespace Transactions.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid("3d0b7184-f155-4eb4-9f29-0005c99dcd48")); // TODO: to be picked from auth token
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
                     if (licenseId.HasValue)
                     {
                         cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);

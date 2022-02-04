@@ -73,7 +73,9 @@ namespace Transactions.Controllers
             [FromQuery] QueryOptions? QueryOptions = null)
         {
             if (QueryOptions == null) QueryOptions = new QueryOptions();
-            var results = await _miningService.GetLicensesAsync(LicenseId).ConfigureAwait(false);
+
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var results = await _miningService.GetLicensesAsync(LicenseId, customerId).ConfigureAwait(false);
             var pagedResult = new PagedResponse<License>()
             {
                 Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
@@ -89,7 +91,10 @@ namespace Transactions.Controllers
             [FromQuery] QueryOptions? QueryOptions = null)
         {
             if (QueryOptions == null) QueryOptions = new QueryOptions();
-            var results = await _miningService.GetLicensesLogsAsync(LicenseId).ConfigureAwait(false);
+
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
+            var results = await _miningService.GetLicensesLogsAsync(LicenseId, customerId).ConfigureAwait(false);
             var pagedResult = new PagedResponse<LicenseLog>()
             {
                 Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
