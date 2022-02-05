@@ -67,7 +67,7 @@ namespace CodeRower.CCP.Services
                 //     }));
             }
             //await Task.WhenAll(transactionTypeBalances).ConfigureAwait(false);
-            return topMiners;
+            return topMiners.DistinctBy(tm => tm.UserId);
         }
     }
 }
