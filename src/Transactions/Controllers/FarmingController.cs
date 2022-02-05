@@ -10,19 +10,19 @@ using Transactions.Controllers.Models;
 namespace CodeRower.CCP.Controllers
 {
     [ApiController]
-    [Route("api/farming")]
-    public class FarmingController : Controller
+    [Route("api/scheduler")]
+    public class SchedulerController : Controller
     {
         private readonly ITransactionsService _transactionsService;
 
-        public FarmingController(ITransactionsService transactionsService)
+        public SchedulerController(ITransactionsService transactionsService)
         {
             _transactionsService = transactionsService;
         }
 
-        [HttpGet("unlock")]
+        [HttpGet("settle-farmed-coins")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> UnlockAsync()
+        public async Task<IActionResult> SettleFarmedCoinsAsync()
         {
             // get current FARM balance
             var farmedBalances = await _transactionsService
