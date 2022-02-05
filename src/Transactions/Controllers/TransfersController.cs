@@ -122,5 +122,58 @@ namespace CodeRower.CCP.Controllers
 
             return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
         }
+
+        [HttpPost("farm")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
+        public async Task<IActionResult> TransferToFarmAsync([FromBody, Required] MintRequest MintRequest)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
+
+            if(MintRequest.AccountPin != userInfo.AccountPin)
+            {
+                ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
+                return BadRequest(ModelState);
+            }
+
+            List<Transaction> transactions = new List<Transaction>();
+
+            // Debit locked
+            var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+            {
+                Amount = MintRequest.Amount,
+                IsCredit = false,
+                Reference = $"Transfer to payee {customerId}",
+                PayerId = customerId,
+                PayeeId = customerId,
+                TransactionType = "LOCKED",
+                Currency = Currency.COINS
+            }).ConfigureAwait(false);
+
+            if(debitTran?.Id.HasValue ?? false)
+            {
+                transactions.Add(debitTran);
+
+                // Credit to mint
+                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                {
+                    Amount = MintRequest.Amount,
+                    IsCredit = true,
+                    Reference = debitTran.Id.Value.ToString(),
+                    PayerId = customerId,
+                    PayeeId = customerId,
+                    TransactionType = "FARM",
+                    Currency = Currency.COINS
+                }).ConfigureAwait(false);
+
+                if(creditTran?.Id.HasValue ?? false)
+                {
+                    transactions.Add(creditTran);
+                }
+            }
+
+            return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
+        }
     }
 }
