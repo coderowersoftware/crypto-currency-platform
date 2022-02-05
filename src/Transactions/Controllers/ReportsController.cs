@@ -38,7 +38,7 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> GetLicensesLogsAsync()
         {
             var result = await _reportsService.GetLicensesInfoAsync().ConfigureAwait(false);
-            return Ok(result);
+            return result == null ? NoContent() : Ok(result);
         }
     }
 }
