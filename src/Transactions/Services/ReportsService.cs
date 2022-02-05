@@ -9,7 +9,7 @@ namespace CodeRower.CCP.Services
     public interface IReportsService
     {
         Task<IEnumerable<Miner>> GetTopMiners();
-        Task<IEnumerable<LicenseLog>> GetLicensesLogsAsync(Guid? licenseId, string? customerId);
+        Task<Licenses?> GetLicensesInfoAsync();
     }
 
     public class ReportsService : IReportsService
@@ -71,46 +71,31 @@ namespace CodeRower.CCP.Services
             return topMiners.DistinctBy(tm => tm.UserId);
         }
 
-        public async Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId, string customerId)
+        public async Task<Licenses?> GetLicensesInfoAsync()
         {
-            // var query = "getlicenseslogs";
-            // List<LicenseLog> results = new List<LicenseLog>();
-            // using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
-            // {
-            //     using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-            //     {
-            //         cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
-            //         if (licenseId.HasValue)
-            //         {
-            //             cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);
-            //         }
+            var query = "get_licenses_info";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                Licenses? result = null;
 
-            //         if (conn.State != ConnectionState.Open) conn.Open();
-            //         var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
 
-            //         while (reader.Read())
-            //         {
-            //             LicenseLog result = new LicenseLog();
-            //             result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
-            //             result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
-            //             result.Title = Convert.ToString(reader["title"]);
-            //             result.MiningStartedAt = Convert.ToDateTime(reader["createdat"]);
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
-            //             if (reader["minedat"] == DBNull.Value)
-            //             {
-            //                 result.MiningStatus = MiningStatus.in_progress;
-            //             }
-            //             else
-            //             {
-            //                 result.MiningStatus = MiningStatus.completed;
-            //             }
-            //             result.MinedBy = Convert.ToString(reader["createdbyname"]);
-            //             results.Add(result);
-            //         }
-            //     }
-            // }
-            // return results;
-            return null;
+                    while (reader.Read())
+                    {
+                        result = new Licenses();
+                        result.TotalLicenses = Convert.ToInt32(reader["total_licenses"]);
+                        result.UnutilizedLicenses = Convert.ToInt32(reader["unused_licenses"]);
+                        result.LicensesUsed = Convert.ToInt32(reader["used_licenses"]);
+                        result.LicensesRemaining = Convert.ToInt32(reader["remaining_licenses"]);
+                    }
+                }
+                return result;
+            }
         }
     }
 }
