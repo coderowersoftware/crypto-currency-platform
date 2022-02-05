@@ -1,4 +1,5 @@
 using System.Runtime.Serialization;
+using CodeRower.CCP.Controllers.Models;
 
 namespace Transactions.Controllers.Models
 {

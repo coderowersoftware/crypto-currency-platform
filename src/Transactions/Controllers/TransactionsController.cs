@@ -6,10 +6,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Net;
 using Transactions.Controllers.Models;
-using Transactions.Services;
 using CodeRower.CCP.Controllers.Models.Common;
+using CodeRower.CCP.Services;
+using CodeRower.CCP.Controllers.Models;
 
-namespace Transactions.AddControllers
+namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Authorize]

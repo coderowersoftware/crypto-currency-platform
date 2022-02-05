@@ -2,9 +2,9 @@ using Newtonsoft.Json;
 using System.Text;
 using System.Runtime.Serialization;
 using System.ComponentModel.DataAnnotations;
-using Transactions.Controllers.Models.Enums;
+using CodeRower.CCP.Controllers.Models.Enums;
 
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     /// <summary>
     /// AddTransactionRequest
@@ -18,6 +18,8 @@ namespace Transactions.Controllers.Models
         /// </summary>
         [DataMember(Name = "currency", EmitDefaultValue = false)]
         public Currency? Currency { get; set; }
+
+        public TransactionRequest(){}
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransactionInput" /> class.

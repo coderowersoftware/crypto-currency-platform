@@ -8,8 +8,9 @@ using Npgsql;
 using NpgsqlTypes;
 using System.Data;
 using CodeRower.CCP.Controllers.Models.Common;
+using CodeRower.CCP.Controllers.Models;
 
-namespace Transactions.Services
+namespace CodeRower.CCP.Services
 {
     public interface ITransactionsService
     {
@@ -141,6 +142,10 @@ namespace Transactions.Services
             var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
             var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
             var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            
+            // Payer should always be this app
+            request.PayerId = tenantId;
+
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/transaction"),
                 null,
