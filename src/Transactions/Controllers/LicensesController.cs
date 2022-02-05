@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using AutoMapper;
+using CodeRower.CCP.Controllers.Models.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Swashbuckle.AspNetCore.Annotations;
 using Transactions.Controllers.Models;
-using Transactions.Controllers.Models.Common;
 using Transactions.Services;
 
 namespace Transactions.Controllers
@@ -77,25 +77,6 @@ namespace Transactions.Controllers
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             var results = await _miningService.GetLicensesAsync(LicenseId, customerId).ConfigureAwait(false);
             var pagedResult = new PagedResponse<License>()
-            {
-                Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
-                Count = results?.Count() ?? 0,
-                Offset = QueryOptions.Offset,
-                Limit = QueryOptions.Limit
-            };
-            return Ok(pagedResult);
-        }
-
-        [HttpGet("logs")]
-        public async Task<IActionResult> GetLicensesLogsAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId,
-            [FromQuery] QueryOptions? QueryOptions = null)
-        {
-            if (QueryOptions == null) QueryOptions = new QueryOptions();
-
-            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-
-            var results = await _miningService.GetLicensesLogsAsync(LicenseId, customerId).ConfigureAwait(false);
-            var pagedResult = new PagedResponse<LicenseLog>()
             {
                 Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
                 Count = results?.Count() ?? 0,

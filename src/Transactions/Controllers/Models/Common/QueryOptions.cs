@@ -1,4 +1,4 @@
-namespace Transactions.Controllers.Models.Common
+namespace CodeRower.CCP.Controllers.Models.Common
 {
     public class QueryOptions
     {

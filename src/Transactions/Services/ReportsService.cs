@@ -9,6 +9,7 @@ namespace CodeRower.CCP.Services
     public interface IReportsService
     {
         Task<IEnumerable<Miner>> GetTopMiners();
+        Task<IEnumerable<LicenseLog>> GetLicensesLogsAsync(Guid? licenseId, string? customerId);
     }
 
     public class ReportsService : IReportsService
@@ -68,6 +69,48 @@ namespace CodeRower.CCP.Services
             }
             //await Task.WhenAll(transactionTypeBalances).ConfigureAwait(false);
             return topMiners.DistinctBy(tm => tm.UserId);
+        }
+
+        public async Task<IEnumerable<LicenseLog>?> GetLicensesLogsAsync(Guid? licenseId, string customerId)
+        {
+            // var query = "getlicenseslogs";
+            // List<LicenseLog> results = new List<LicenseLog>();
+            // using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            // {
+            //     using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+            //     {
+            //         cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
+            //         if (licenseId.HasValue)
+            //         {
+            //             cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);
+            //         }
+
+            //         if (conn.State != ConnectionState.Open) conn.Open();
+            //         var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+            //         while (reader.Read())
+            //         {
+            //             LicenseLog result = new LicenseLog();
+            //             result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
+            //             result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
+            //             result.Title = Convert.ToString(reader["title"]);
+            //             result.MiningStartedAt = Convert.ToDateTime(reader["createdat"]);
+
+            //             if (reader["minedat"] == DBNull.Value)
+            //             {
+            //                 result.MiningStatus = MiningStatus.in_progress;
+            //             }
+            //             else
+            //             {
+            //                 result.MiningStatus = MiningStatus.completed;
+            //             }
+            //             result.MinedBy = Convert.ToString(reader["createdbyname"]);
+            //             results.Add(result);
+            //         }
+            //     }
+            // }
+            // return results;
+            return null;
         }
     }
 }

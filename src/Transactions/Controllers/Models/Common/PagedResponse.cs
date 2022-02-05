@@ -1,6 +1,6 @@
 using CodeRower.CCP.Controllers.Models.Common;
 
-namespace Transactions.Controllers.Models.Common
+namespace CodeRower.CCP.Controllers.Models.Common
 {
     public class PagedResponse<T> : ListResponse<T>
     {

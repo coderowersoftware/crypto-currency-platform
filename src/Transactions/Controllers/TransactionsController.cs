@@ -6,9 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Net;
 using Transactions.Controllers.Models;
-using Transactions.Controllers.Models.Common;
 using Transactions.Services;
-using System.Security.Claims;
 using CodeRower.CCP.Controllers.Models.Common;
 
 namespace Transactions.AddControllers
