@@ -104,12 +104,17 @@ namespace Transactions.Services
                         {
                             result.ExpirationDate = Convert.ToDateTime(expiresOn);
                         }
+                        var customerLicenseLogId = reader["customerLicenseLogId"];
 
                         if (result.ActivationDate.HasValue)
                         {
                             if (result.ExpirationDate < DateTime.Now)
                             {
                                 result.MiningStatus = MiningStatus.expired;
+                            }
+                            else if(customerLicenseLogId == DBNull.Value)
+                            {
+                                result.MiningStatus = MiningStatus.completed;
                             }
                             else if (reader["minedat"] == DBNull.Value)
                             {
