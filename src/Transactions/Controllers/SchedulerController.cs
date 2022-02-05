@@ -14,10 +14,12 @@ namespace CodeRower.CCP.Controllers
     public class SchedulerController : Controller
     {
         private readonly ITransactionsService _transactionsService;
+        private readonly IConfiguration _configuration;
 
-        public SchedulerController(ITransactionsService transactionsService)
+        public SchedulerController(ITransactionsService transactionsService, IConfiguration configuration)
         {
             _transactionsService = transactionsService;
+            _configuration = configuration;
         }
 
         [HttpGet("settle-farmed-coins")]
@@ -37,6 +39,7 @@ namespace CodeRower.CCP.Controllers
                 }, true).ConfigureAwait(false);
             
             List<Transaction> transactions = new List<Transaction>();
+            var walletTenant = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
             // group by payee id
             if(farmedBalances?.Count > 0)
             {
@@ -56,6 +59,7 @@ namespace CodeRower.CCP.Controllers
                         IsCredit = false,
                         Reference = "Automated debit",
                         Remark = "Automated debit to unlock coins",
+                        PayerId = walletTenant,
                         PayeeId = payeeId,
                         TransactionType = "FARM",
                         Currency = Currency.COINS
@@ -72,6 +76,7 @@ namespace CodeRower.CCP.Controllers
                             IsCredit = true,
                             Reference = "Automated credit",
                             Remark = "Automated credit from unlocked farm coins",
+                            PayerId = walletTenant,
                             PayeeId = payeeId,
                             TransactionType = "UNLOCKED",
                             Currency = Currency.COINS

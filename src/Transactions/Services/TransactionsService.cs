@@ -143,9 +143,6 @@ namespace CodeRower.CCP.Services
             var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
             var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
             
-            // Payer should always be this app
-            request.PayerId = tenantId;
-
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/transaction"),
                 null,
