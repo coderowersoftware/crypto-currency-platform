@@ -59,6 +59,7 @@ builder.Services.AddSingleton<IRestApiFacade, RestApiFacade>();
 builder.Services.AddSingleton<ITransactionsService, TransactionsService>();
 builder.Services.AddSingleton<IMiningService,  MiningService>();
 builder.Services.AddSingleton<IReportsService,  ReportsService>();
+builder.Services.AddSingleton<IUsersService,  UsersService>();
 
 var app = builder.Build();
 
