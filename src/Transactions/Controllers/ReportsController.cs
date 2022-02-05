@@ -35,7 +35,7 @@ namespace CodeRower.CCP.Controllers
         [HttpGet("licenses")]
         [Authorize]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Licenses))]
-        public async Task<IActionResult> GetLicensesLogsAsync()
+        public async Task<IActionResult> GetLicensesInfoAsync()
         {
             var result = await _reportsService.GetLicensesInfoAsync().ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
