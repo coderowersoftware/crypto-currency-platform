@@ -12,7 +12,7 @@ using Transactions.Services;
 namespace Transactions.Controllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("api/licenses")]
     public class LicensesController : Controller
     {
@@ -27,7 +27,6 @@ namespace Transactions.Controllers
         }
 
         [HttpPost("buy")]
-        [Authorize]
         public async Task<IActionResult> BuyLicense([FromBody, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -37,7 +36,6 @@ namespace Transactions.Controllers
         }
 
         [HttpPost("register")]
-        [Authorize]
         public async Task<IActionResult> RegisterLicense([FromBody, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -51,10 +49,10 @@ namespace Transactions.Controllers
         [HttpPatch("{LicenseId}/activate")]
         public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid LicenseId)
         {
-            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             try
             {
-                await _miningService.ActivateLicenseAsync(LicenseId, userId).ConfigureAwait(false);
+                await _miningService.ActivateLicenseAsync(LicenseId, customerId).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {

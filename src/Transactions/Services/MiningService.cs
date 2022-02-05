@@ -11,7 +11,7 @@ namespace Transactions.Services
     {
         Task MineAsync(Guid licenseId, string userId);
         Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId);
-        Task ActivateLicenseAsync(Guid licenseId, string userId);
+        Task ActivateLicenseAsync(Guid licenseId, string customerId);
         Task RegisterLicense(LicenseRequest data,string customerId, string userId);
         Task<string> AddLicense(LicenseBuyRequest data, string userId);
         Task EndMiningAsync();
@@ -144,7 +144,7 @@ namespace Transactions.Services
             }
         }
 
-        public async Task ActivateLicenseAsync(Guid licenseId, string userId)
+        public async Task ActivateLicenseAsync(Guid licenseId, string customerId)
         {
             var query = "activatelicense";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -152,7 +152,7 @@ namespace Transactions.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
-                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(userId));
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
