@@ -4,14 +4,12 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
-using Transactions.Controllers.Models.Common;
 using Transactions.Controllers.Models.Mining;
 using Transactions.Services;
 
 namespace Transactions.Controllers
 {
     [ApiController]
-    //[Authorize]
     [Route("api/mining")]
     public class MiningController : Controller
     {
@@ -27,31 +25,30 @@ namespace Transactions.Controllers
 
         [HttpPost("begin")]
         [Authorize]
-        public async Task<IActionResult> MineAsync([FromBody, Required]MineRequest MineRequest)
+        public async Task<IActionResult> MineAsync([FromBody, Required] MineRequestData MineRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             try
             {
-                await _miningService.MineAsync(MineRequest.LicenseId.Value, userId).ConfigureAwait(false);
+                await _miningService.MineAsync(MineRequest.Data.LicenseId.Value, userId).ConfigureAwait(false);
             }
             catch(PostgresException ex)
             {
                 if(ex.SqlState == "P0001" && ex.Hint == "MiningAlreadyInProgress")
                 {
-                    return BadRequest(new { ErrorCode = "MiningAlreadyInProgress", Message = $"Mining for license {MineRequest.LicenseId.Value} is already in progress."});
+                    return BadRequest(new { ErrorCode = "MiningAlreadyInProgress", Message = $"Mining for license {MineRequest.Data.LicenseId.Value} is already in progress."});
                 }
             }
             
             return StatusCode((int) HttpStatusCode.Created);
         }
 
-        [HttpPatch("end")]
+        [HttpGet("end/0fd480af-e9f6-45ab-bd56-afe94e7b6ce1")]
         public async Task<IActionResult> EndMiningAsync()
         {
             await _miningService.EndMiningAsync().ConfigureAwait(false);
             
-            
-            return StatusCode((int) HttpStatusCode.NoContent);
+            return StatusCode((int) HttpStatusCode.OK);
         }
     }
 }

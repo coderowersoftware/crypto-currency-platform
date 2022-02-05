@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Swashbuckle.AspNetCore.Annotations;
@@ -25,31 +26,56 @@ namespace Transactions.Controllers
             _mapper = mapper;
         }
 
-        [HttpPatch("{LicenseId}/activate")]
-        public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required]Guid LicenseId)
+        [HttpPost("buy")]
+        [Authorize]
+        public async Task<IActionResult> BuyLicense([FromBody, Required] LicenseBuyRequestData Data)
         {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var id = await _miningService.AddLicense(Data.Data, userId).ConfigureAwait(false);
+
+            return Ok(new { licenseId = id });
+        }
+
+        [HttpPost("register")]
+        [Authorize]
+        public async Task<IActionResult> RegisterLicense([FromBody, Required] LicenseRequestData Data)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            await _miningService.RegisterLicense(Data.Data, customerId, userId).ConfigureAwait(false);
+
+            return StatusCode((int)HttpStatusCode.Created);
+        }
+
+
+        [HttpPatch("{LicenseId}/activate")]
+        public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid LicenseId)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             try
             {
-                await _miningService.ActivateLicenseAsync(LicenseId).ConfigureAwait(false);
+                await _miningService.ActivateLicenseAsync(LicenseId, userId).ConfigureAwait(false);
             }
-            catch(PostgresException ex)
+            catch (PostgresException ex)
             {
-                if(ex.SqlState == "P0001" && ex.Hint == "LicenseAlreadyActivated")
+                if (ex.SqlState == "P0001" && ex.Hint == "LicenseAlreadyActivated")
                 {
-                    return BadRequest(new { ErrorCode = "LicenseAlreadyActivated", Message = $"License {LicenseId} cannot be activated."});
+                    return BadRequest(new { ErrorCode = "LicenseAlreadyActivated", Message = $"License {LicenseId} cannot be activated." });
                 }
             }
-            
-            return StatusCode((int) HttpStatusCode.NoContent);
+
+            return StatusCode((int)HttpStatusCode.NoContent);
         }
 
         [HttpGet("")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<License>))]
-        public async Task<IActionResult> GetLicensesAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId, 
+        public async Task<IActionResult> GetLicensesAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId,
             [FromQuery] QueryOptions? QueryOptions = null)
         {
-            if(QueryOptions == null) QueryOptions = new QueryOptions();
-            var results = await _miningService.GetLicensesAsync(LicenseId).ConfigureAwait(false);
+            if (QueryOptions == null) QueryOptions = new QueryOptions();
+
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var results = await _miningService.GetLicensesAsync(LicenseId, customerId).ConfigureAwait(false);
             var pagedResult = new PagedResponse<License>()
             {
                 Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
@@ -57,15 +83,18 @@ namespace Transactions.Controllers
                 Offset = QueryOptions.Offset,
                 Limit = QueryOptions.Limit
             };
-            return Ok(pagedResult);            
+            return Ok(pagedResult);
         }
 
         [HttpGet("logs")]
-        public async Task<IActionResult> GetLicensesLogsAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId, 
+        public async Task<IActionResult> GetLicensesLogsAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId,
             [FromQuery] QueryOptions? QueryOptions = null)
         {
-            if(QueryOptions == null) QueryOptions = new QueryOptions();
-            var results = await _miningService.GetLicensesLogsAsync(LicenseId).ConfigureAwait(false);
+            if (QueryOptions == null) QueryOptions = new QueryOptions();
+
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
+            var results = await _miningService.GetLicensesLogsAsync(LicenseId, customerId).ConfigureAwait(false);
             var pagedResult = new PagedResponse<LicenseLog>()
             {
                 Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
@@ -73,7 +102,7 @@ namespace Transactions.Controllers
                 Offset = QueryOptions.Offset,
                 Limit = QueryOptions.Limit
             };
-            return Ok(pagedResult);            
+            return Ok(pagedResult);
         }
     }
 }
