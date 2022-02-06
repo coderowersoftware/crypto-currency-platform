@@ -30,8 +30,20 @@ namespace CodeRower.CCP.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] UnlockedCoinsTransferRequest TransferRequest)
         {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<Transaction> transactions = new List<Transaction>();
+
+            var unlockedBalance = (await _transactionsService
+                                .GetBalancesByTransactionTypes(new List<string> { "UNLOCKED" }, userId)
+                                .ConfigureAwait(false))?.FirstOrDefault()
+                                ?.Amount ?? 0;
+
+            if(TransferRequest.Amount > unlockedBalance)
+            {
+                ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+                return BadRequest(ModelState);
+            }
 
             // Debit from account
             var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
@@ -78,9 +90,23 @@ namespace CodeRower.CCP.Controllers
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
 
-            if(MintRequest.AccountPin != userInfo.AccountPin)
+            if(MintRequest.AccountPin != userInfo?.AccountPin)
             {
                 ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
+            }
+
+            var lockedBalance = (await _transactionsService
+                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, userId)
+                                .ConfigureAwait(false))?.FirstOrDefault()
+                                ?.Amount ?? 0;
+
+            if(MintRequest.Amount > lockedBalance)
+            {
+                ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+            }
+
+            if(!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
             }
 
@@ -125,15 +151,29 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("farm")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToFarmAsync([FromBody, Required] MintRequest MintRequest)
+        public async Task<IActionResult> TransferToFarmAsync([FromBody, Required] MintRequest FarmRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
 
-            if(MintRequest.AccountPin != userInfo.AccountPin)
+            if(FarmRequest.AccountPin != userInfo?.AccountPin)
             {
                 ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
+            }
+
+            var lockedBalance = (await _transactionsService
+                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, userId)
+                                .ConfigureAwait(false))?.FirstOrDefault()
+                                ?.Amount ?? 0;
+
+            if(FarmRequest.Amount > lockedBalance)
+            {
+                ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+            }
+
+            if(!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
             }
 
@@ -142,7 +182,7 @@ namespace CodeRower.CCP.Controllers
             // Debit locked
             var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
             {
-                Amount = MintRequest.Amount,
+                Amount = FarmRequest.Amount,
                 IsCredit = false,
                 Reference = $"Transfer to payee {customerId}",
                 PayerId = customerId,
@@ -158,7 +198,7 @@ namespace CodeRower.CCP.Controllers
                 // Credit to mint
                 var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
                 {
-                    Amount = MintRequest.Amount,
+                    Amount = FarmRequest.Amount,
                     IsCredit = true,
                     Reference = debitTran.Id.Value.ToString(),
                     PayerId = customerId,
