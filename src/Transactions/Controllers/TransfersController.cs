@@ -8,7 +8,6 @@ using CodeRower.CCP.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Transactions.Controllers.Models;
 
 namespace CodeRower.CCP.Controllers
 {

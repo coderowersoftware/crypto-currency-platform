@@ -1,5 +1,3 @@
-using Transactions.Controllers.Models.Enums;
-
 namespace CodeRower.CCP.Controllers.Models.Reports
 {
     public class Licenses

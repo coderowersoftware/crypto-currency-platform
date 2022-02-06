@@ -1,4 +1,4 @@
-namespace Transactions.Controllers.Models.Enums
+namespace CodeRower.CCP.Controllers.Models.Enums
 {
     public enum MiningStatus
     {

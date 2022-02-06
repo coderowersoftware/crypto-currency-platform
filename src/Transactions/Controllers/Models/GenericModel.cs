@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     /// <summary>
     /// GenericModel

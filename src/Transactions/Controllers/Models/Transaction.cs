@@ -2,9 +2,8 @@ using System.Text;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using Transactions.Controllers.Models.Enums;
 
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     /// <summary>
     /// Transaction

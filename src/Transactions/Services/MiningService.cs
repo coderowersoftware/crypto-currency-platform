@@ -1,9 +1,9 @@
 using System.Data;
 using Npgsql;
 using NpgsqlTypes;
-using Transactions.Controllers.Models;
-using Transactions.Controllers.Models.Enums;
-using License = Transactions.Controllers.Models.License;
+using CodeRower.CCP.Controllers.Models;
+using CodeRower.CCP.Controllers.Models.Enums;
+using License = CodeRower.CCP.Controllers.Models.License;
 
 namespace Transactions.Services
 {

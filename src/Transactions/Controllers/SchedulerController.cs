@@ -5,7 +5,6 @@ using CodeRower.CCP.Controllers.Models.Enums;
 using CodeRower.CCP.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Transactions.Controllers.Models;
 
 namespace CodeRower.CCP.Controllers
 {

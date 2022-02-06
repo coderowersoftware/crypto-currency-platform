@@ -1,6 +1,5 @@
 using AutoMapper;
-using Transactions.Controllers.Models;
-using Transactions.Controllers.Models.Enums;
+using CodeRower.CCP.Controllers.Models;
 using DomainTransaction = Transactions.Domain.Models.Transaction;
 using DomainTransactionType = Transactions.Domain.Models.TransactionType;
 

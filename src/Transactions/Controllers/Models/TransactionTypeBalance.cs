@@ -1,6 +1,6 @@
 using System.Runtime.Serialization;
 
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     /// <summary>
     /// Transaction Type Balance

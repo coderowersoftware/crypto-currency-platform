@@ -5,10 +5,9 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Net;
-using Transactions.Controllers.Models;
+using CodeRower.CCP.Controllers.Models;
 using CodeRower.CCP.Controllers.Models.Common;
 using CodeRower.CCP.Services;
-using CodeRower.CCP.Controllers.Models;
 
 namespace CodeRower.CCP.Controllers
 {

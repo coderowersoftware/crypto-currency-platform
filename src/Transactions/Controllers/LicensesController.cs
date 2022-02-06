@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Swashbuckle.AspNetCore.Annotations;
-using Transactions.Controllers.Models;
+using CodeRower.CCP.Controllers.Models;
 using Transactions.Services;
 
-namespace Transactions.Controllers
+namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Authorize]

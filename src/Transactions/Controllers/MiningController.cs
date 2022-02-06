@@ -4,10 +4,10 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
-using Transactions.Controllers.Models.Mining;
+using CodeRower.CCP.Controllers.Models.Mining;
 using Transactions.Services;
 
-namespace Transactions.Controllers
+namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Route("api/mining")]

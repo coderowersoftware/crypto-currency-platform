@@ -1,6 +1,6 @@
-using Transactions.Controllers.Models.Enums;
+using CodeRower.CCP.Controllers.Models.Enums;
 
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     public class License
     {

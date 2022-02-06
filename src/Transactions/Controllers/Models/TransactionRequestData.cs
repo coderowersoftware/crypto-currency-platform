@@ -1,7 +1,6 @@
 using System.Runtime.Serialization;
-using CodeRower.CCP.Controllers.Models;
 
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     /// <summary>
     /// Add Transaction Response

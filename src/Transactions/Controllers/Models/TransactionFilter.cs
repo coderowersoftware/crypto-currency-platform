@@ -1,4 +1,4 @@
-namespace Transactions.Controllers.Models
+namespace CodeRower.CCP.Controllers.Models
 {
     public class TransactionFilter
     {

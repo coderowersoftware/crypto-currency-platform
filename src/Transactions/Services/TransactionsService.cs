@@ -1,14 +1,13 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Transactions.Controllers.Models;
+using CodeRower.CCP.Controllers.Models;
 using Transactions.Facade;
 using Transactions.Domain.Models;
-using Transaction = Transactions.Controllers.Models.Transaction;
+using Transaction = CodeRower.CCP.Controllers.Models.Transaction;
 using Npgsql;
 using NpgsqlTypes;
 using System.Data;
 using CodeRower.CCP.Controllers.Models.Common;
-using CodeRower.CCP.Controllers.Models;
 
 namespace CodeRower.CCP.Services
 {
