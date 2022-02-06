@@ -73,7 +73,7 @@ namespace Transactions.Services
 
         public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId)
         {
-            var query = "getlicenses";
+            var query = "getlicenses_v2";
             List<License> results = new List<License>();
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
@@ -94,6 +94,7 @@ namespace Transactions.Services
                         result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
                         result.Title = Convert.ToString(reader["title"]);
+                        result.Mined = Convert.ToInt32(reader["total_mined"]);
                         var activatedOn = reader["activatedon"];
                         if (activatedOn != DBNull.Value)
                         {
