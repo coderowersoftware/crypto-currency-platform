@@ -10,6 +10,7 @@ namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Route("api/reports")]
+    [Authorize]
     public class ReportsController : Controller
     {
         private readonly IReportsService _reportsService;
@@ -20,7 +21,6 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpGet("top-miners")]
-        [Authorize]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Miner>))]
         public async Task<IActionResult> GetTopMinersAsync()
         {
@@ -33,11 +33,19 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpGet("licenses")]
-        [Authorize]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Licenses))]
         public async Task<IActionResult> GetLicensesInfoAsync()
         {
             var result = await _reportsService.GetLicensesInfoAsync().ConfigureAwait(false);
+            return result == null ? NoContent() : Ok(result);
+        }
+
+        [HttpGet("all-license-details")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(OverallLicenseDetails))]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetOverallLicenseDetailsAsync()
+        {
+            var result = await _reportsService.GetOverallLicenseDetailsAsync().ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
         }
     }

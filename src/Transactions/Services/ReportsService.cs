@@ -2,7 +2,6 @@ using System.Data;
 using CodeRower.CCP.Controllers.Models.Reports;
 using Npgsql;
 using NpgsqlTypes;
-using Transactions.Services;
 
 namespace CodeRower.CCP.Services
 {
@@ -10,6 +9,7 @@ namespace CodeRower.CCP.Services
     {
         Task<IEnumerable<Miner>> GetTopMiners();
         Task<Licenses?> GetLicensesInfoAsync();
+        Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync();
     }
 
     public class ReportsService : IReportsService
@@ -94,6 +94,34 @@ namespace CodeRower.CCP.Services
                         result.LicensesRemaining = Convert.ToInt32(reader["remaining_licenses"]);
                     }
                 }
+                return result;
+            }
+        }
+
+        public async Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync()
+        {
+            var query = "get_overall_licenses_details";
+            var farmMintWalletBalances = _transactionsService.GetBalancesByTransactionTypes(new List<string> { "FARM", "MINT", "WALLET" });
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                OverallLicenseDetails? result = new OverallLicenseDetails();
+
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        result.LicenseUsers = Convert.ToInt32(reader["total_license_users"]);
+                        result.PoolLicenseMiners = Convert.ToInt32(reader["total_pool_license_miners"]);
+                        result.ActiveLicenseMiners = Convert.ToInt32(reader["total_active_license_miners"]);
+                    }
+                }
+                var balancesResult = await farmMintWalletBalances.ConfigureAwait(false);
+                result.CoinsInFarming = balancesResult?.FirstOrDefault(b => b.TransactionType == "FARM")?.Amount ?? 0;
+                result.CoinsInMinting = balancesResult?.FirstOrDefault(b => b.TransactionType == "MINT")?.Amount ?? 0;
+                result.CoinsInWallet = balancesResult?.FirstOrDefault(b => b.TransactionType == "WALLET")?.Amount ?? 0;
                 return result;
             }
         }
