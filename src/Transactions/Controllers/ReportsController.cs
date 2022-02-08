@@ -40,6 +40,15 @@ namespace CodeRower.CCP.Controllers
             return result == null ? NoContent() : Ok(result);
         }
 
+        [HttpGet("licenses/purchased")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PurchasedLicenses))]
+        public async Task<IActionResult> GetMyPurchasedLicensesAsync()
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var result = await _reportsService.GetMyPurchasedLicensesAsync(userId).ConfigureAwait(false);
+            return result == null ? NoContent() : Ok(result);
+        }
+
         [HttpGet("all-license-details")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(OverallLicenseDetails))]
         [AllowAnonymous]

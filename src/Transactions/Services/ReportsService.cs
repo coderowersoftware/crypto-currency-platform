@@ -10,6 +10,7 @@ namespace CodeRower.CCP.Services
         Task<IEnumerable<Miner>> GetTopMiners();
         Task<Licenses?> GetLicensesInfoAsync();
         Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync();
+        Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId);
     }
 
     public class ReportsService : IReportsService
@@ -122,6 +123,33 @@ namespace CodeRower.CCP.Services
                 result.CoinsInFarming = balancesResult?.FirstOrDefault(b => b.TransactionType == "FARM")?.Amount ?? 0;
                 result.CoinsInMinting = balancesResult?.FirstOrDefault(b => b.TransactionType == "MINT")?.Amount ?? 0;
                 result.CoinsInWallet = balancesResult?.FirstOrDefault(b => b.TransactionType == "WALLET")?.Amount ?? 0;
+                return result;
+            }
+        }
+
+        public async Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId)
+        {
+            var query = "get_purchased_licenses";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                PurchasedLicenses? result = null;
+
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        result = new PurchasedLicenses();
+                        result.TotalLicenses = Convert.ToInt32(reader["total_licenses"]);
+                        result.TotalPurchased = Convert.ToInt32(reader["licenses_purchased"]);
+                        result.TotalUsed = Convert.ToInt32(reader["licenses_used"]);
+                    }
+                }
                 return result;
             }
         }
