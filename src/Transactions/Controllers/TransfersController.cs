@@ -25,9 +25,9 @@ namespace CodeRower.CCP.Controllers
             _usersService = usersService;
         }
 
-        [HttpPost("unlocked")]
+        [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] UnlockedCoinsTransferRequest TransferRequest)
+        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] CoinsTransferRequest TransferRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -68,7 +68,7 @@ namespace CodeRower.CCP.Controllers
                     Reference = debitTran.Id.Value.ToString(),
                     PayerId = customerId,
                     PayeeId = TransferRequest.ToCustomerId,
-                    TransactionType = "UNLOCKED",
+                    TransactionType = "WALLET",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
@@ -81,7 +81,63 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
         }
 
-        [HttpPost("mint")]
+        [HttpPost("wallet-to-wallet")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
+        public async Task<IActionResult> TransferWalletCoinsAsync([FromBody, Required] CoinsTransferRequest TransferRequest)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            List<Transaction> transactions = new List<Transaction>();
+
+            var unlockedBalance = (await _transactionsService
+                                .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, userId)
+                                .ConfigureAwait(false))?.FirstOrDefault()
+                                ?.Amount ?? 0;
+
+            if(TransferRequest.Amount > unlockedBalance)
+            {
+                ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+                return BadRequest(ModelState);
+            }
+
+            // Debit from account
+            var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+            {
+                Amount = TransferRequest.Amount,
+                IsCredit = false,
+                Reference = $"Transfer to payee {TransferRequest.ToCustomerId}",
+                PayerId = customerId,
+                PayeeId = TransferRequest.ToCustomerId,
+                TransactionType = "WALLET",
+                Currency = Currency.COINS
+            }).ConfigureAwait(false);
+
+            if(debitTran?.Id.HasValue ?? false)
+            {
+                transactions.Add(debitTran);
+
+                // Credit to other account
+                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                {
+                    Amount = TransferRequest.Amount,
+                    IsCredit = true,
+                    Reference = debitTran.Id.Value.ToString(),
+                    PayerId = customerId,
+                    PayeeId = TransferRequest.ToCustomerId,
+                    TransactionType = "WALLET",
+                    Currency = Currency.COINS
+                }).ConfigureAwait(false);
+
+                if(creditTran?.Id.HasValue ?? false)
+                {
+                    transactions.Add(creditTran);
+                }
+            }
+
+            return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
+        }
+
+        [HttpPost("locked-to-mint")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferToMintAsync([FromBody, Required] MintRequest MintRequest)
         {
@@ -148,7 +204,7 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
         }
 
-        [HttpPost("farm")]
+        [HttpPost("locked-to-farm")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferToFarmAsync([FromBody, Required] MintRequest FarmRequest)
         {

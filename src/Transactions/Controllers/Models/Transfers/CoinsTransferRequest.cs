@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CodeRower.CCP.Controllers.Models.Transfers
 {
-    public class UnlockedCoinsTransferRequest
+    public class CoinsTransferRequest
     {
         [Required]
         public string? ToCustomerId { get; set; }
