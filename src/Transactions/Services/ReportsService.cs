@@ -44,6 +44,7 @@ namespace CodeRower.CCP.Services
                     {
                         Miner result = new Miner();
                         result.UserId = Convert.ToString(reader["user_id"]);
+                        result.CustomerId = Convert.ToString(reader["customerId"]);
                         result.Name = Convert.ToString(reader["first_name"]);
                         result.DisplayName = Convert.ToString(reader["full_name"]);
                         result.Image = Convert.ToString(reader["image_url"]);
@@ -58,7 +59,7 @@ namespace CodeRower.CCP.Services
             // List<Task> transactionTypeBalances = new List<Task>();
             foreach(var miner in topMiners)
             {
-                var amounts = await _transactionsService.GetBalancesByTransactionTypes(new List<string> { "LOCKED", "UNLOCKED" }, miner.UserId).ConfigureAwait(false);
+                var amounts = await _transactionsService.GetBalancesByTransactionTypes(new List<string> { "LOCKED", "UNLOCKED" }, miner.CustomerId).ConfigureAwait(false);
                 miner.LockedAmount = amounts?.FirstOrDefault(amt => "LOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
                 miner.UnlockedAmount = amounts?.FirstOrDefault(amt => "UNLOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
                 // transactionTypeBalances.Add(_transactionsService.GetBalancesByTransactionTypes(new List<string> { "LOCKED", "UNLOCKED" }, miner.UserId)
