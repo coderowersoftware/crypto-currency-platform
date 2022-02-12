@@ -18,17 +18,19 @@ namespace CodeRower.CCP.Controllers
     {
         private readonly ITransactionsService _transactionsService;
         private readonly IUsersService _usersService;
+        private readonly IConfiguration _configuration;
 
-        public TransfersController(ITransactionsService transactionsService, IUsersService usersService)
+        public TransfersController(ITransactionsService transactionsService, IUsersService usersService, IConfiguration configuration)
         {
             _transactionsService = transactionsService;
             _usersService = usersService;
+            _configuration = configuration;
         }
 
         [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] UnlockedTransferRequest TransferRequest)
-        { 
+        {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
@@ -37,7 +39,7 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            if(TransferRequest.Amount > unlockedBalance)
+            if (TransferRequest.Amount > unlockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
                 return BadRequest(ModelState);
@@ -55,7 +57,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
+            if (!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -71,7 +73,7 @@ namespace CodeRower.CCP.Controllers
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
@@ -92,7 +94,7 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            if(TransferRequest.Amount > unlockedBalance)
+            if (TransferRequest.Amount > unlockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
                 return BadRequest(ModelState);
@@ -105,31 +107,31 @@ namespace CodeRower.CCP.Controllers
                 IsCredit = false,
                 Reference = $"Transfer to payee {TransferRequest.ToCustomerId}",
                 PayerId = customerId,
-                PayeeId = TransferRequest.ToCustomerId,
+                PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
                 TransactionType = "WALLET",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
+            if (!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
                 // Credit to other account
-                // var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
-                // {
-                //     Amount = TransferRequest.Amount,
-                //     IsCredit = true,
-                //     Reference = debitTran.transactionid,
-                //     PayerId = TransferRequest.ToCustomerId,
-                //     PayeeId = customerId,
-                //     TransactionType = "WALLET",
-                //     Currency = Currency.COINS
-                // }).ConfigureAwait(false);
+                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                {
+                    Amount = TransferRequest.Amount,
+                    IsCredit = true,
+                    Reference = $"Received from payer {customerId}",
+                    PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                    PayeeId = TransferRequest.ToCustomerId,
+                    TransactionType = "WALLET",
+                    Currency = Currency.COINS
+                }).ConfigureAwait(false);
 
-                // if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
-                // {
-                //     transactions.Add(creditTran);
-                // }
+                if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                {
+                    transactions.Add(creditTran);
+                }
             }
 
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
@@ -143,7 +145,7 @@ namespace CodeRower.CCP.Controllers
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
 
-            if(MintRequest.AccountPin != userInfo?.AccountPin)
+            if (MintRequest.AccountPin != userInfo?.AccountPin)
             {
                 ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
             }
@@ -153,12 +155,12 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            if(MintRequest.Amount > lockedBalance)
+            if (MintRequest.Amount > lockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
             }
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -177,7 +179,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
+            if (!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -193,7 +195,7 @@ namespace CodeRower.CCP.Controllers
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
@@ -210,7 +212,7 @@ namespace CodeRower.CCP.Controllers
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
 
-            if(FarmRequest.AccountPin != userInfo?.AccountPin)
+            if (FarmRequest.AccountPin != userInfo?.AccountPin)
             {
                 ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
             }
@@ -220,12 +222,12 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            if(FarmRequest.Amount > lockedBalance)
+            if (FarmRequest.Amount > lockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
             }
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -244,7 +246,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
+            if (!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -260,7 +262,7 @@ namespace CodeRower.CCP.Controllers
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
