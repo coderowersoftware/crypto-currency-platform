@@ -23,7 +23,7 @@ namespace CodeRower.CCP.Controllers
             _configuration = configuration;
         }
 
-        [HttpGet("end-mining")]
+        [HttpGet("execute-mining")]
         public async Task<IActionResult> EndMiningAsync()
         {
             var minedLicenses = await _miningService.EndMiningAsync().ConfigureAwait(false);
