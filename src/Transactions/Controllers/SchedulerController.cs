@@ -28,7 +28,7 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> EndMiningAsync()
         {
             var minedLicenses = await _miningService.EndMiningAsync().ConfigureAwait(false);
-            List<Transaction> transactions = new List<Transaction>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
             if(minedLicenses?.Any() ?? false)
             {
                 var walletTenant = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
@@ -111,7 +111,7 @@ namespace CodeRower.CCP.Controllers
                     Limit = int.MaxValue
                 }, true).ConfigureAwait(false);
             
-            List<Transaction> transactions = new List<Transaction>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
             var walletTenant = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
             // group by payee id
             if(farmedBalances?.Count > 0)
@@ -138,7 +138,7 @@ namespace CodeRower.CCP.Controllers
                         Currency = Currency.COINS
                     }).ConfigureAwait(false);
 
-                    if(debitTran?.Id.HasValue ?? false)
+                    if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
                     {
                         transactions.Add(debitTran);
 
@@ -155,7 +155,7 @@ namespace CodeRower.CCP.Controllers
                             Currency = Currency.COINS
                         }).ConfigureAwait(false);
 
-                        if(creditTran?.Id.HasValue ?? false)
+                        if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                         {
                             transactions.Add(creditTran);
                         }
@@ -163,7 +163,7 @@ namespace CodeRower.CCP.Controllers
                 }
             }            
             return transactions.Any() 
-                ? Ok(new ListResponse<Transaction> { Rows = transactions }) 
+                ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) 
                 : NoContent();
         }
     }

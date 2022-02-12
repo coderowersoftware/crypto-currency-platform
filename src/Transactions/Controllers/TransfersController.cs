@@ -30,7 +30,7 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] UnlockedTransferRequest TransferRequest)
         { 
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            List<Transaction> transactions = new List<Transaction>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             var unlockedBalance = (await _transactionsService
                                 .GetBalancesByTransactionTypes(new List<string> { "UNLOCKED" }, customerId)
@@ -55,7 +55,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(debitTran?.Id.HasValue ?? false)
+            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -64,20 +64,20 @@ namespace CodeRower.CCP.Controllers
                 {
                     Amount = TransferRequest.Amount,
                     IsCredit = true,
-                    Reference = debitTran.Id.Value.ToString(),
+                    Reference = debitTran.transactionid,
                     PayerId = customerId,
                     PayeeId = customerId,
                     TransactionType = "WALLET",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(creditTran?.Id.HasValue ?? false)
+                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
             }
 
-            return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
+            return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
         [HttpPost("wallet-to-wallet")]
@@ -85,7 +85,7 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferWalletCoinsAsync([FromBody, Required] CoinsTransferRequest TransferRequest)
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            List<Transaction> transactions = new List<Transaction>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             var unlockedBalance = (await _transactionsService
                                 .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, customerId)
@@ -110,7 +110,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(debitTran?.Id.HasValue ?? false)
+            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -119,20 +119,20 @@ namespace CodeRower.CCP.Controllers
                 {
                     Amount = TransferRequest.Amount,
                     IsCredit = true,
-                    Reference = debitTran.Id.Value.ToString(),
+                    Reference = debitTran.transactionid,
                     PayerId = customerId,
                     PayeeId = TransferRequest.ToCustomerId,
                     TransactionType = "WALLET",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(creditTran?.Id.HasValue ?? false)
+                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
             }
 
-            return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
+            return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
         [HttpPost("locked-to-mint")]
@@ -163,7 +163,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            List<Transaction> transactions = new List<Transaction>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             // Debit locked
             var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
@@ -177,7 +177,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(debitTran?.Id.HasValue ?? false)
+            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -186,20 +186,20 @@ namespace CodeRower.CCP.Controllers
                 {
                     Amount = MintRequest.Amount,
                     IsCredit = true,
-                    Reference = debitTran.Id.Value.ToString(),
+                    Reference = debitTran.transactionid,
                     PayerId = customerId,
                     PayeeId = customerId,
                     TransactionType = "MINT",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(creditTran?.Id.HasValue ?? false)
+                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
             }
 
-            return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
+            return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
         [HttpPost("locked-to-farm")]
@@ -230,7 +230,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            List<Transaction> transactions = new List<Transaction>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             // Debit locked
             var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
@@ -244,7 +244,7 @@ namespace CodeRower.CCP.Controllers
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
 
-            if(debitTran?.Id.HasValue ?? false)
+            if(!string.IsNullOrWhiteSpace(debitTran?.transactionid))
             {
                 transactions.Add(debitTran);
 
@@ -253,20 +253,20 @@ namespace CodeRower.CCP.Controllers
                 {
                     Amount = FarmRequest.Amount,
                     IsCredit = true,
-                    Reference = debitTran.Id.Value.ToString(),
+                    Reference = debitTran.transactionid,
                     PayerId = customerId,
                     PayeeId = customerId,
                     TransactionType = "FARM",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
-                if(creditTran?.Id.HasValue ?? false)
+                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                 {
                     transactions.Add(creditTran);
                 }
             }
 
-            return transactions.Any() ? Ok(new ListResponse<Transaction> { Rows = transactions }) : NoContent();
+            return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
     }
 }

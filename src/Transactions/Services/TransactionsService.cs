@@ -13,7 +13,7 @@ namespace CodeRower.CCP.Services
 {
     public interface ITransactionsService
     {
-        Task<Transaction> AddTransaction(TransactionRequest request);
+        Task<WalletTransactionResponse> AddTransaction(TransactionRequest request);
         Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report);
         Task<dynamic> GetCurrentBalance();
         Task<TransactionResponse> InsertTransactions(TransactionRequest request);
@@ -143,7 +143,7 @@ namespace CodeRower.CCP.Services
         }
 
 
-        public async Task<Transaction> AddTransaction(TransactionRequest request)
+        public async Task<WalletTransactionResponse> AddTransaction(TransactionRequest request)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
             var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
@@ -170,7 +170,7 @@ namespace CodeRower.CCP.Services
                     }
                 }).ConfigureAwait(false);
 
-            return JsonConvert.DeserializeObject<Transaction>(responseMessage);
+            return JsonConvert.DeserializeObject<WalletTransactionResponse>(responseMessage);
         }
 
         public async Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report)
