@@ -208,6 +208,30 @@ namespace CodeRower.CCP.Controllers
             return Ok(listResult);
         }
 
+        [HttpGet("transactiontypecreditrecord")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetCreditsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: true).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
+
+        [HttpGet("transactiontypedebitrecord")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
+
         [HttpGet("transactiontypebalances/me")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
         [Authorize]
