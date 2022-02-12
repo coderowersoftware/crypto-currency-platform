@@ -115,21 +115,21 @@ namespace CodeRower.CCP.Controllers
                 transactions.Add(debitTran);
 
                 // Credit to other account
-                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
-                {
-                    Amount = TransferRequest.Amount,
-                    IsCredit = true,
-                    Reference = debitTran.transactionid,
-                    PayerId = TransferRequest.ToCustomerId,
-                    PayeeId = customerId,
-                    TransactionType = "WALLET",
-                    Currency = Currency.COINS
-                }).ConfigureAwait(false);
+                // var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                // {
+                //     Amount = TransferRequest.Amount,
+                //     IsCredit = true,
+                //     Reference = debitTran.transactionid,
+                //     PayerId = TransferRequest.ToCustomerId,
+                //     PayeeId = customerId,
+                //     TransactionType = "WALLET",
+                //     Currency = Currency.COINS
+                // }).ConfigureAwait(false);
 
-                if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
-                {
-                    transactions.Add(creditTran);
-                }
+                // if(!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                // {
+                //     transactions.Add(creditTran);
+                // }
             }
 
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
