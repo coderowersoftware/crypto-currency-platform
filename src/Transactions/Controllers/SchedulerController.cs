@@ -51,8 +51,23 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(transactions) : NoContent();
         }
 
+        [HttpGet("execute-minting")]
+        public async Task<IActionResult> ExecuteMintingAsync()
+        {
+            await _transactionsService.ExecuteFarmingMintingAsync("cloud-chain-technology/execute-minting", "MINT").ConfigureAwait(false);
+            return Ok();
+        }
+
+        [HttpGet("execute-farming")]
+        public async Task<IActionResult> ExecuteFarmingAsync()
+        {
+            await _transactionsService.ExecuteFarmingMintingAsync("cloud-chain-technology/execute-farming", "FARM").ConfigureAwait(false);
+            return Ok();
+        }
+
         [HttpGet("settle-farmed-coins")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
+        [Obsolete("To be removed later")]
         public async Task<IActionResult> SettleFarmedCoinsAsync()
         {
             // get current FARM balance

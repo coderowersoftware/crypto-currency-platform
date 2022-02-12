@@ -22,16 +22,19 @@ namespace CodeRower.CCP.Services
         Task<List<AutoCompleteResponse>> GetCurrencies();
         Task<Transaction> GetTransactionById(string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string customerId = null);
+        Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution);
     }
 
     public class TransactionsService : ITransactionsService
     {
         private readonly IRestApiFacade _restApiFacade;
+        private readonly ITenantService _tenantService;
         private readonly IConfiguration _configuration;
 
-        public TransactionsService(IRestApiFacade restApiFacade, IConfiguration configuration)
+        public TransactionsService(IRestApiFacade restApiFacade, ITenantService tenantService, IConfiguration configuration)
         {
             _restApiFacade = restApiFacade;
+            _tenantService = tenantService;
             _configuration = configuration;
         }
 
@@ -347,6 +350,51 @@ namespace CodeRower.CCP.Services
 
             }
             return response;
+        }
+
+        public async Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution)
+        {
+            var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
+            var tenantId = _configuration.GetSection("CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("CCCWalletSecret").Value;
+
+            var appTenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
+
+            if(!string.IsNullOrWhiteSpace(typeOfExecution))
+            {
+                dynamic executeData = null;
+                if("FARM".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
+                    && appTenantInfo.FarmingDailyUnlockPercent.HasValue)
+                {
+                    executeData = new {
+                        FarmingDailyUnlockPercent = appTenantInfo.FarmingDailyUnlockPercent,
+                        Currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS
+                    };
+                }
+                else if("MINT".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
+                    && appTenantInfo.MintRewardsDailyPercent.HasValue)
+                {
+                    executeData = new {
+                        MintRewardsDailyPercent = appTenantInfo.MintRewardsDailyPercent,
+                        Currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS
+                    };
+                }
+                
+                if(executeData != null)
+                {
+                    await _restApiFacade.SendAsync(HttpMethod.Post,
+                        new Uri($"{walletHost}api/tenant/{tenantId}/{relativeUri}"),
+                        null,
+                        new
+                        {
+                            application_id = tenantId,
+                            client_id = clientId,
+                            client_secret = clientSecret,
+                            data = executeData
+                        }).ConfigureAwait(false);
+                }
+            }
         }
     }
 }
