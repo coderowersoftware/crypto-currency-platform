@@ -41,8 +41,37 @@ namespace CodeRower.CCP.Controllers
                         Reference = license.LicenseId,
                         PayerId = walletTenant,
                         PayeeId = license.CustomerId,
+                        TransactionType = "MINED",
+                        Currency = Currency.COINS,
+                        CurrentBalanceFor = license.CustomerId
+                    }).ConfigureAwait(false);
+
+                    transactions.Add(creditTran);
+
+                    var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    {
+                        Amount = 1m,
+                        IsCredit = false,
+                        Reference = license.LicenseId,
+                        PayerId = license.CustomerId,
+                        PayeeId = walletTenant,
+                        TransactionType = "MINED",
+                        Currency = Currency.COINS,
+                        CurrentBalanceFor = walletTenant
+                    }).ConfigureAwait(false);
+
+                    transactions.Add(debitTran);
+
+                    creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    {
+                        Amount = 1m,
+                        IsCredit = true,
+                        Reference = license.LicenseId,
+                        PayerId = walletTenant,
+                        PayeeId = license.CustomerId,
                         TransactionType = "LOCKED",
-                        Currency = Currency.COINS
+                        Currency = Currency.COINS,
+                        CurrentBalanceFor = license.CustomerId
                     }).ConfigureAwait(false);
 
                     transactions.Add(creditTran);

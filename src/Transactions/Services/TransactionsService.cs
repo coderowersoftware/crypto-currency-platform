@@ -151,14 +151,23 @@ namespace CodeRower.CCP.Services
             var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
             
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{walletHost}api/tenant/{tenantId}/transaction"),
+                new Uri($"{walletHost}api/tenant/{tenantId}/execute-currency-transaction"),
                 null,
                 new
                 {
                     application_id = tenantId,
                     client_id = clientId,
                     client_secret = clientSecret,
-                    data = request
+                    data = new {
+                        transactionType = request.TransactionType,
+                        currency = request.Currency.ToString(),
+                        payeeId = request.PayeeId,
+                        payerId = request.PayerId,
+                        currentBalanceFor = request.CurrentBalanceFor,
+                        amount = request.Amount,
+                        reference = request.Reference,
+                        isCredit = request.IsCredit
+                    }
                 }).ConfigureAwait(false);
 
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
