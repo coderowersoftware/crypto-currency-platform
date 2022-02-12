@@ -113,12 +113,12 @@ namespace CodeRower.CCP.Services
 
             if(!string.IsNullOrWhiteSpace(customerId))
             {
-                queryString = $"{queryString}filter[userId]={customerId}";
+                queryString = $"{queryString}filter[userId]={customerId}&";
             }
 
             if(isCredit.HasValue)
             {
-                queryString = $"{queryString}filter[isCredit]={isCredit.Value}";
+                queryString = $"{queryString}filter[isCredit]={isCredit.Value}&";
             }
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
