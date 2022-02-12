@@ -24,9 +24,11 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpGet("execute-mining")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> EndMiningAsync()
         {
             var minedLicenses = await _miningService.EndMiningAsync().ConfigureAwait(false);
+            List<Transaction> transactions = new List<Transaction>();
             if(minedLicenses?.Any() ?? false)
             {
                 var walletTenant = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
@@ -42,9 +44,11 @@ namespace CodeRower.CCP.Controllers
                         TransactionType = "LOCKED",
                         Currency = Currency.COINS
                     }).ConfigureAwait(false);
+
+                    transactions.Add(creditTran);
                 }
             }
-            return Ok();
+            return transactions.Any() ? Ok(transactions) : NoContent();
         }
 
         [HttpGet("settle-farmed-coins")]
