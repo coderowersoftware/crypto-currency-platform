@@ -220,11 +220,37 @@ namespace CodeRower.CCP.Controllers
             return Ok(listResult);
         }
 
+        [HttpGet("transactiontype-credit-record/me")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetMyCreditsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: true, customerId: customerId).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
+
         [HttpGet("transactiontype-debit-record")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
         public async Task<IActionResult> GetDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
         {
             var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
+
+        [HttpGet("transactiontype-debit-record/me")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetMyDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        {
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false, customerId: customerId).ConfigureAwait(false);
             var listResult = new ListResponse<TransactionTypeBalance>
             {
                 Rows = balances
