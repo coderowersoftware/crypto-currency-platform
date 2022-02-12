@@ -57,5 +57,15 @@ namespace CodeRower.CCP.Controllers
             var result = await _reportsService.GetOverallLicenseDetailsAsync().ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
         }
+
+        [HttpGet("coin-value-history")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<CoinValue>))]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCoinValueHistorysAsync([FromQuery(Name = "Filter[StartDate]")] DateTime? StartDate = null,
+            [FromQuery(Name = "Filter[EndDate]")] DateTime? EndDate = null)
+        {
+            var result = await _reportsService.GetCoinValuesAsync(StartDate, EndDate).ConfigureAwait(false);
+            return result == null ? NoContent() : Ok(result);
+        }
     }
 }

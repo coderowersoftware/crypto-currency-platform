@@ -11,6 +11,7 @@ namespace CodeRower.CCP.Services
         Task<Licenses?> GetLicensesInfoAsync();
         Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync();
         Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId);
+        Task<IEnumerable<CoinValue>> GetCoinValuesAsync(DateTime? startDate, DateTime? endDate);
     }
 
     public class ReportsService : IReportsService
@@ -162,6 +163,46 @@ namespace CodeRower.CCP.Services
                 }
                 return result;
             }
+        }
+
+        public async Task<IEnumerable<CoinValue>> GetCoinValuesAsync(DateTime? startDate, DateTime? endDate)
+        {
+            var query = "get_coin_value_price_history";
+            List<CoinValue> coinValues = new List<CoinValue>();
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    if(startDate.HasValue)
+                        cmd.Parameters.AddWithValue("from_date", NpgsqlDbType.Date, startDate);
+                    if(endDate.HasValue)
+                        cmd.Parameters.AddWithValue("to_date", NpgsqlDbType.Date, endDate);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        CoinValue coinValue = new CoinValue();
+                        coinValue.Date = Convert.ToDateTime(reader["created_at"]);
+                        if(reader["value_usd"] != DBNull.Value)
+                            coinValue.Value = Convert.ToDecimal(reader["value_usd"]);
+                        
+                        coinValues.Add(coinValue);
+                    }
+                }
+            }
+            var total = coinValues.Count();
+            for(int ctr = 1; ctr < total; ctr++)
+            {
+                if(!coinValues[ctr].Value.HasValue
+                    && coinValues[ctr-1].Value.HasValue)
+                {
+                    coinValues[ctr].Value = coinValues[ctr-1].Value;
+                }
+            }
+            return coinValues;
         }
     }
 }
