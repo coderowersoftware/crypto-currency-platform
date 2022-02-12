@@ -76,6 +76,13 @@ namespace CodeRower.CCP.Controllers
             {
                 QueryOptions.OrderBy = defaultOrderBy;
             }
+
+            if(string.IsNullOrWhiteSpace(PayerId))
+                PayerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
+            if(string.IsNullOrWhiteSpace(PayeeId))
+                PayeeId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
             var transactionFilter = new TransactionFilter
             {
                 TransactionType = TransactionType,
@@ -112,6 +119,7 @@ namespace CodeRower.CCP.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Transaction))]
         public async Task<IActionResult> GetTransactionById([FromQuery] string id)
         {
+            // TODO: customer id check
             var transaction = await _transactionsService.GetTransactionById(id).ConfigureAwait(false);
 
             return Ok(transaction);
@@ -147,6 +155,13 @@ namespace CodeRower.CCP.Controllers
             {
                 QueryOptions.OrderBy = defaultOrderBy;
             }
+
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            if(string.IsNullOrWhiteSpace(PayerId))
+                PayerId = customerId;
+
+            if(string.IsNullOrWhiteSpace(PayeeId))
+                PayeeId = customerId;
 
             var transactionFilter = new TransactionFilter
             {
@@ -194,8 +209,8 @@ namespace CodeRower.CCP.Controllers
         [Authorize]
         public async Task<IActionResult> GetMyBalanceByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
         {
-            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, userId).ConfigureAwait(false);
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, customerId).ConfigureAwait(false);
             var listResult = new ListResponse<TransactionTypeBalance>
             {
                 Rows = balances
@@ -203,30 +218,30 @@ namespace CodeRower.CCP.Controllers
             return Ok(listResult);
         }
 
-        [HttpPost("")]
-        public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
-        {
-            var transactionResponse = await _transactionsService.AddTransaction(Request).ConfigureAwait(false);
-            return Ok(transactionResponse);
-        }
+        // [HttpPost("")]
+        // public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
+        // {
+        //     var transactionResponse = await _transactionsService.AddTransaction(Request).ConfigureAwait(false);
+        //     return Ok(transactionResponse);
+        // }
 
-        [HttpPost("wallet")]
-        public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequestData data)
-        {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            var transactionResponse = await _transactionsService.InsertTransactions(data.Data).ConfigureAwait(false);
-            sw.Stop();
+        // [HttpPost("wallet")]
+        // public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequestData data)
+        // {
+        //     Stopwatch sw = new Stopwatch();
+        //     sw.Start();
+        //     var transactionResponse = await _transactionsService.InsertTransactions(data.Data).ConfigureAwait(false);
+        //     sw.Stop();
 
-            _logger.Log(LogLevel.Information, $"time for wallet transactions is {sw.ElapsedMilliseconds}");
-            return Ok(transactionResponse);
-        }
+        //     _logger.Log(LogLevel.Information, $"time for wallet transactions is {sw.ElapsedMilliseconds}");
+        //     return Ok(transactionResponse);
+        // }
 
-        [HttpPost("wallet-balance")]
-        public async Task<IActionResult> GetBalanceByIdentifierForCurrency([FromQuery, Required] string identifier, [FromQuery, Required] string currency)
-        {
-            var transactionResponse = await _transactionsService.GetBalanceByIdentifierForCurrency(identifier, currency).ConfigureAwait(false);
-            return Ok(transactionResponse);
-        }
+        // [HttpPost("wallet-balance")]
+        // public async Task<IActionResult> GetBalanceByIdentifierForCurrency([FromQuery, Required] string identifier, [FromQuery, Required] string currency)
+        // {
+        //     var transactionResponse = await _transactionsService.GetBalanceByIdentifierForCurrency(identifier, currency).ConfigureAwait(false);
+        //     return Ok(transactionResponse);
+        // }
     }
 }

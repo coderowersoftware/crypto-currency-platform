@@ -27,14 +27,13 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] CoinsTransferRequest TransferRequest)
-        {
-            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] UnlockedTransferRequest TransferRequest)
+        { 
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<Transaction> transactions = new List<Transaction>();
 
             var unlockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "UNLOCKED" }, userId)
+                                .GetBalancesByTransactionTypes(new List<string> { "UNLOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -49,9 +48,9 @@ namespace CodeRower.CCP.Controllers
             {
                 Amount = TransferRequest.Amount,
                 IsCredit = false,
-                Reference = $"Transfer to payee {TransferRequest.ToCustomerId}",
+                Reference = $"Transfer to payee {customerId}",
                 PayerId = customerId,
-                PayeeId = TransferRequest.ToCustomerId,
+                PayeeId = customerId,
                 TransactionType = "UNLOCKED",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
@@ -67,7 +66,7 @@ namespace CodeRower.CCP.Controllers
                     IsCredit = true,
                     Reference = debitTran.Id.Value.ToString(),
                     PayerId = customerId,
-                    PayeeId = TransferRequest.ToCustomerId,
+                    PayeeId = customerId,
                     TransactionType = "WALLET",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
@@ -85,12 +84,11 @@ namespace CodeRower.CCP.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferWalletCoinsAsync([FromBody, Required] CoinsTransferRequest TransferRequest)
         {
-            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<Transaction> transactions = new List<Transaction>();
 
             var unlockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, userId)
+                                .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -151,7 +149,7 @@ namespace CodeRower.CCP.Controllers
             }
 
             var lockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, userId)
+                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -218,7 +216,7 @@ namespace CodeRower.CCP.Controllers
             }
 
             var lockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, userId)
+                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 

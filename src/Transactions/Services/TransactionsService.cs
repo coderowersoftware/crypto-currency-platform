@@ -21,7 +21,7 @@ namespace CodeRower.CCP.Services
         Task<List<AutoCompleteResponse>> GetTransactionTypes();
         Task<List<AutoCompleteResponse>> GetCurrencies();
         Task<Transaction> GetTransactionById(string id);
-        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string userId = null);
+        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string customerId = null);
     }
 
     public class TransactionsService : ITransactionsService
@@ -96,7 +96,7 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
-        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string userId = null)
+        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string customerId = null)
         {
             var queryString = string.Empty;
 
@@ -108,9 +108,9 @@ namespace CodeRower.CCP.Services
                 }
             }
 
-            if(!string.IsNullOrWhiteSpace(userId))
+            if(!string.IsNullOrWhiteSpace(customerId))
             {
-                queryString = $"{queryString}filter[userId]={userId}";
+                queryString = $"{queryString}filter[userId]={customerId}";
             }
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;

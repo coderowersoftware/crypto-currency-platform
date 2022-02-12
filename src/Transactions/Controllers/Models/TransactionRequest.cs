@@ -147,6 +147,7 @@ namespace CodeRower.CCP.Controllers.Models
         /// Gets or Sets PayerId
         /// </summary>
         [DataMember(Name = "payerId", EmitDefaultValue = false)]
+        [JsonIgnore]
         public string PayerId { get; set; }
 
         /// <summary>
