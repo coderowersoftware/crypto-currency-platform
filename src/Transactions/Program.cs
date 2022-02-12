@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Swashbuckle.AspNetCore.Filters;
 using Transactions.Facade;
-using Transactions.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json",optional:false,reloadOnChange:true);

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using CodeRower.CCP.Controllers.Models.Mining;
-using Transactions.Services;
+using CodeRower.CCP.Services;
 
 namespace CodeRower.CCP.Controllers
 {
@@ -44,9 +44,9 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpGet("end/0fd480af-e9f6-45ab-bd56-afe94e7b6ce1")]
-        public async Task<IActionResult> EndMiningAsync()
+        public async Task<IActionResult> FinishMiningAsync()
         {
-            await _miningService.EndMiningAsync().ConfigureAwait(false);
+            await _miningService.FinishMiningAsync().ConfigureAwait(false);
             
             return StatusCode((int) HttpStatusCode.OK);
         }

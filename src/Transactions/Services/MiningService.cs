@@ -5,7 +5,7 @@ using CodeRower.CCP.Controllers.Models;
 using CodeRower.CCP.Controllers.Models.Enums;
 using License = CodeRower.CCP.Controllers.Models.License;
 
-namespace Transactions.Services
+namespace CodeRower.CCP.Services
 {
     public interface IMiningService
     {
@@ -14,7 +14,10 @@ namespace Transactions.Services
         Task ActivateLicenseAsync(Guid licenseId, string customerId);
         Task RegisterLicense(LicenseRequest data,string customerId, string userId);
         Task<string> AddLicense(LicenseBuyRequest data, string userId);
-        Task EndMiningAsync();
+
+        [Obsolete("To be removed later")]
+        Task FinishMiningAsync();
+        Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync();
     }
 
     public class MiningService : IMiningService
@@ -166,7 +169,7 @@ namespace Transactions.Services
             }
         }
 
-        public async Task EndMiningAsync()
+        public async Task FinishMiningAsync()
         {
             var query = "finishmining";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -179,6 +182,28 @@ namespace Transactions.Services
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
+        }
+
+        public async Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync()
+        {
+            var query = "endmining";
+            var customerIdsMined = new List<(string CustomerId, string LicenseId)>();
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while(reader.Read())
+                    {
+                        var detail = (Convert.ToString(reader["customerid"]), Convert.ToString(reader["licenseid"]));
+                        customerIdsMined.Add(detail);
+                    }
+                }
+            }
+            return customerIdsMined;
         }
     }
 }

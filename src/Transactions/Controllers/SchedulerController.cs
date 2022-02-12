@@ -13,12 +13,38 @@ namespace CodeRower.CCP.Controllers
     public class SchedulerController : Controller
     {
         private readonly ITransactionsService _transactionsService;
+        private readonly IMiningService _miningService;
         private readonly IConfiguration _configuration;
 
-        public SchedulerController(ITransactionsService transactionsService, IConfiguration configuration)
+        public SchedulerController(ITransactionsService transactionsService, IMiningService miningService, IConfiguration configuration)
         {
             _transactionsService = transactionsService;
+            _miningService = miningService;
             _configuration = configuration;
+        }
+
+        [HttpGet("end-mining")]
+        public async Task<IActionResult> EndMiningAsync()
+        {
+            var minedLicenses = await _miningService.EndMiningAsync().ConfigureAwait(false);
+            if(minedLicenses?.Any() ?? false)
+            {
+                var walletTenant = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+                foreach(var license in minedLicenses)
+                {
+                    var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    {
+                        Amount = 1m,
+                        IsCredit = true,
+                        Reference = license.LicenseId,
+                        PayerId = walletTenant,
+                        PayeeId = license.CustomerId,
+                        TransactionType = "LOCKED",
+                        Currency = Currency.COINS
+                    }).ConfigureAwait(false);
+                }
+            }
+            return Ok();
         }
 
         [HttpGet("settle-farmed-coins")]

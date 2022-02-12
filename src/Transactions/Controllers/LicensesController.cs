@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Swashbuckle.AspNetCore.Annotations;
 using CodeRower.CCP.Controllers.Models;
-using Transactions.Services;
+using CodeRower.CCP.Services;
 
 namespace CodeRower.CCP.Controllers
 {
