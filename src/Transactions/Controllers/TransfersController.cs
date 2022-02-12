@@ -120,8 +120,8 @@ namespace CodeRower.CCP.Controllers
                     Amount = TransferRequest.Amount,
                     IsCredit = true,
                     Reference = debitTran.transactionid,
-                    PayerId = customerId,
-                    PayeeId = TransferRequest.ToCustomerId,
+                    PayerId = TransferRequest.ToCustomerId,
+                    PayeeId = customerId,
                     TransactionType = "WALLET",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);

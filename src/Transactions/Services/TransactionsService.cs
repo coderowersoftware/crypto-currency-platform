@@ -369,9 +369,9 @@ namespace CodeRower.CCP.Services
         public async Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("CCCWalletSecret").Value;
+            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
 
             var appTenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
 
@@ -382,16 +382,16 @@ namespace CodeRower.CCP.Services
                     && appTenantInfo.FarmingDailyUnlockPercent.HasValue)
                 {
                     executeData = new {
-                        FarmingDailyUnlockPercent = appTenantInfo.FarmingDailyUnlockPercent,
-                        Currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS
+                        farmingDailyUnlockPercent = appTenantInfo.FarmingDailyUnlockPercent,
+                        currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS.ToString()
                     };
                 }
                 else if("MINT".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
                     && appTenantInfo.MintRewardsDailyPercent.HasValue)
                 {
                     executeData = new {
-                        MintRewardsDailyPercent = appTenantInfo.MintRewardsDailyPercent,
-                        Currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS
+                        mintRewardsDailyPercent = appTenantInfo.MintRewardsDailyPercent,
+                        currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS.ToString()
                     };
                 }
                 
