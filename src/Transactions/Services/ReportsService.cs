@@ -106,6 +106,23 @@ namespace CodeRower.CCP.Services
             var licenseInfo = GetLicensesInfoAsync();
             var farmMintWalletBalances = _transactionsService.GetBalancesByTransactionTypes(new List<string> { "FARM", "MINT", "WALLET" });
 
+            var query = "get_overall_licenses_details";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        result.LicenseUsers = Convert.ToInt32(reader["total_license_users"]);
+                        result.PoolLicenseMiners = Convert.ToInt32(reader["total_pool_license_miners"]);
+                        result.ActiveLicenseMiners = Convert.ToInt32(reader["total_active_license_miners"]);
+                    }
+                }
+            }
+
             var licenseInfoResult = await licenseInfo.ConfigureAwait(false);
             result.Total = licenseInfoResult?.Total ?? 0;
             result.Unutilized = licenseInfoResult?.Unutilized ?? 0;
