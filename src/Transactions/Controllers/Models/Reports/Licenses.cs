@@ -2,12 +2,14 @@ namespace CodeRower.CCP.Controllers.Models.Reports
 {
     public class Licenses
     {
-        public int TotalLicenses { get; set; }
+        public int Total { get; set; }
 
-        public int UnutilizedLicenses { get; set; }
+        public int Unutilized { get; set; }
 
-        public int LicensesUsed { get; set; }
+        public int Used { get; set; }
 
-        public int LicensesRemaining { get; set; }
+        public int Remaining { get; set; }
+
+        public int Purchased { get; set; }
     }
 }

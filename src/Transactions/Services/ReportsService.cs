@@ -89,10 +89,10 @@ namespace CodeRower.CCP.Services
                     while (reader.Read())
                     {
                         result = new Licenses();
-                        result.TotalLicenses = Convert.ToInt32(reader["total_licenses"]);
-                        result.UnutilizedLicenses = Convert.ToInt32(reader["unutilized_licenses"]);
-                        result.LicensesUsed = Convert.ToInt32(reader["used_licenses"]);
-                        result.LicensesRemaining = Convert.ToInt32(reader["remaining_licenses"]);
+                        result.Total = Convert.ToInt32(reader["total_licenses"]);
+                        result.Unutilized = Convert.ToInt32(reader["unutilized_licenses"]);
+                        result.Used = Convert.ToInt32(reader["used_licenses"]);
+                        result.Remaining = Convert.ToInt32(reader["remaining_licenses"]);
                     }
                 }
                 return result;
