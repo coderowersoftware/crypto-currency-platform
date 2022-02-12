@@ -14,5 +14,8 @@ namespace CodeRower.CCP.Controllers.Models.Reports
         public decimal CoinsInFarming { get; set; }
         public decimal CoinsInMinting { get; set; }
         public decimal CoinsInWallet { get; set; }
+        public int LicenseUsers { get; internal set; }
+        public int PoolLicenseMiners { get; internal set; }
+        public int ActiveLicenseMiners { get; internal set; }
     }
 }
