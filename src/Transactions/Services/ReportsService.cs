@@ -93,6 +93,7 @@ namespace CodeRower.CCP.Services
                         result.Unutilized = Convert.ToInt32(reader["unutilized_licenses"]);
                         result.Used = Convert.ToInt32(reader["used_licenses"]);
                         result.Remaining = Convert.ToInt32(reader["remaining_licenses"]);
+                        result.Purchased = Convert.ToInt32(reader["total_purchased"]);
                     }
                 }
                 return result;
