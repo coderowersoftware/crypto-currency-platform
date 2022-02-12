@@ -201,7 +201,11 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> GetBalancesByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
         {
             var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes).ConfigureAwait(false);
-            return Ok(balances);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
         }
 
         [HttpGet("transactiontypebalances/me")]
