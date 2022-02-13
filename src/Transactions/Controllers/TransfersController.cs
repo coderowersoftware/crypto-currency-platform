@@ -129,6 +129,7 @@ namespace CodeRower.CCP.Controllers
                     PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
                     PayeeId = TransferRequest.ToCustomerId,
                     TransactionType = "WALLET",
+                    Remark = $"Deducting fee {walletTransferFee}",
                     Currency = Currency.COINS
                 }).ConfigureAwait(false);
 
