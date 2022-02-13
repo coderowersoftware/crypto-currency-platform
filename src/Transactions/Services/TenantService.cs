@@ -43,6 +43,8 @@ namespace CodeRower.CCP.Services
                         tenantInfo.MintRewardsDailyPercent = Convert.ToDecimal(reader["mint_rewards_daily_percent"]);
                         if(reader["farming_daily_unlock_percent"] != DBNull.Value)
                             tenantInfo.FarmingDailyUnlockPercent = Convert.ToDecimal(reader["farming_daily_unlock_percent"]);
+                        if(reader["fee_transfer_to_wallet"] != DBNull.Value)
+                            tenantInfo.WalletTransferFee = Convert.ToDecimal(reader["fee_transfer_to_wallet"]);
                     }
                 }
                 return tenantInfo;

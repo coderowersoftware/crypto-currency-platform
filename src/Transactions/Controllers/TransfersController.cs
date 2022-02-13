@@ -17,13 +17,15 @@ namespace CodeRower.CCP.Controllers
     public class TransfersController : Controller
     {
         private readonly ITransactionsService _transactionsService;
+        private readonly ITenantService _tenantService;
         private readonly IUsersService _usersService;
         private readonly IConfiguration _configuration;
 
-        public TransfersController(ITransactionsService transactionsService, IUsersService usersService, IConfiguration configuration)
+        public TransfersController(ITransactionsService transactionsService, IUsersService usersService, ITenantService tenantService, IConfiguration configuration)
         {
             _transactionsService = transactionsService;
             _usersService = usersService;
+            _tenantService = tenantService;
             _configuration = configuration;
         }
 
@@ -93,8 +95,10 @@ namespace CodeRower.CCP.Controllers
                                 .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
+            
+            var walletTransferFee = (await _tenantService.GetTenantInfo().ConfigureAwait(false))?.WalletTransferFee ?? 0;
 
-            if (TransferRequest.Amount > unlockedBalance)
+            if (walletTransferFee >= unlockedBalance || TransferRequest.Amount > unlockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
                 return BadRequest(ModelState);
@@ -119,7 +123,7 @@ namespace CodeRower.CCP.Controllers
                 // Credit to other account
                 var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
                 {
-                    Amount = TransferRequest.Amount,
+                    Amount = TransferRequest.Amount - walletTransferFee,
                     IsCredit = true,
                     Reference = $"Received from payer {customerId}",
                     PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
