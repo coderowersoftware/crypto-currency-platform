@@ -98,9 +98,18 @@ namespace CodeRower.CCP.Controllers
             
             var walletTransferFee = (await _tenantService.GetTenantInfo().ConfigureAwait(false))?.WalletTransferFee ?? 0;
 
+            if(TransferRequest.Amount <= walletTransferFee)
+            {
+                ModelState.AddModelError(nameof(TransferRequest.Amount), "Transfer amount should be greater than minimum transfer amount.");
+            }
+
             if (walletTransferFee >= unlockedBalance || TransferRequest.Amount > unlockedBalance)
             {
-                ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+                ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
+            }
+
+            if(!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
             }
 
