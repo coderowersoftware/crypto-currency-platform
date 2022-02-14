@@ -111,12 +111,12 @@ namespace CodeRower.CCP.Services
                 }
             }
 
-            if(!string.IsNullOrWhiteSpace(customerId))
+            if (!string.IsNullOrWhiteSpace(customerId))
             {
                 queryString = $"{queryString}filter[userId]={customerId}&";
             }
 
-            if(isCredit.HasValue)
+            if (isCredit.HasValue)
             {
                 queryString = $"{queryString}filter[isCredit]={isCredit.Value}&";
             }
@@ -139,7 +139,21 @@ namespace CodeRower.CCP.Services
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
 
-            return JsonConvert.DeserializeObject<List<TransactionTypeBalance>>(responseMessage);
+            var result = JsonConvert.DeserializeObject<List<TransactionTypeBalance>>(responseMessage);
+
+            if (result?.Count > 0)
+            {
+
+                string[] arr = new string[3] { "WALLET", "LOCKED", "UNLOCKED" };
+                result.Add(new TransactionTypeBalance
+                {
+                    TransactionType = "TOTAL",
+                    Amount = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.Amount : 0),
+                    VirtualValue = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.VirtualValue : 0),
+                    Currency = result.First().Currency
+                });
+            }
+            return result;
         }
 
 
@@ -149,7 +163,7 @@ namespace CodeRower.CCP.Services
             var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
             var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
             var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
-            
+
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{walletHost}api/tenant/{tenantId}/execute-currency-transaction"),
                 null,
@@ -158,7 +172,8 @@ namespace CodeRower.CCP.Services
                     application_id = tenantId,
                     client_id = clientId,
                     client_secret = clientSecret,
-                    data = new {
+                    data = new
+                    {
                         transactionType = request.TransactionType,
                         currency = request.Currency.ToString(),
                         payeeId = request.PayeeId,
@@ -375,27 +390,29 @@ namespace CodeRower.CCP.Services
 
             var appTenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
 
-            if(!string.IsNullOrWhiteSpace(typeOfExecution))
+            if (!string.IsNullOrWhiteSpace(typeOfExecution))
             {
                 dynamic executeData = null;
-                if("FARM".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
+                if ("FARM".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
                     && appTenantInfo.FarmingDailyUnlockPercent.HasValue)
                 {
-                    executeData = new {
+                    executeData = new
+                    {
                         farmingDailyUnlockPercent = appTenantInfo.FarmingDailyUnlockPercent,
                         currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS.ToString()
                     };
                 }
-                else if("MINT".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
+                else if ("MINT".Equals(typeOfExecution, StringComparison.InvariantCultureIgnoreCase)
                     && appTenantInfo.MintRewardsDailyPercent.HasValue)
                 {
-                    executeData = new {
+                    executeData = new
+                    {
                         mintRewardsDailyPercent = appTenantInfo.MintRewardsDailyPercent,
                         currency = CodeRower.CCP.Controllers.Models.Enums.Currency.COINS.ToString()
                     };
                 }
-                
-                if(executeData != null)
+
+                if (executeData != null)
                 {
                     await _restApiFacade.SendAsync(HttpMethod.Post,
                         new Uri($"{walletHost}api/tenant/{tenantId}/{relativeUri}"),
