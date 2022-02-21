@@ -77,10 +77,10 @@ namespace CodeRower.CCP.Controllers
                 QueryOptions.OrderBy = defaultOrderBy;
             }
 
-            if(string.IsNullOrWhiteSpace(PayerId))
+            if (string.IsNullOrWhiteSpace(PayerId))
                 PayerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
-            if(string.IsNullOrWhiteSpace(PayeeId))
+            if (string.IsNullOrWhiteSpace(PayeeId))
                 PayeeId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
             var transactionFilter = new TransactionFilter
@@ -157,10 +157,10 @@ namespace CodeRower.CCP.Controllers
             }
 
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            if(string.IsNullOrWhiteSpace(PayerId))
+            if (string.IsNullOrWhiteSpace(PayerId))
                 PayerId = customerId;
 
-            if(string.IsNullOrWhiteSpace(PayeeId))
+            if (string.IsNullOrWhiteSpace(PayeeId))
                 PayeeId = customerId;
 
             var transactionFilter = new TransactionFilter
@@ -198,59 +198,9 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("transactiontype-balances")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
-        public async Task<IActionResult> GetBalancesByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        public async Task<IActionResult> GetBalancesByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
         {
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes).ConfigureAwait(false);
-            var listResult = new ListResponse<TransactionTypeBalance>
-            {
-                Rows = balances
-            };
-            return Ok(listResult);
-        }
-
-        [HttpGet("transactiontype-credit-record")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
-        public async Task<IActionResult> GetCreditsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
-        {
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: true).ConfigureAwait(false);
-            var listResult = new ListResponse<TransactionTypeBalance>
-            {
-                Rows = balances
-            };
-            return Ok(listResult);
-        }
-
-        [HttpGet("transactiontype-credit-record/me")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
-        public async Task<IActionResult> GetMyCreditsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
-        {
-            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: true, customerId: customerId).ConfigureAwait(false);
-            var listResult = new ListResponse<TransactionTypeBalance>
-            {
-                Rows = balances
-            };
-            return Ok(listResult);
-        }
-
-        [HttpGet("transactiontype-debit-record")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
-        public async Task<IActionResult> GetDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
-        {
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false).ConfigureAwait(false);
-            var listResult = new ListResponse<TransactionTypeBalance>
-            {
-                Rows = balances
-            };
-            return Ok(listResult);
-        }
-
-        [HttpGet("transactiontype-debit-record/me")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
-        public async Task<IActionResult> GetMyDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
-        {
-            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false, customerId: customerId).ConfigureAwait(false);
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
             var listResult = new ListResponse<TransactionTypeBalance>
             {
                 Rows = balances
@@ -261,10 +211,10 @@ namespace CodeRower.CCP.Controllers
         [HttpGet("transactiontype-balances/me")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
         [Authorize]
-        public async Task<IActionResult> GetMyBalanceByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes)
+        public async Task<IActionResult> GetMyBalanceByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, customerId).ConfigureAwait(false);
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, customerId: customerId, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
             var listResult = new ListResponse<TransactionTypeBalance>
             {
                 Rows = balances
@@ -272,30 +222,55 @@ namespace CodeRower.CCP.Controllers
             return Ok(listResult);
         }
 
-        // [HttpPost("")]
-        // public async Task<IActionResult> AddTransaction([FromBody, Required] TransactionRequest Request)
-        // {
-        //     var transactionResponse = await _transactionsService.AddTransaction(Request).ConfigureAwait(false);
-        //     return Ok(transactionResponse);
-        // }
+        [HttpGet("transactiontype-credit-record")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetCreditsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
+        {
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: true, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
 
-        // [HttpPost("wallet")]
-        // public async Task<IActionResult> AddWalletTransaction([FromBody, Required] TransactionRequestData data)
-        // {
-        //     Stopwatch sw = new Stopwatch();
-        //     sw.Start();
-        //     var transactionResponse = await _transactionsService.InsertTransactions(data.Data).ConfigureAwait(false);
-        //     sw.Stop();
+        [HttpGet("transactiontype-credit-record/me")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetMyCreditsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
+        {
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: true, customerId: customerId, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
 
-        //     _logger.Log(LogLevel.Information, $"time for wallet transactions is {sw.ElapsedMilliseconds}");
-        //     return Ok(transactionResponse);
-        // }
+        [HttpGet("transactiontype-debit-record")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
+        {
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
 
-        // [HttpPost("wallet-balance")]
-        // public async Task<IActionResult> GetBalanceByIdentifierForCurrency([FromQuery, Required] string identifier, [FromQuery, Required] string currency)
-        // {
-        //     var transactionResponse = await _transactionsService.GetBalanceByIdentifierForCurrency(identifier, currency).ConfigureAwait(false);
-        //     return Ok(transactionResponse);
-        // }
+        [HttpGet("transactiontype-debit-record/me")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
+        public async Task<IActionResult> GetMyDebitsByTransactionTypes([FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
+        {
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var balances = await _transactionsService.GetBalancesByTransactionTypes(TransactionTypes, isCredit: false, customerId: customerId, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
+            var listResult = new ListResponse<TransactionTypeBalance>
+            {
+                Rows = balances
+            };
+            return Ok(listResult);
+        }
+
     }
 }
