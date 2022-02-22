@@ -153,14 +153,14 @@ namespace CodeRower.CCP.Controllers
 
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             var walletTransferFeePct = tenantInfo?.WalletToWalletFeePct ?? 0;
-            var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
+            //var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
             var walletTransferFeeAmount = TransferRequest.Amount * walletTransferFeePct / 100;
             var amountTobeDeducted = TransferRequest.Amount + walletTransferFeeAmount;
 
-            if (TransferRequest.Amount <= minWithDrawalLimit)
-            {
-                ModelState.AddModelError(nameof(TransferRequest.Amount), "Transfer amount should be greater than minimum transfer amount.");
-            }
+            //if (TransferRequest.Amount <= minWithDrawalLimit)
+            //{
+            //    ModelState.AddModelError(nameof(TransferRequest.Amount), "Transfer amount should be greater than minimum transfer amount.");
+            //}
 
             if (amountTobeDeducted > walletBalance)
             {
