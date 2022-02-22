@@ -59,7 +59,7 @@ namespace CodeRower.CCP.Services
             // List<Task> transactionTypeBalances = new List<Task>();
             foreach(var miner in topMiners)
             {
-                var amounts = await _transactionsService.GetBalancesByTransactionTypes(new List<string> { "LOCKED", "UNLOCKED" }, miner.CustomerId).ConfigureAwait(false);
+                var amounts = await _transactionsService.GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED", "UNLOCKED" }, miner.CustomerId).ConfigureAwait(false);
                 miner.LockedAmount = amounts?.FirstOrDefault(amt => "LOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
                 miner.UnlockedAmount = amounts?.FirstOrDefault(amt => "UNLOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
                 // transactionTypeBalances.Add(_transactionsService.GetBalancesByTransactionTypes(new List<string> { "LOCKED", "UNLOCKED" }, miner.UserId)
@@ -106,7 +106,7 @@ namespace CodeRower.CCP.Services
         {
             OverallLicenseDetails? result = new OverallLicenseDetails();
             var licenseInfo = GetLicensesInfoAsync(tenantId);
-            var farmMintWalletBalances = _transactionsService.GetBalancesByTransactionTypes(new List<string> { "FARM", "MINT", "WALLET" });
+            var farmMintWalletBalances = _transactionsService.GetBalancesByTransactionTypes(tenantId, new List<string> { "FARM", "MINT", "WALLET" });
 
             var query = "get_overall_licenses_details";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))

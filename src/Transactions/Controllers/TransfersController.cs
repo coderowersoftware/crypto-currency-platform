@@ -40,7 +40,7 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             var unlockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "UNLOCKED" }, customerId)
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "UNLOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -56,7 +56,7 @@ namespace CodeRower.CCP.Controllers
             }
 
             // Debit from account
-            var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+            var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
                 Amount = TransferRequest.Amount,
                 IsCredit = false,
@@ -72,13 +72,13 @@ namespace CodeRower.CCP.Controllers
                 transactions.Add(debitTran);
 
                 // Debit from account
-                var debitFeeTran = await _transactionsService.AddTransaction(new TransactionRequest
+                var debitFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
                     Amount = unlockToWalletFeeAmount,
                     IsCredit = false,
                     Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
                     PayerId = customerId,
-                    PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                    PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
                     TransactionType = "UNLOCKED",
                     Currency = Currency.COINS,
                     BaseTransaction = debitTran?.transactionid
@@ -89,13 +89,13 @@ namespace CodeRower.CCP.Controllers
                     transactions.Add(debitFeeTran);
 
                     // Credit fee
-                    var creditFeeTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
                         Amount = unlockToWalletFeeAmount,
                         IsCredit = true,
                         Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
-                        PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
-                        PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                        PayerId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                        PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
                         TransactionType = "UNLOCKED_WALLET_FEE",
                         Currency = Currency.COINS,
                         BaseTransaction = debitTran?.transactionid
@@ -106,7 +106,7 @@ namespace CodeRower.CCP.Controllers
                         transactions.Add(creditFeeTran);
 
                         // Credit to other account
-                        var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                        var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                         {
                             Amount = TransferRequest.Amount,
                             IsCredit = true,
@@ -147,7 +147,7 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             var walletBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, customerId)
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -173,13 +173,13 @@ namespace CodeRower.CCP.Controllers
             }
 
             // Debit from account
-            var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+            var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
                 Amount = TransferRequest.Amount,
                 IsCredit = false,
                 Reference = $"Transfer to payee {TransferRequest.ToCustomerId}",
                 PayerId = customerId,
-                PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
                 TransactionType = "WALLET",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
@@ -189,13 +189,13 @@ namespace CodeRower.CCP.Controllers
                 transactions.Add(debitTran);
 
                 // Debit fee from account
-                var debitFeeTran = await _transactionsService.AddTransaction(new TransactionRequest
+                var debitFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
                     Amount = walletTransferFeeAmount,
                     IsCredit = false,
                     Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
                     PayerId = customerId,
-                    PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                    PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
                     TransactionType = "WALLET",
                     Currency = Currency.COINS,
                     BaseTransaction = debitTran?.transactionid
@@ -206,13 +206,13 @@ namespace CodeRower.CCP.Controllers
                     transactions.Add(debitFeeTran);
 
                     // Credit fee to tenant
-                    var creditFeeTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
                         Amount = walletTransferFeeAmount,
                         IsCredit = true,
                         Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
-                        PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
-                        PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                        PayerId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                        PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
                         TransactionType = "WALLET_WALLET_FEE",
                         Currency = Currency.COINS,
                         BaseTransaction = debitTran?.transactionid
@@ -222,12 +222,12 @@ namespace CodeRower.CCP.Controllers
                     {
                         transactions.Add(creditFeeTran);
                         // Credit to other account
-                        var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                        var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                         {
                             Amount = TransferRequest.Amount,
                             IsCredit = true,
                             Reference = $"Received from payer {customerId}",
-                            PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                            PayerId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
                             PayeeId = toCustomerId,
                             TransactionType = "WALLET",
                             Remark = $"Wallet transfer received from {customerId}",
@@ -260,7 +260,7 @@ namespace CodeRower.CCP.Controllers
             }
 
             var lockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, customerId)
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -277,7 +277,7 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             // Debit locked
-            var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+            var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
                 Amount = MintRequest.Amount,
                 IsCredit = false,
@@ -293,7 +293,7 @@ namespace CodeRower.CCP.Controllers
                 transactions.Add(debitTran);
 
                 // Credit to mint
-                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
                     Amount = MintRequest.Amount,
                     IsCredit = true,
@@ -327,7 +327,7 @@ namespace CodeRower.CCP.Controllers
             }
 
             var lockedBalance = (await _transactionsService
-                                .GetBalancesByTransactionTypes(new List<string> { "LOCKED" }, customerId)
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
@@ -344,7 +344,7 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             // Debit locked
-            var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+            var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
                 Amount = FarmRequest.Amount,
                 IsCredit = false,
@@ -360,7 +360,7 @@ namespace CodeRower.CCP.Controllers
                 transactions.Add(debitTran);
 
                 // Credit to mint
-                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
                     Amount = FarmRequest.Amount,
                     IsCredit = true,

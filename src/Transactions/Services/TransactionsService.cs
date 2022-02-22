@@ -10,14 +10,14 @@ namespace CodeRower.CCP.Services
 {
     public interface ITransactionsService
     {
-        Task<WalletTransactionResponse> AddTransaction(TransactionRequest request);
-        Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report);
-        Task<dynamic> GetCurrentBalance();
-        Task<List<AutoCompleteResponse>> GetTransactionTypes();
-        Task<List<AutoCompleteResponse>> GetCurrencies();
-        Task<Transaction> GetTransactionById(string id);
-        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
-        Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution, Guid tenantId);
+        Task<WalletTransactionResponse> AddTransaction(Guid tenantId, TransactionRequest request);
+        Task<TransactionsRoot> GetTransactionReport(Guid tenantId, TransactionFilter? filter, QueryOptions? queryOptions, bool report);
+        Task<dynamic> GetCurrentBalance(Guid tenantId);
+        Task<List<AutoCompleteResponse>> GetTransactionTypes(Guid tenantId);
+        Task<List<AutoCompleteResponse>> GetCurrencies(Guid tenantId);
+        Task<Transaction> GetTransactionById(Guid tenantId, string id);
+        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
+        Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
     }
 
     public class TransactionsService : ITransactionsService
@@ -33,18 +33,18 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<List<AutoCompleteResponse>> GetTransactionTypes()
+        public async Task<List<AutoCompleteResponse>> GetTransactionTypes(Guid tenantId)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{walletHost}api/tenant/{tenantId}/transaction-type/get-autocomplete"),
+                new Uri($"{walletHost}api/tenant/{walletTenantId}/transaction-type/get-autocomplete"),
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
@@ -52,18 +52,18 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
         }
 
-        public async Task<List<AutoCompleteResponse>> GetCurrencies()
+        public async Task<List<AutoCompleteResponse>> GetCurrencies(Guid tenantId)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{walletHost}api/tenant/{tenantId}/currency/get-autocomplete"),
+                new Uri($"{walletHost}api/tenant/{walletTenantId}/currency/get-autocomplete"),
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
@@ -71,14 +71,14 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<List<AutoCompleteResponse>>(responseMessage);
         }
 
-        public async Task<Transaction> GetTransactionById(string id)
+        public async Task<Transaction> GetTransactionById(Guid tenantId, string id)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
 
-            Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction/{id}");
+            Uri uri = new Uri($"{walletHost}api/tenant/{walletTenantId}/get-transaction/{id}");
 
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
@@ -86,7 +86,7 @@ namespace CodeRower.CCP.Services
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
@@ -94,7 +94,8 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
-        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null)
+        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes,
+            string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null)
         {
             var queryString = string.Empty;
 
@@ -127,11 +128,11 @@ namespace CodeRower.CCP.Services
             }
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
 
-            Uri uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-balances-for-transaction-types?{queryString}");
+            Uri uri = new Uri($"{walletHost}api/tenant/{walletTenantId}/get-balances-for-transaction-types?{queryString}");
 
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
@@ -139,7 +140,7 @@ namespace CodeRower.CCP.Services
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
@@ -162,19 +163,19 @@ namespace CodeRower.CCP.Services
         }
 
 
-        public async Task<WalletTransactionResponse> AddTransaction(TransactionRequest request)
+        public async Task<WalletTransactionResponse> AddTransaction(Guid tenantId, TransactionRequest request)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{walletHost}api/tenant/{tenantId}/execute-currency-transaction"),
+                new Uri($"{walletHost}api/tenant/{walletTenantId}/execute-currency-transaction"),
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret,
                     data = new
@@ -193,7 +194,7 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<WalletTransactionResponse>(responseMessage);
         }
 
-        public async Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report)
+        public async Task<TransactionsRoot> GetTransactionReport(Guid tenantId, TransactionFilter? filter, QueryOptions? queryOptions, bool report)
         {
             var queryString = string.Empty;
 
@@ -266,18 +267,18 @@ namespace CodeRower.CCP.Services
             queryString = $"{queryString}orderBy={queryOptions?.OrderBy}&";
 
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
 
             Uri uri = null;
             if (report)
             {
-                uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction-report?{queryString}");
+                uri = new Uri($"{walletHost}api/tenant/{walletTenantId}/get-transaction-report?{queryString}");
             }
             else
             {
-                uri = new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction?{queryString}");
+                uri = new Uri($"{walletHost}api/tenant/{walletTenantId}/get-transaction?{queryString}");
             }
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
@@ -285,7 +286,7 @@ namespace CodeRower.CCP.Services
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
@@ -293,18 +294,19 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<TransactionsRoot>(responseMessage, new StringEnumConverter());
         }
 
-        public async Task<dynamic> GetCurrentBalance()
+        public async Task<dynamic> GetCurrentBalance(Guid tenantId)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
+
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{walletHost}api/tenant/{tenantId}/get-transaction-report"),
+                new Uri($"{walletHost}api/tenant/{walletTenantId}/get-transaction-report"),
                 null,
                 new
                 {
-                    application_id = tenantId,
+                    application_id = walletTenantId,
                     client_id = clientId,
                     client_secret = clientSecret
                 }).ConfigureAwait(false);
@@ -312,12 +314,12 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<dynamic>(responseMessage, new StringEnumConverter());
         }
 
-        public async Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution, Guid tenantId)
+        public async Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var walletTenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
-            var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
-            var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
+            var walletTenantId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var clientId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletClientId").Value;
+            var clientSecret = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletSecret").Value;
 
             var appTenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
 

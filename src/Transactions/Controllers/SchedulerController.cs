@@ -32,10 +32,10 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
             if(minedLicenses?.Any() ?? false)
             {
-                var walletTenant = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+                var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
                 foreach(var license in minedLicenses)
                 {
-                    var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
                         Amount = 1m,
                         IsCredit = true,
@@ -49,7 +49,7 @@ namespace CodeRower.CCP.Controllers
 
                     transactions.Add(creditTran);
 
-                    var debitTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
                         Amount = 1m,
                         IsCredit = false,
@@ -63,7 +63,7 @@ namespace CodeRower.CCP.Controllers
 
                     transactions.Add(debitTran);
 
-                    creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
                         Amount = 1m,
                         IsCredit = true,
@@ -84,14 +84,14 @@ namespace CodeRower.CCP.Controllers
         [HttpGet("execute-minting")]
         public async Task<IActionResult> ExecuteMintingAsync([FromRoute, Required] Guid tenantId)
         {
-            await _transactionsService.ExecuteFarmingMintingAsync("cloud-chain-technology/execute-minting", "MINT", tenantId).ConfigureAwait(false);
+            await _transactionsService.ExecuteFarmingMintingAsync(tenantId, "cloud-chain-technology/execute-minting", "MINT").ConfigureAwait(false);
             return Ok();
         }
 
         [HttpGet("execute-farming")]
         public async Task<IActionResult> ExecuteFarmingAsync([FromRoute, Required] Guid tenantId)
         {
-            await _transactionsService.ExecuteFarmingMintingAsync("cloud-chain-technology/execute-farming", "FARM", tenantId).ConfigureAwait(false);
+            await _transactionsService.ExecuteFarmingMintingAsync(tenantId, "cloud-chain-technology/execute-farming", "FARM").ConfigureAwait(false);
             return Ok();
         }
 
