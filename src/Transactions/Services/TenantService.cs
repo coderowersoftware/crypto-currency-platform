@@ -43,8 +43,20 @@ namespace CodeRower.CCP.Services
                         tenantInfo.MintRewardsDailyPercent = Convert.ToDecimal(reader["mint_rewards_daily_percent"]);
                         if(reader["farming_daily_unlock_percent"] != DBNull.Value)
                             tenantInfo.FarmingDailyUnlockPercent = Convert.ToDecimal(reader["farming_daily_unlock_percent"]);
-                        if(reader["fee_transfer_to_wallet"] != DBNull.Value)
-                            tenantInfo.WalletTransferFee = Convert.ToDecimal(reader["fee_transfer_to_wallet"]);
+                        if(reader["unlockToWalletFeePct"] != DBNull.Value)
+                            tenantInfo.UnlockToWalletFeePct = Convert.ToDecimal(reader["unlockToWalletFeePct"]);
+                        if (reader["dailyCoinRewardForAirDropUser"] != DBNull.Value)
+                            tenantInfo.DailyCoinRewardForAirDropUser = Convert.ToDecimal(reader["dailyCoinRewardForAirDropUser"]);
+                        if (reader["offerDailyCoinRewardForAirDropUserForDays"] != DBNull.Value)
+                            tenantInfo.OfferDailyCoinRewardForAirDropUserForDays = Convert.ToDecimal(reader["offerDailyCoinRewardForAirDropUserForDays"]);
+                        if (reader["walletToWalletFeePct"] != DBNull.Value)
+                            tenantInfo.WalletToWalletFeePct = Convert.ToDecimal(reader["walletToWalletFeePct"]);
+                        if (reader["coinPaymentWalletWithdrawalFeePct"] != DBNull.Value)
+                            tenantInfo.CoinPaymentWalletWithdrawalFeePct = Convert.ToDecimal(reader["coinPaymentWalletWithdrawalFeePct"]);
+                        if (reader["bankAccountWithdrawalFeePct"] != DBNull.Value)
+                            tenantInfo.BankAccountWithdrawalFeePct = Convert.ToDecimal(reader["bankAccountWithdrawalFeePct"]);
+                        if (reader["minWithdrawalLimitInUSD"] != DBNull.Value)
+                            tenantInfo.MinWithdrawalLimitInUSD = Convert.ToDecimal(reader["minWithdrawalLimitInUSD"]);
                     }
                 }
                 return tenantInfo;

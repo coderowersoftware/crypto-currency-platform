@@ -8,6 +8,12 @@ namespace CodeRower.CCP.Controllers.Models
 
         public decimal? MintRewardsDailyPercent { get; set; }
         public decimal? FarmingDailyUnlockPercent { get; set; }
-        public decimal? WalletTransferFee { get; internal set; }
+        public decimal? DailyCoinRewardForAirDropUser { get; internal set; }
+        public decimal? OfferDailyCoinRewardForAirDropUserForDays { get; internal set; }
+        public decimal? UnlockToWalletFeePct { get; internal set; }
+        public decimal? WalletToWalletFeePct { get; internal set; }
+        public decimal? CoinPaymentWalletWithdrawalFeePct { get; internal set; }
+        public decimal? BankAccountWithdrawalFeePct { get; internal set; }
+        public decimal? MinWithdrawalLimitInUSD { get; internal set; }
     }
 }

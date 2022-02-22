@@ -41,7 +41,12 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            if (TransferRequest.Amount > unlockedBalance)
+            var tenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
+            var unlockToWalletFeePct = tenantInfo?.UnlockToWalletFeePct ?? 0;
+            var unlockToWalletFeeAmount = TransferRequest.Amount * unlockToWalletFeePct / 100;
+            var amountTobeDeducted = TransferRequest.Amount + unlockToWalletFeeAmount;
+
+            if (TransferRequest.Amount > amountTobeDeducted)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
                 return BadRequest(ModelState);
@@ -63,21 +68,40 @@ namespace CodeRower.CCP.Controllers
             {
                 transactions.Add(debitTran);
 
-                // Credit to other account
-                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                // Debit from account
+                var debitFeeTran = await _transactionsService.AddTransaction(new TransactionRequest
                 {
-                    Amount = TransferRequest.Amount,
-                    IsCredit = true,
-                    Reference = debitTran.transactionid,
+                    Amount = unlockToWalletFeeAmount,
+                    IsCredit = false,
+                    Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
                     PayerId = customerId,
-                    PayeeId = customerId,
-                    TransactionType = "WALLET",
-                    Currency = Currency.COINS
+                    PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                    TransactionType = "UNLOCKED_WALLET_FEE",
+                    Currency = Currency.COINS,
+                    BaseTransaction = debitTran?.transactionid
                 }).ConfigureAwait(false);
 
-                if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                if (!string.IsNullOrWhiteSpace(debitFeeTran?.transactionid))
                 {
-                    transactions.Add(creditTran);
+                    transactions.Add(debitFeeTran);
+
+                    // Credit to other account
+                    var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    {
+                        Amount = TransferRequest.Amount,
+                        IsCredit = true,
+                        Reference = debitTran.transactionid,
+                        PayerId = customerId,
+                        PayeeId = customerId,
+                        TransactionType = "WALLET",
+                        Currency = Currency.COINS,
+                        BaseTransaction = debitTran?.transactionid
+                    }).ConfigureAwait(false);
+
+                    if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                    {
+                        transactions.Add(creditTran);
+                    }
                 }
             }
 
@@ -91,24 +115,28 @@ namespace CodeRower.CCP.Controllers
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
-            var unlockedBalance = (await _transactionsService
+            var walletBalance = (await _transactionsService
                                 .GetBalancesByTransactionTypes(new List<string> { "WALLET" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
-            
-            var walletTransferFee = (await _tenantService.GetTenantInfo().ConfigureAwait(false))?.WalletTransferFee ?? 0;
 
-            if(TransferRequest.Amount <= walletTransferFee)
+            var tenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
+            var walletTransferFeePct = tenantInfo?.WalletToWalletFeePct ?? 0;
+            var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
+            var walletTransferFeeAmount = TransferRequest.Amount * walletTransferFeePct / 100;
+            var amountTobeDeducted = TransferRequest.Amount + walletTransferFeeAmount;
+
+            if (TransferRequest.Amount <= minWithDrawalLimit)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), "Transfer amount should be greater than minimum transfer amount.");
             }
 
-            if (walletTransferFee >= unlockedBalance || TransferRequest.Amount > unlockedBalance)
+            if (amountTobeDeducted > walletBalance)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
             }
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -129,22 +157,41 @@ namespace CodeRower.CCP.Controllers
             {
                 transactions.Add(debitTran);
 
-                // Credit to other account
-                var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                // Debit fee from account
+                var debitFeeTran = await _transactionsService.AddTransaction(new TransactionRequest
                 {
-                    Amount = TransferRequest.Amount - walletTransferFee,
-                    IsCredit = true,
-                    Reference = $"Received from payer {customerId}",
-                    PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
-                    PayeeId = TransferRequest.ToCustomerId,
-                    TransactionType = "WALLET",
-                    Remark = $"Deducting fee {walletTransferFee}",
-                    Currency = Currency.COINS
+                    Amount = walletTransferFeeAmount,
+                    IsCredit = false,
+                    Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
+                    PayerId = customerId,
+                    PayeeId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                    TransactionType = "WALLET_WALLET_FEE",
+                    Currency = Currency.COINS,
+                    BaseTransaction = debitTran?.transactionid
                 }).ConfigureAwait(false);
 
-                if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                if (!string.IsNullOrWhiteSpace(debitFeeTran?.transactionid))
                 {
-                    transactions.Add(creditTran);
+                    transactions.Add(debitFeeTran);
+                    // Credit to other account
+                    var creditTran = await _transactionsService.AddTransaction(new TransactionRequest
+                    {
+                        Amount = TransferRequest.Amount,
+                        IsCredit = true,
+                        Reference = $"Received from payer {customerId}",
+                        PayerId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value,
+                        PayeeId = TransferRequest.ToCustomerId,
+                        TransactionType = "WALLET",
+                        Remark = $"Wallet transfer received from {customerId}",
+                        Currency = Currency.COINS,
+                        BaseTransaction = debitTran?.transactionid
+                    }).ConfigureAwait(false);
+
+                    if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
+                    {
+                        transactions.Add(creditTran);
+                    }
+
                 }
             }
 
