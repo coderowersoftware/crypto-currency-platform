@@ -59,6 +59,7 @@ builder.Services.AddSingleton<ITransactionsService, TransactionsService>();
 builder.Services.AddSingleton<IMiningService, MiningService>();
 builder.Services.AddSingleton<IReportsService, ReportsService>();
 builder.Services.AddSingleton<IUsersService, UsersService>();
+builder.Services.AddSingleton<ICustomerService, CustomerService>();
 builder.Services.AddSingleton<ITenantService, TenantService>();
 
 var app = builder.Build();
