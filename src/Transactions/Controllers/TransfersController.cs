@@ -13,7 +13,7 @@ namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("api/transfers")]
+    [Route("api/tenant/{tenantId}/transfers")]
     public class TransfersController : Controller
     {
         private readonly ITransactionsService _transactionsService;
@@ -34,7 +34,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromBody, Required] UnlockedTransferRequest TransferRequest)
+        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] UnlockedTransferRequest TransferRequest)
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
@@ -44,7 +44,7 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            var tenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             var unlockToWalletFeePct = tenantInfo?.UnlockToWalletFeePct ?? 0;
             var unlockToWalletFeeAmount = TransferRequest.Amount * unlockToWalletFeePct / 100;
             var amountTobeDeducted = TransferRequest.Amount + unlockToWalletFeeAmount;
@@ -132,7 +132,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("wallet-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferWalletCoinsAsync([FromBody, Required] CoinsTransferRequest TransferRequest)
+        public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] CoinsTransferRequest TransferRequest)
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
@@ -151,7 +151,7 @@ namespace CodeRower.CCP.Controllers
                                 .ConfigureAwait(false))?.FirstOrDefault()
                                 ?.Amount ?? 0;
 
-            var tenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             var walletTransferFeePct = tenantInfo?.WalletToWalletFeePct ?? 0;
             var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
             var walletTransferFeeAmount = TransferRequest.Amount * walletTransferFeePct / 100;
@@ -248,7 +248,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-mint")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToMintAsync([FromBody, Required] MintRequest MintRequest)
+        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId,[FromBody, Required] MintRequest MintRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -315,7 +315,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-farm")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToFarmAsync([FromBody, Required] MintRequest FarmRequest)
+        public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] MintRequest FarmRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;

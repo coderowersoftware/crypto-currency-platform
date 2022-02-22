@@ -10,7 +10,7 @@ using CodeRower.CCP.Services;
 namespace CodeRower.CCP.Controllers
 {
     [ApiController]
-    [Route("api/mining")]
+    [Route("api/tenant/{tenantId}/mining")]
     public class MiningController : Controller
     {
         private readonly IMiningService _miningService;
@@ -25,12 +25,12 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("begin")]
         [Authorize]
-        public async Task<IActionResult> MineAsync([FromBody, Required] MineRequestData MineRequest)
+        public async Task<IActionResult> MineAsync([FromRoute, Required] Guid tenantId,[FromBody, Required] MineRequestData MineRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             try
             {
-                await _miningService.MineAsync(MineRequest.Data.LicenseId.Value, userId).ConfigureAwait(false);
+                await _miningService.MineAsync(MineRequest.Data.LicenseId.Value, userId, tenantId).ConfigureAwait(false);
             }
             catch(PostgresException ex)
             {
@@ -43,12 +43,5 @@ namespace CodeRower.CCP.Controllers
             return StatusCode((int) HttpStatusCode.Created);
         }
 
-        [HttpGet("end/0fd480af-e9f6-45ab-bd56-afe94e7b6ce1")]
-        public async Task<IActionResult> FinishMiningAsync()
-        {
-            await _miningService.FinishMiningAsync().ConfigureAwait(false);
-            
-            return StatusCode((int) HttpStatusCode.OK);
-        }
     }
 }

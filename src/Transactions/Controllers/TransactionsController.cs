@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Net;
 using CodeRower.CCP.Controllers.Models;
 using CodeRower.CCP.Controllers.Models.Common;
@@ -13,7 +12,7 @@ namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("api/transactions")]
+    [Route("api/tenant/{tenantId}/transactions")]
     public class TransactionsController : Controller
     {
         private readonly ITransactionsService _transactionsService;

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using CodeRower.CCP.Controllers.Models.Common;
 using CodeRower.CCP.Controllers.Models.Reports;
@@ -9,7 +10,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace CodeRower.CCP.Controllers
 {
     [ApiController]
-    [Route("api/reports")]
+    [Route("api/tenant/{tenantId}/reports")]
     [Authorize]
     public class ReportsController : Controller
     {
@@ -22,9 +23,9 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("top-miners")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Miner>))]
-        public async Task<IActionResult> GetTopMinersAsync()
+        public async Task<IActionResult> GetTopMinersAsync([FromRoute, Required] Guid tenantId)
         {
-            var topMiners = await _reportsService.GetTopMiners().ConfigureAwait(false);
+            var topMiners = await _reportsService.GetTopMiners(tenantId).ConfigureAwait(false);
             var listResult = new ListResponse<Miner>()
             {
                 Rows = topMiners
@@ -34,37 +35,37 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("licenses")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(Licenses))]
-        public async Task<IActionResult> GetLicensesInfoAsync()
+        public async Task<IActionResult> GetLicensesInfoAsync([FromRoute, Required] Guid tenantId)
         {
-            var result = await _reportsService.GetLicensesInfoAsync().ConfigureAwait(false);
+            var result = await _reportsService.GetLicensesInfoAsync(tenantId).ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
         }
 
         [HttpGet("licenses/purchased")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PurchasedLicenses))]
-        public async Task<IActionResult> GetMyPurchasedLicensesAsync()
+        public async Task<IActionResult> GetMyPurchasedLicensesAsync([FromRoute, Required] Guid tenantId)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var result = await _reportsService.GetMyPurchasedLicensesAsync(userId).ConfigureAwait(false);
+            var result = await _reportsService.GetMyPurchasedLicensesAsync(userId, tenantId).ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
         }
 
         [HttpGet("all-license-details")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(OverallLicenseDetails))]
         [AllowAnonymous]
-        public async Task<IActionResult> GetOverallLicenseDetailsAsync()
+        public async Task<IActionResult> GetOverallLicenseDetailsAsync([FromRoute, Required] Guid tenantId)
         {
-            var result = await _reportsService.GetOverallLicenseDetailsAsync().ConfigureAwait(false);
+            var result = await _reportsService.GetOverallLicenseDetailsAsync(tenantId).ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
         }
 
         [HttpGet("coin-value-history")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<CoinValue>))]
         [AllowAnonymous]
-        public async Task<IActionResult> GetCoinValueHistorysAsync([FromQuery(Name = "Filter[StartDate]")] DateTime? StartDate = null,
+        public async Task<IActionResult> GetCoinValueHistorysAsync([FromRoute, Required] Guid tenantId,[FromQuery(Name = "Filter[StartDate]")] DateTime? StartDate = null,
             [FromQuery(Name = "Filter[EndDate]")] DateTime? EndDate = null)
         {
-            var result = await _reportsService.GetCoinValuesAsync(StartDate, EndDate).ConfigureAwait(false);
+            var result = await _reportsService.GetCoinValuesAsync(StartDate, EndDate, tenantId).ConfigureAwait(false);
             return result == null ? NoContent() : Ok(result);
         }
     }

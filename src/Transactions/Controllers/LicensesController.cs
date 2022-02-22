@@ -13,7 +13,7 @@ namespace CodeRower.CCP.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("api/licenses")]
+    [Route("api/tenant/{tenantId}/licenses")]
     public class LicensesController : Controller
     {
         private readonly IMiningService _miningService;
@@ -27,20 +27,20 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpPost("buy")]
-        public async Task<IActionResult> BuyLicense([FromBody, Required] LicenseBuyRequestData Data)
+        public async Task<IActionResult> BuyLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var id = await _miningService.AddLicense(Data.Data, userId).ConfigureAwait(false);
+            var id = await _miningService.AddLicense(Data.Data, userId, tenantId).ConfigureAwait(false);
 
             return Ok(new { licenseId = id });
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterLicense([FromBody, Required] LicenseRequestData Data)
+        public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            await _miningService.RegisterLicense(Data.Data, customerId, userId).ConfigureAwait(false);
+            await _miningService.RegisterLicense(Data.Data, customerId, userId, tenantId).ConfigureAwait(false);
 
             return StatusCode((int)HttpStatusCode.Created);
         }

@@ -79,4 +79,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapControllerRoute(
+    name: "default",
+    pattern: "tenant/{tenantId}/{controller=Home}/{action=Index}/{id?}");
+
 app.Run();

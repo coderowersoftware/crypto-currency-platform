@@ -9,15 +9,13 @@ namespace CodeRower.CCP.Services
 {
     public interface IMiningService
     {
-        Task MineAsync(Guid licenseId, string userId);
+        Task MineAsync(Guid licenseId, string userId, Guid tenantId);
         Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId);
         Task ActivateLicenseAsync(Guid licenseId, string customerId);
-        Task RegisterLicense(LicenseRequest data,string customerId, string userId);
-        Task<string> AddLicense(LicenseBuyRequest data, string userId);
+        Task RegisterLicense(LicenseRequest data,string customerId, string userId, Guid tenantId);
+        Task<string> AddLicense(LicenseBuyRequest data, string userId, Guid tenantId);
 
-        [Obsolete("To be removed later")]
-        Task FinishMiningAsync();
-        Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync();
+        Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync( Guid tenantId);
     }
 
     public class MiningService : IMiningService
@@ -29,7 +27,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<string> AddLicense(LicenseBuyRequest data, string userId)
+        public async Task<string> AddLicense(LicenseBuyRequest data, string userId, Guid tenantId)
         {
             var query = "addlicense";
             var id = string.Empty;
@@ -37,7 +35,7 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Text, data.TransactionId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
                     if (conn.State != ConnectionState.Open) conn.Open();
@@ -54,8 +52,7 @@ namespace CodeRower.CCP.Services
             return id;
 
         }
-
-        public async Task RegisterLicense(LicenseRequest data, string customerId, string userId)
+        public async Task RegisterLicense(LicenseRequest data, string customerId, string userId, Guid tenantId)
         {
             var query = "registerlicense";
 
@@ -65,7 +62,7 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, data.LicenseId);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
                     if (conn.State != ConnectionState.Open) conn.Open();
 
@@ -73,7 +70,6 @@ namespace CodeRower.CCP.Services
                 }
             }
         }
-
         public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId)
         {
             var query = "getlicenses_v2";
@@ -135,8 +131,7 @@ namespace CodeRower.CCP.Services
             }
             return results;
         }
-
-        public async Task MineAsync(Guid licenseId, string userId)
+        public async Task MineAsync(Guid licenseId, string userId, Guid tenantId)
         {
             var query = "startmining";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -145,7 +140,7 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
                     cmd.Parameters.AddWithValue("mined_by_id", NpgsqlDbType.Uuid, new Guid(userId));
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -169,22 +164,7 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task FinishMiningAsync()
-        {
-            var query = "finishmining";
-            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
-            {
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-                {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
-                    if (conn.State != ConnectionState.Open) conn.Open();
-
-                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-            }
-        }
-
-        public async Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync()
+        public async Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync(Guid tenantId)
         {
             var query = "endmining";
             var customerIdsMined = new List<(string CustomerId, string LicenseId)>();
@@ -192,7 +172,7 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 

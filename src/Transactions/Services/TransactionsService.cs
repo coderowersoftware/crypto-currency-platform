@@ -4,9 +4,6 @@ using CodeRower.CCP.Controllers.Models;
 using Transactions.Facade;
 using Transactions.Domain.Models;
 using Transaction = CodeRower.CCP.Controllers.Models.Transaction;
-using Npgsql;
-using NpgsqlTypes;
-using System.Data;
 using CodeRower.CCP.Controllers.Models.Common;
 
 namespace CodeRower.CCP.Services
@@ -16,13 +13,11 @@ namespace CodeRower.CCP.Services
         Task<WalletTransactionResponse> AddTransaction(TransactionRequest request);
         Task<TransactionsRoot> GetTransactionReport(TransactionFilter? filter, QueryOptions? queryOptions, bool report);
         Task<dynamic> GetCurrentBalance();
-        Task<TransactionResponse> InsertTransactions(TransactionRequest request);
-        Task<IdentifierProfileBalance> GetBalanceByIdentifierForCurrency(string identifier, string currency);
         Task<List<AutoCompleteResponse>> GetTransactionTypes();
         Task<List<AutoCompleteResponse>> GetCurrencies();
         Task<Transaction> GetTransactionById(string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
-        Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution);
+        Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution, Guid tenantId);
     }
 
     public class TransactionsService : ITransactionsService
@@ -317,88 +312,14 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<dynamic>(responseMessage, new StringEnumConverter());
         }
 
-        public async Task<TransactionResponse> InsertTransactions(TransactionRequest request)
-        {
-            var query = "insertvirtualvaluetransaction";
-            TransactionResponse response = null;
-            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres").Value))
-            {
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-                {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid("923d95cb-3be0-41a4-997b-a41d2d657467"));
-                    cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, request.Currency);
-                    //cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, request.Amount);
-                    cmd.Parameters.AddWithValue("transactiontype_identifier", NpgsqlDbType.Text, request.TransactionType);
-                    cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, request.IsCredit);
-                    cmd.Parameters.AddWithValue("reference_", NpgsqlDbType.Varchar, request.Reference);
-                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("f7539e04-fe57-4afa-9d76-2e5f87b8ae42"));
-                    cmd.Parameters.AddWithValue("created_at", NpgsqlDbType.TimestampTz, DateTime.UtcNow);
-                    cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("f7539e04-fe57-4afa-9d76-2e5f87b8ae42"));
-                    cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, DateTime.UtcNow);
-                    cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, request.PayerId);
-                    //cmd.Parameters.AddWithValue("payer_name", NpgsqlDbType.Varchar, request.PayerName);
-                    cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, request.CurrentBalanceFor);
-                    cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, request.OnBehalfOfId);
-                    cmd.Parameters.AddWithValue("virtual_value", NpgsqlDbType.Numeric, request.VirtualValue);
-
-                    if (conn.State != ConnectionState.Open) conn.Open();
-                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    while (reader.Read())
-                    {
-                        response = new TransactionResponse();
-                        response.TransactionId = Convert.ToString(reader["transactionid"]);
-                        response.Currency = Convert.ToString(reader["currency"]);
-                        response.CurrentAmount = Convert.ToDecimal(reader["currentAmount"]);
-                        response.CurrentVirtualValue = Convert.ToDecimal(reader["currentVirtualValue"]);
-
-                    }
-                }
-
-            }
-            return response;
-
-        }
-
-        public async Task<IdentifierProfileBalance> GetBalanceByIdentifierForCurrency(string identifier, string currency)
-        {
-            var query = "getbalancebyidentifierforcurrency";
-            IdentifierProfileBalance response = null;
-            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres").Value))
-            {
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-                {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:CCCWalletTenant").Value));
-                    cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, currency);
-                    cmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Unknown, identifier);
-
-                    if (conn.State != ConnectionState.Open) conn.Open();
-                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    while (reader.Read())
-                    {
-                        response = new IdentifierProfileBalance();
-                        response.TransactionId = Convert.ToString(reader["transactionid"]);
-                        response.Currency = Convert.ToString(reader["currency"]);
-                        response.CurrentAmount = Convert.ToDecimal(reader["currentAmount"]);
-                        response.CurrentVirtualValue = Convert.ToDecimal(reader["currentVirtualValue"]);
-
-                    }
-
-                }
-
-            }
-            return response;
-        }
-
-        public async Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution)
+        public async Task ExecuteFarmingMintingAsync(string relativeUri, string typeOfExecution, Guid tenantId)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
-            var tenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
+            var walletTenantId = _configuration.GetSection("AppSettings:CCCWalletTenant").Value;
             var clientId = _configuration.GetSection("AppSettings:CCCWalletClientId").Value;
             var clientSecret = _configuration.GetSection("AppSettings:CCCWalletSecret").Value;
 
-            var appTenantInfo = await _tenantService.GetTenantInfo().ConfigureAwait(false);
+            var appTenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
 
             if (!string.IsNullOrWhiteSpace(typeOfExecution))
             {
@@ -425,11 +346,11 @@ namespace CodeRower.CCP.Services
                 if (executeData != null)
                 {
                     await _restApiFacade.SendAsync(HttpMethod.Post,
-                        new Uri($"{walletHost}api/tenant/{tenantId}/{relativeUri}"),
+                        new Uri($"{walletHost}api/tenant/{walletTenantId}/{relativeUri}"),
                         null,
                         new
                         {
-                            application_id = tenantId,
+                            application_id = walletTenantId,
                             client_id = clientId,
                             client_secret = clientSecret,
                             data = executeData

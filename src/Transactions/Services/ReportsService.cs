@@ -7,11 +7,11 @@ namespace CodeRower.CCP.Services
 {
     public interface IReportsService
     {
-        Task<IEnumerable<Miner>> GetTopMiners();
-        Task<Licenses?> GetLicensesInfoAsync();
-        Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync();
-        Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId);
-        Task<IEnumerable<CoinValue>> GetCoinValuesAsync(DateTime? startDate, DateTime? endDate);
+        Task<IEnumerable<Miner>> GetTopMiners(Guid tenantId);
+        Task<Licenses?> GetLicensesInfoAsync(Guid tenantId);
+        Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync(Guid tenantId);
+        Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId, Guid tenantId);
+        Task<IEnumerable<CoinValue>> GetCoinValuesAsync(DateTime? startDate, DateTime? endDate, Guid tenantId);
     }
 
     public class ReportsService : IReportsService
@@ -26,7 +26,7 @@ namespace CodeRower.CCP.Services
             _transactionsService = transactionsService;
         }
 
-        public async Task<IEnumerable<Miner>> GetTopMiners()
+        public async Task<IEnumerable<Miner>> GetTopMiners(Guid tenantId)
         {
             var query = "get_top_miners";
 
@@ -35,7 +35,7 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -74,7 +74,7 @@ namespace CodeRower.CCP.Services
             return topMiners.DistinctBy(tm => tm.UserId);
         }
 
-        public async Task<Licenses?> GetLicensesInfoAsync()
+        public async Task<Licenses?> GetLicensesInfoAsync(Guid tenantId)
         {
             var query = "get_licenses_info";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -83,7 +83,7 @@ namespace CodeRower.CCP.Services
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -102,10 +102,10 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync()
+        public async Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync(Guid tenantId)
         {
             OverallLicenseDetails? result = new OverallLicenseDetails();
-            var licenseInfo = GetLicensesInfoAsync();
+            var licenseInfo = GetLicensesInfoAsync(tenantId);
             var farmMintWalletBalances = _transactionsService.GetBalancesByTransactionTypes(new List<string> { "FARM", "MINT", "WALLET" });
 
             var query = "get_overall_licenses_details";
@@ -113,6 +113,8 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
@@ -139,7 +141,7 @@ namespace CodeRower.CCP.Services
             return result;
         }
 
-        public async Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId)
+        public async Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId, Guid tenantId)
         {
             var query = "get_purchased_licenses";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -148,7 +150,7 @@ namespace CodeRower.CCP.Services
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
 
                     if (conn.State != ConnectionState.Open) conn.Open();
@@ -166,7 +168,7 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task<IEnumerable<CoinValue>> GetCoinValuesAsync(DateTime? startDate, DateTime? endDate)
+        public async Task<IEnumerable<CoinValue>> GetCoinValuesAsync(DateTime? startDate, DateTime? endDate, Guid tenantId)
         {
             var query = "get_coin_value_price_history";
             List<CoinValue> coinValues = new List<CoinValue>();
@@ -174,7 +176,7 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     if(startDate.HasValue)
                         cmd.Parameters.AddWithValue("from_date", NpgsqlDbType.Date, startDate);
                     if(endDate.HasValue)

@@ -7,7 +7,7 @@ namespace CodeRower.CCP.Services
 {
     public interface ITenantService
     {
-        Task<TenantInfo> GetTenantInfo();
+        Task<TenantInfo> GetTenantInfo(Guid tenantId);
     }
 
     public class TenantService : ITenantService
@@ -19,7 +19,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<TenantInfo> GetTenantInfo()
+        public async Task<TenantInfo> GetTenantInfo(Guid tenantId)
         {
             var query = "get_tenant_info";
 
@@ -29,7 +29,7 @@ namespace CodeRower.CCP.Services
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(_configuration.GetSection("AppSettings:Tenant").Value));
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
