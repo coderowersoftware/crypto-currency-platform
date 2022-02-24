@@ -15,7 +15,7 @@ namespace CodeRower.CCP.Controllers
     public class ReportsController : Controller
     {
         private readonly IReportsService _reportsService;
-        
+
         public ReportsController(IReportsService reportsService)
         {
             _reportsService = reportsService;
@@ -23,14 +23,18 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("top-miners")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Miner>))]
-        public async Task<IActionResult> GetTopMinersAsync([FromRoute, Required] Guid tenantId)
+        public async Task<IActionResult> GetTopMinersAsync([FromRoute, Required] Guid tenantId, [FromQuery] QueryOptions? QueryOptions = null)
         {
-            var topMiners = await _reportsService.GetTopMiners(tenantId).ConfigureAwait(false);
-            var listResult = new ListResponse<Miner>()
+            var topMiners = await _reportsService.GetTopMiners(tenantId, QueryOptions).ConfigureAwait(false);
+
+            var pagedResult = new PagedResponse<Miner>()
             {
-                Rows = topMiners
+                Rows = topMiners,
+                Count = topMiners.Count,
+                Offset = QueryOptions?.Offset ?? 0,
+                Limit = QueryOptions?.Limit ?? 10
             };
-            return Ok(listResult);
+            return Ok(pagedResult);
         }
 
         [HttpGet("licenses")]
@@ -62,7 +66,7 @@ namespace CodeRower.CCP.Controllers
         [HttpGet("coin-value-history")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<CoinValue>))]
         [AllowAnonymous]
-        public async Task<IActionResult> GetCoinValueHistorysAsync([FromRoute, Required] Guid tenantId,[FromQuery(Name = "Filter[StartDate]")] DateTime? StartDate = null,
+        public async Task<IActionResult> GetCoinValueHistorysAsync([FromRoute, Required] Guid tenantId, [FromQuery(Name = "Filter[StartDate]")] DateTime? StartDate = null,
             [FromQuery(Name = "Filter[EndDate]")] DateTime? EndDate = null)
         {
             var result = await _reportsService.GetCoinValuesAsync(StartDate, EndDate, tenantId).ConfigureAwait(false);

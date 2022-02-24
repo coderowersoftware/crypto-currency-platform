@@ -1,4 +1,5 @@
 using System.Data;
+using CodeRower.CCP.Controllers.Models.Common;
 using CodeRower.CCP.Controllers.Models.Reports;
 using Npgsql;
 using NpgsqlTypes;
@@ -7,7 +8,7 @@ namespace CodeRower.CCP.Services
 {
     public interface IReportsService
     {
-        Task<IEnumerable<Miner>> GetTopMiners(Guid tenantId);
+        Task<List<Miner>> GetTopMiners(Guid tenantId, QueryOptions? queryOptions);
         Task<Licenses?> GetLicensesInfoAsync(Guid tenantId);
         Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync(Guid tenantId);
         Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId, Guid tenantId);
@@ -26,7 +27,7 @@ namespace CodeRower.CCP.Services
             _transactionsService = transactionsService;
         }
 
-        public async Task<IEnumerable<Miner>> GetTopMiners(Guid tenantId)
+        public async Task<List<Miner>> GetTopMiners(Guid tenantId, QueryOptions? queryOptions)
         {
             var query = "get_top_miners";
 
@@ -55,9 +56,10 @@ namespace CodeRower.CCP.Services
                 }
             }
 
+            topMiners = topMiners.Skip(queryOptions?.Offset ?? 0).Take(queryOptions?.Limit ?? 3).ToList();
             // Update Locked and unlocked coin amounts
             // List<Task> transactionTypeBalances = new List<Task>();
-            foreach(var miner in topMiners)
+            foreach (var miner in topMiners)
             {
                 var amounts = await _transactionsService.GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED", "UNLOCKED" }, miner.CustomerId).ConfigureAwait(false);
                 miner.LockedAmount = amounts?.FirstOrDefault(amt => "LOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
@@ -71,7 +73,7 @@ namespace CodeRower.CCP.Services
                 //     }));
             }
             //await Task.WhenAll(transactionTypeBalances).ConfigureAwait(false);
-            return topMiners.DistinctBy(tm => tm.UserId);
+            return topMiners;
         }
 
         public async Task<Licenses?> GetLicensesInfoAsync(Guid tenantId)
