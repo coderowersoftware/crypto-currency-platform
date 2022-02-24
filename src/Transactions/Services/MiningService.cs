@@ -72,7 +72,7 @@ namespace CodeRower.CCP.Services
         }
         public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId)
         {
-            var query = "getlicenses_v2";
+            var query = "getlicenses";
             List<License> results = new List<License>();
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
@@ -103,6 +103,11 @@ namespace CodeRower.CCP.Services
                         if (expiresOn != DBNull.Value)
                         {
                             result.ExpirationDate = Convert.ToDateTime(expiresOn);
+                        }
+                        var registeredAt = reader["registeredAt"];
+                        if (registeredAt != DBNull.Value)
+                        {
+                            result.RegisteredAt = Convert.ToDateTime(registeredAt);
                         }
                         var customerLicenseLogId = reader["customerLicenseLogId"];
 

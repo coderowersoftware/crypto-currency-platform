@@ -10,7 +10,7 @@ namespace CodeRower.CCP.Controllers.Models
         public string? Title { get; set; }
         public DateTime? ActivationDate { get; set; }
         public DateTime? ExpirationDate { get; set; }
-
+        public DateTime? RegisteredAt { get; set; }
         public MiningStatus? MiningStatus { get; set; }
     }
 }
