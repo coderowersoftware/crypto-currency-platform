@@ -39,7 +39,7 @@ namespace CodeRower.CCP.Controllers
                     {
                         Amount = license.LicenseType.Equals("AIRDROP") ? 0.1m : 1m,
                         IsCredit = true,
-                        Reference = "Mined Coins via" + (license.LicenseType.Equals("AIRDROP") ? "AIRDROP" : "POOL") + $" license - {license.LicenseId}",
+                        Reference = "Mined Coins via " + (license.LicenseType.Equals("AIRDROP") ? "AIRDROP" : "POOL") + $" license - {license.LicenseId}",
                         PayerId = walletTenant,
                         PayeeId = license.CustomerId.ToString(),
                         TransactionType = "MINED",
