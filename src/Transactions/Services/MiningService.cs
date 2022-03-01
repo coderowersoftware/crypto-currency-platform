@@ -94,6 +94,7 @@ namespace CodeRower.CCP.Services
                         License result = new License();
                         result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
+                        result.LicenseType = Convert.ToString(reader["licenseType"]);
                         result.Title = Convert.ToString(reader["title"]);
                         result.Mined = Convert.ToInt32(reader["total_mined"]);
                         var activatedOn = reader["activatedon"];
