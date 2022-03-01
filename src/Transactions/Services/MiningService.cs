@@ -96,7 +96,7 @@ namespace CodeRower.CCP.Services
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
                         result.LicenseType = Convert.ToString(reader["licenseType"]);
                         result.Title = Convert.ToString(reader["title"]);
-                        result.Mined = Convert.ToInt32(reader["total_mined"]);
+                        result.Mined = Convert.ToDecimal(reader["total_mined"]);
                         var activatedOn = reader["activatedon"];
                         if (activatedOn != DBNull.Value)
                         {
