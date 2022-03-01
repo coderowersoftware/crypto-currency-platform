@@ -12,5 +12,6 @@ namespace CodeRower.CCP.Controllers.Models
         public DateTime? ExpirationDate { get; set; }
         public DateTime? RegisteredAt { get; set; }
         public MiningStatus? MiningStatus { get; set; }
+        public string? LicenseType { get; set; }
     }
 }

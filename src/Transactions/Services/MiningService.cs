@@ -15,7 +15,7 @@ namespace CodeRower.CCP.Services
         Task RegisterLicense(LicenseRequest data,string customerId, string userId, Guid tenantId);
         Task<string> AddLicense(LicenseBuyRequest data, string userId, Guid tenantId);
 
-        Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync( Guid tenantId);
+        Task<IEnumerable<License>> EndMiningAsync( Guid tenantId);
     }
 
     public class MiningService : IMiningService
@@ -38,6 +38,8 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Text, data.TransactionId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
+                    cmd.Parameters.AddWithValue("license_type", NpgsqlDbType.Text,data.LicenseType );
+
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -169,10 +171,10 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task<IEnumerable<(string CustomerId, string LicenseId)>> EndMiningAsync(Guid tenantId)
+        public async Task<IEnumerable<License>> EndMiningAsync(Guid tenantId)
         {
             var query = "endmining";
-            var customerIdsMined = new List<(string CustomerId, string LicenseId)>();
+            var minedLicenses = new List<License>();
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
@@ -183,12 +185,16 @@ namespace CodeRower.CCP.Services
 
                     while(reader.Read())
                     {
-                        var detail = (Convert.ToString(reader["customerid"]), Convert.ToString(reader["licenseid"]));
-                        customerIdsMined.Add(detail);
+                        var minedLicense = new License();
+                        minedLicense.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
+                        minedLicense.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
+                        minedLicense.LicenseType = Convert.ToString(reader["licensetype"]);
+
+                        minedLicenses.Add(minedLicense);
                     }
                 }
             }
-            return customerIdsMined;
+            return minedLicenses;
         }
     }
 }
