@@ -16,6 +16,7 @@ namespace CodeRower.CCP.Services
         Task<string> AddLicense(LicenseBuyRequest data, string userId, Guid tenantId);
 
         Task<IEnumerable<License>> EndMiningAsync( Guid tenantId);
+        Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId);
     }
 
     public class MiningService : IMiningService
@@ -196,6 +197,39 @@ namespace CodeRower.CCP.Services
                 }
             }
             return minedLicenses;
+        }
+
+        public async Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId)
+        {
+            var query = "get_license_log_report";
+            var licenseLogs = new List<LicenseLog>();
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+                    cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, customerId);
+                    if(licenseId.HasValue) cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while(reader.Read())
+                    {
+                        var log = new LicenseLog();
+                        log.LicenseId = Guid.Parse(Convert.ToString(reader["id"]));
+                        log.Title = Convert.ToString(reader["title"]);
+                        log.ActivatedOn = Convert.ToDateTime(reader["activated_on"]);
+                        if(reader["expires_on"] != DBNull.Value) log.ExpiresOn = Convert.ToDateTime(reader["expires_on"]);
+                        log.Status = Convert.ToString(reader["status"]);
+                        log.LicenseType = Convert.ToString(reader["license_type"]);
+                        log.MiningStartedAt = Convert.ToDateTime(reader["created_at"]);
+                        if(reader["mined_at"] != DBNull.Value) log.MiningEndedAt = Convert.ToDateTime(reader["mined_at"]);
+
+                        licenseLogs.Add(log);
+                    }
+                }
+            }
+            return licenseLogs;
         }
     }
 }

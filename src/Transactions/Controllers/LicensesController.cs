@@ -83,5 +83,26 @@ namespace CodeRower.CCP.Controllers
             };
             return Ok(pagedResult);
         }
+
+        [HttpGet("logs")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<LicenseLog>))]
+        public async Task<IActionResult> GetLicenseLogs([FromRoute, Required] Guid tenantId,
+            [FromQuery(Name = "Filter[LicenseId]")] Guid? licenseId = null,
+            [FromQuery] QueryOptions? QueryOptions = null)
+        {
+            if (QueryOptions == null) QueryOptions = new QueryOptions();
+
+            var customerId = Guid.Parse(User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value);
+            var result = await _miningService.GetLicenseLogsAsync(tenantId, customerId, licenseId).ConfigureAwait(false);
+
+            var pagedResult = new PagedResponse<LicenseLog>()
+            {
+                Rows = result?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
+                Count = result?.Count() ?? 0,
+                Offset = QueryOptions.Offset,
+                Limit = QueryOptions.Limit
+            };
+            return Ok(pagedResult);
+        }
     }
 }
