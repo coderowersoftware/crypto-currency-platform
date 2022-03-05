@@ -136,7 +136,7 @@ namespace CodeRower.CCP.Controllers
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
-            var customerInfo = await _customerService.GetCustomerInfoAsync(null, TransferRequest.ToCustomerId).ConfigureAwait(false);
+            var customerInfo = await _customerService.GetCustomerInfoAsync(tenantId, null, TransferRequest.ToCustomerId).ConfigureAwait(false);
 
             if (customerInfo == null)
             {

@@ -7,7 +7,7 @@ namespace CodeRower.CCP.Services
 {
     public interface ICustomerService
     {
-        Task<CustomerInfo?> GetCustomerInfoAsync(string customerId, string walletAddress);
+        Task<CustomerInfo?> GetCustomerInfoAsync(Guid tenantId, string customerId, string walletAddress);
     }
 
     public class CustomerService : ICustomerService
@@ -19,7 +19,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<CustomerInfo?> GetCustomerInfoAsync(string customerId, string walletAddress)
+        public async Task<CustomerInfo?> GetCustomerInfoAsync(Guid tenantId, string customerId, string walletAddress)
         {
             var query = "get_customer_info";
 
@@ -29,6 +29,8 @@ namespace CodeRower.CCP.Services
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+
                     if (!string.IsNullOrEmpty(customerId))
                         cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
 
