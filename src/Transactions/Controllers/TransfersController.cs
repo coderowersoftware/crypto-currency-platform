@@ -252,7 +252,7 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
+            var userInfo = await _usersService.GetUserInfoAsync(tenantId, userId).ConfigureAwait(false);
 
             if (MintRequest.AccountPin != userInfo?.AccountPin)
             {
@@ -319,7 +319,7 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var userInfo = await _usersService.GetUserInfoAsync(userId).ConfigureAwait(false);
+            var userInfo = await _usersService.GetUserInfoAsync(tenantId, userId).ConfigureAwait(false);
 
             if (FarmRequest.AccountPin != userInfo?.AccountPin)
             {

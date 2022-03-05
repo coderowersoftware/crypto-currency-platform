@@ -7,7 +7,7 @@ namespace CodeRower.CCP.Services
 {
     public interface IUsersService
     {
-        Task<UserInfo?> GetUserInfoAsync(string userId);
+        Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId);
     }
 
     public class UsersService : IUsersService
@@ -19,7 +19,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
         
-        public async Task<UserInfo?> GetUserInfoAsync(string userId)
+        public async Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId)
         {
             var query = "get_user_info";
 
@@ -29,6 +29,7 @@ namespace CodeRower.CCP.Services
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
 
                     if (conn.State != ConnectionState.Open) conn.Open();
