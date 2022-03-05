@@ -9,13 +9,13 @@ namespace CodeRower.CCP.Services
 {
     public interface IMiningService
     {
-        Task MineAsync(Guid licenseId, string userId, Guid tenantId);
-        Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId);
-        Task ActivateLicenseAsync(Guid licenseId, string customerId);
-        Task RegisterLicense(LicenseRequest data,string customerId, string userId, Guid tenantId);
-        Task<string> AddLicense(LicenseBuyRequest data, string userId, Guid tenantId);
+        Task MineAsync(Guid tenantId, Guid licenseId, string userId);
+        Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId);
+        Task ActivateLicenseAsync(Guid tenantId, Guid licenseId, string customerId);
+        Task RegisterLicense(Guid tenantId, LicenseRequest data, string customerId, string userId);
+        Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId);
 
-        Task<IEnumerable<License>> EndMiningAsync( Guid tenantId);
+        Task<IEnumerable<License>> EndMiningAsync(Guid tenantId);
         Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId);
     }
 
@@ -28,7 +28,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<string> AddLicense(LicenseBuyRequest data, string userId, Guid tenantId)
+        public async Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId)
         {
             var query = "addlicense";
             var id = string.Empty;
@@ -39,7 +39,7 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Text, data.TransactionId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
-                    cmd.Parameters.AddWithValue("license_type", NpgsqlDbType.Text,data.LicenseType );
+                    cmd.Parameters.AddWithValue("license_type", NpgsqlDbType.Text, data.LicenseType);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
@@ -55,7 +55,7 @@ namespace CodeRower.CCP.Services
             return id;
 
         }
-        public async Task RegisterLicense(LicenseRequest data, string customerId, string userId, Guid tenantId)
+        public async Task RegisterLicense(Guid tenantId, LicenseRequest data, string customerId, string userId)
         {
             var query = "registerlicense";
 
@@ -73,7 +73,7 @@ namespace CodeRower.CCP.Services
                 }
             }
         }
-        public async Task<IEnumerable<License>?> GetLicensesAsync(Guid? licenseId, string customerId)
+        public async Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId)
         {
             var query = "getlicenses";
             List<License> results = new List<License>();
@@ -81,7 +81,9 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
+
                     if (licenseId.HasValue)
                     {
                         cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId.Value);
@@ -121,7 +123,7 @@ namespace CodeRower.CCP.Services
                             {
                                 result.MiningStatus = MiningStatus.expired;
                             }
-                            else if(customerLicenseLogId == DBNull.Value)
+                            else if (customerLicenseLogId == DBNull.Value)
                             {
                                 result.MiningStatus = MiningStatus.completed;
                             }
@@ -140,7 +142,7 @@ namespace CodeRower.CCP.Services
             }
             return results;
         }
-        public async Task MineAsync(Guid licenseId, string userId, Guid tenantId)
+        public async Task MineAsync(Guid tenantId, Guid licenseId, string userId)
         {
             var query = "startmining";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
@@ -157,13 +159,14 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task ActivateLicenseAsync(Guid licenseId, string customerId)
+        public async Task ActivateLicenseAsync(Guid tenantId, Guid licenseId, string customerId)
         {
             var query = "activatelicense";
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
                     if (conn.State != ConnectionState.Open) conn.Open();
@@ -185,7 +188,7 @@ namespace CodeRower.CCP.Services
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
-                    while(reader.Read())
+                    while (reader.Read())
                     {
                         var minedLicense = new License();
                         minedLicense.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
@@ -209,21 +212,21 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, customerId);
-                    if(licenseId.HasValue) cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
+                    if (licenseId.HasValue) cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
-                    while(reader.Read())
+                    while (reader.Read())
                     {
                         var log = new LicenseLog();
                         log.LicenseId = Guid.Parse(Convert.ToString(reader["id"]));
                         log.Title = Convert.ToString(reader["title"]);
                         log.ActivatedOn = Convert.ToDateTime(reader["activated_on"]);
-                        if(reader["expires_on"] != DBNull.Value) log.ExpiresOn = Convert.ToDateTime(reader["expires_on"]);
+                        if (reader["expires_on"] != DBNull.Value) log.ExpiresOn = Convert.ToDateTime(reader["expires_on"]);
                         log.Status = Convert.ToString(reader["status"]);
                         log.LicenseType = Convert.ToString(reader["license_type"]);
                         log.MiningStartedAt = Convert.ToDateTime(reader["created_at"]);
-                        if(reader["mined_at"] != DBNull.Value) log.MiningEndedAt = Convert.ToDateTime(reader["mined_at"]);
+                        if (reader["mined_at"] != DBNull.Value) log.MiningEndedAt = Convert.ToDateTime(reader["mined_at"]);
 
                         licenseLogs.Add(log);
                     }

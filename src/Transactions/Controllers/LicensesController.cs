@@ -30,7 +30,7 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> BuyLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var id = await _miningService.AddLicense(Data.Data, userId, tenantId).ConfigureAwait(false);
+            var id = await _miningService.AddLicense(tenantId, Data.Data, userId).ConfigureAwait(false);
 
             return Ok(new { licenseId = id });
         }
@@ -40,19 +40,19 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            await _miningService.RegisterLicense(Data.Data, customerId, userId, tenantId).ConfigureAwait(false);
+            await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
 
             return StatusCode((int)HttpStatusCode.Created);
         }
 
 
         [HttpPatch("{LicenseId}/activate")]
-        public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid LicenseId)
+        public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid tenantId, [FromRoute, Required] Guid LicenseId)
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             try
             {
-                await _miningService.ActivateLicenseAsync(LicenseId, customerId).ConfigureAwait(false);
+                await _miningService.ActivateLicenseAsync(tenantId, LicenseId, customerId).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {
@@ -67,13 +67,13 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<License>))]
-        public async Task<IActionResult> GetLicensesAsync([FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId,
+        public async Task<IActionResult> GetLicensesAsync([FromRoute, Required] Guid tenantId, [FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId,
             [FromQuery] QueryOptions? QueryOptions = null)
         {
             if (QueryOptions == null) QueryOptions = new QueryOptions();
 
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var results = await _miningService.GetLicensesAsync(LicenseId, customerId).ConfigureAwait(false);
+            var results = await _miningService.GetLicensesAsync(tenantId, LicenseId, customerId).ConfigureAwait(false);
             var pagedResult = new PagedResponse<License>()
             {
                 Rows = results?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),

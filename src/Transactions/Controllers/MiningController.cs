@@ -30,7 +30,7 @@ namespace CodeRower.CCP.Controllers
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             try
             {
-                await _miningService.MineAsync(MineRequest.Data.LicenseId.Value, userId, tenantId).ConfigureAwait(false);
+                await _miningService.MineAsync(tenantId, MineRequest.Data.LicenseId.Value, userId).ConfigureAwait(false);
             }
             catch(PostgresException ex)
             {
