@@ -40,8 +40,17 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
-
+            try
+            {
+                await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
+            }
+            catch (PostgresException ex)
+            {
+                if (ex.SqlState == "P0003" && ex.Hint == "LicensesLimitReached")
+                {
+                    return BadRequest(new { ErrorCode = "LicensesLimitReached", Message = $"More Licenses cannot be registered." });
+                }
+            }
             return StatusCode((int)HttpStatusCode.Created);
         }
 
