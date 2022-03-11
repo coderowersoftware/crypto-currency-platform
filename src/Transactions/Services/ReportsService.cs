@@ -47,6 +47,7 @@ namespace CodeRower.CCP.Services
                         result.UserId = Convert.ToString(reader["user_id"]);
                         result.CustomerId = Convert.ToString(reader["customerId"]);
                         result.Name = Convert.ToString(reader["first_name"]);
+                        result.ReferralCode = Convert.ToString(reader["referralCode"]);
                         result.DisplayName = Convert.ToString(reader["full_name"]);
                         result.Image = Convert.ToString(reader["image_url"]);
                         result.LicensesCount = Convert.ToInt32(reader["licenses_count"]);
