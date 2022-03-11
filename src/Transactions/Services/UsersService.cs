@@ -8,6 +8,7 @@ namespace CodeRower.CCP.Services
     public interface IUsersService
     {
         Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId);
+        Task<List<UserReferral>> GetReferralUsers(Guid tenantId, Guid userId);
     }
 
     public class UsersService : IUsersService
@@ -18,7 +19,7 @@ namespace CodeRower.CCP.Services
         {
             _configuration = configuration;
         }
-        
+
         public async Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId)
         {
             var query = "get_user_info";
@@ -44,6 +45,38 @@ namespace CodeRower.CCP.Services
                     }
                 }
                 return userInfo;
+            }
+        }
+
+        public async Task<List<UserReferral>> GetReferralUsers(Guid tenantId, Guid userId)
+        {
+            var query = "get_referrals";
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                List<UserReferral> referral = new List<UserReferral>();
+
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        var user = new UserReferral();
+                        user.ReferralCode = Convert.ToString(reader["referralCode"]);
+                        user.LicenseType = Convert.ToString(reader["licenseType"]);
+                        user.CreatedAt = Convert.ToDateTime(reader["createdAt"]);
+                        user.NumberOfLicenses = Convert.ToInt32(reader["numberOfLicenses"]);
+                        referral.Add(user);
+
+                    }
+                }
+
+                return referral;
             }
         }
     }
