@@ -25,7 +25,7 @@ namespace CodeRower.CCP.Controllers
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var result = await _smsService.SendAsync(tenantId, new Guid(userId)).ConfigureAwait(false);
 
-            return Ok(result);
+            return result ? Ok(result) : BadRequest();
         }
 
         [HttpGet("verify")]

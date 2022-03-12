@@ -9,7 +9,7 @@ namespace CodeRower.CCP.Services
 {
     public interface ISmsService
     {
-        Task<string> SendAsync(Guid tenantId, Guid userId);
+        Task<bool> SendAsync(Guid tenantId, Guid userId);
         Task<bool> VerifyAsync(Guid tenantId, Guid userId, string otp);
     }
 
@@ -22,7 +22,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<string> SendAsync(Guid tenantId, Guid userId)
+        public async Task<bool> SendAsync(Guid tenantId, Guid userId)
         {
             var query = "sendotp";
 
@@ -47,9 +47,12 @@ namespace CodeRower.CCP.Services
                     }
                 }
 
+                if (string.IsNullOrEmpty(phoneNumber))
+                    return false;
+
                 var status = SendTwilioMessage(phoneNumber, otp);
 
-                return status;
+                return true;
             }
         }
 
