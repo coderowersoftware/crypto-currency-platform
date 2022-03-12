@@ -15,5 +15,10 @@ namespace CodeRower.CCP.Controllers.Models
         public decimal? CoinPaymentWalletWithdrawalFeePct { get; internal set; }
         public decimal? BankAccountWithdrawalFeePct { get; internal set; }
         public decimal? MinWithdrawalLimitInUSD { get; internal set; }
+
+        public decimal LicenseCost { get; internal set; }
+        public string? LicenseCostCurrency { get; internal set; }
+        public decimal MonthlyMaintenancePct { get; internal set; }
+
     }
 }

@@ -39,11 +39,11 @@ namespace CodeRower.CCP.Services
                         tenantInfo = new TenantInfo();
                         tenantInfo.Id = Convert.ToString(reader["id"]);
                         tenantInfo.Name = Convert.ToString(reader["name"]);
-                        if(reader["mint_rewards_daily_percent"] != DBNull.Value)
-                        tenantInfo.MintRewardsDailyPercent = Convert.ToDecimal(reader["mint_rewards_daily_percent"]);
-                        if(reader["farming_daily_unlock_percent"] != DBNull.Value)
+                        if (reader["mint_rewards_daily_percent"] != DBNull.Value)
+                            tenantInfo.MintRewardsDailyPercent = Convert.ToDecimal(reader["mint_rewards_daily_percent"]);
+                        if (reader["farming_daily_unlock_percent"] != DBNull.Value)
                             tenantInfo.FarmingDailyUnlockPercent = Convert.ToDecimal(reader["farming_daily_unlock_percent"]);
-                        if(reader["unlockToWalletFeePct"] != DBNull.Value)
+                        if (reader["unlockToWalletFeePct"] != DBNull.Value)
                             tenantInfo.UnlockToWalletFeePct = Convert.ToDecimal(reader["unlockToWalletFeePct"]);
                         if (reader["dailyCoinRewardForAirDropUser"] != DBNull.Value)
                             tenantInfo.DailyCoinRewardForAirDropUser = Convert.ToDecimal(reader["dailyCoinRewardForAirDropUser"]);
@@ -57,6 +57,11 @@ namespace CodeRower.CCP.Services
                             tenantInfo.BankAccountWithdrawalFeePct = Convert.ToDecimal(reader["bankAccountWithdrawalFeePct"]);
                         if (reader["minWithdrawalLimitInUSD"] != DBNull.Value)
                             tenantInfo.MinWithdrawalLimitInUSD = Convert.ToDecimal(reader["minWithdrawalLimitInUSD"]);
+
+                        tenantInfo.LicenseCost = Convert.ToDecimal(reader["licenseCost"]);
+                        tenantInfo.LicenseCostCurrency = Convert.ToString(reader["licenseCostCurrency"]);
+                        tenantInfo.MonthlyMaintenancePct = Convert.ToDecimal(reader["monthlyMaintenancePct"]);
+
                     }
                 }
                 return tenantInfo;
