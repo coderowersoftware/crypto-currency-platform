@@ -85,7 +85,7 @@ namespace CodeRower.CCP.Services
         private string SendTwilioMessage(string phoneNumber, string otp)
         {
             var accountSid = "ACdcfcdbc2ac4877a905337958845334e8";
-            var authToken = "a66756f55d1aec61ee1a69fdf05b830d";
+            var authToken = "4d0c264e0c75027c514c107a98f2db32";
             TwilioClient.Init(accountSid, authToken);
 
             var messageOptions = new CreateMessageOptions(
