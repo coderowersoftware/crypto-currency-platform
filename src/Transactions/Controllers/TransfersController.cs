@@ -21,15 +21,17 @@ namespace CodeRower.CCP.Controllers
         private readonly IUsersService _usersService;
         private readonly IConfiguration _configuration;
         private readonly ICustomerService _customerService;
+        private readonly ISmsService _smsService;
 
         public TransfersController(ITransactionsService transactionsService, IUsersService usersService, ITenantService tenantService,
-            IConfiguration configuration, ICustomerService customerService)
+            IConfiguration configuration, ICustomerService customerService, ISmsService smsService)
         {
             _transactionsService = transactionsService;
             _usersService = usersService;
             _tenantService = tenantService;
             _configuration = configuration;
             _customerService = customerService;
+            _smsService = smsService;
         }
 
         [HttpPost("unlocked-to-wallet")]
@@ -255,6 +257,7 @@ namespace CodeRower.CCP.Controllers
             var userInfo = await _usersService.GetUserInfoAsync(tenantId, userId).ConfigureAwait(false);
 
             if (MintRequest.AccountPin != userInfo?.AccountPin)
+            //if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), MintRequest.AccountPin).ConfigureAwait(false)))
             {
                 ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
             }
@@ -321,7 +324,8 @@ namespace CodeRower.CCP.Controllers
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             var userInfo = await _usersService.GetUserInfoAsync(tenantId, userId).ConfigureAwait(false);
 
-            if (FarmRequest.AccountPin != userInfo?.AccountPin)
+            //if (FarmRequest.AccountPin != userInfo?.AccountPin)
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), FarmRequest.AccountPin).ConfigureAwait(false)))
             {
                 ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
             }
