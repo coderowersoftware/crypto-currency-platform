@@ -13,7 +13,7 @@ namespace CodeRower.CCP.Services
         Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId);
         Task ActivateLicenseAsync(Guid tenantId, Guid licenseId, string customerId);
         Task RegisterLicense(Guid tenantId, LicenseRequest data, string customerId, string userId);
-        Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId);
+        Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId, string customerId);
 
         Task<IEnumerable<License>> EndMiningAsync(Guid tenantId);
         Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId);
@@ -22,13 +22,19 @@ namespace CodeRower.CCP.Services
     public class MiningService : IMiningService
     {
         private readonly IConfiguration _configuration;
-
-        public MiningService(IConfiguration configuration)
+        private readonly ITenantService _tenantService;
+        private readonly ITransactionsService _transactionsService;
+        private readonly IUsersService _userService;
+        public MiningService(IConfiguration configuration, ITenantService tenantService,
+            ITransactionsService transactionsService, IUsersService userService)
         {
             _configuration = configuration;
+            _tenantService = tenantService;
+            _transactionsService = transactionsService;
+            _userService = userService;
         }
 
-        public async Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId)
+        public async Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId, string customerId)
         {
             var query = "addlicense";
             var id = string.Empty;
@@ -50,8 +56,51 @@ namespace CodeRower.CCP.Services
                         id = Convert.ToString(reader["licenseId"]);
                     }
                 }
-
             }
+
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+            var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+            var maintenanceFee = tenantInfo.LicenseCost * tenantInfo.MonthlyMaintenancePct / 100;
+
+            var walletTopUp = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            {
+                Amount = tenantInfo.LicenseCost + maintenanceFee,
+                IsCredit = true,
+                Reference = $"Payment added to wallet for purchase of License - {id}",
+                PayerId = walletTenant,
+                PayeeId = customerId,
+                TransactionType = "PAYMENT",
+                Currency = Currency.COINS,
+                CurrentBalanceFor = customerId
+            }).ConfigureAwait(false);
+
+
+            var buyTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            {
+                Amount = tenantInfo.LicenseCost,
+                IsCredit = false,
+                Reference = $"Payment added to wallet for purchase of License - {id}",
+                PayerId = customerId,
+                PayeeId = walletTenant,
+                TransactionType = "PURCHASE_LICENSE",
+                Currency = Currency.COINS,
+                CurrentBalanceFor = customerId,
+                BaseTransaction = walletTopUp.transactionid
+            }).ConfigureAwait(false);
+
+            var maintenanceTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            {
+                Amount = maintenanceFee,
+                IsCredit = false,
+                Reference = $"Payment received from user {customerId} for purchase of License - {id} , TransactionId - {data.TransactionId}",
+                PayerId = customerId,
+                PayeeId = walletTenant,
+                TransactionType = "MAINTENANCE_FEE",
+                Currency = Currency.COINS,
+                CurrentBalanceFor = customerId,
+                BaseTransaction = walletTopUp.transactionid
+            }).ConfigureAwait(false);
+
             return id;
 
         }
@@ -72,6 +121,24 @@ namespace CodeRower.CCP.Services
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
+
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+            var ownerInfo = await _userService.GetUserInfoAsync(tenantId, userId, true);
+            var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
+
+            var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+
+            var maintenanceFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            {
+                Amount = commissionFee,
+                IsCredit = true,
+                Reference = $"Commission for License registered by user",
+                PayerId = walletTenant,
+                PayeeId = ownerInfo.CustomerId,
+                TransactionType = "COMMISSION",
+                Currency = Currency.COINS,
+                CurrentBalanceFor = walletTenant
+            }).ConfigureAwait(false);
         }
         public async Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId)
         {
@@ -158,7 +225,6 @@ namespace CodeRower.CCP.Services
                 }
             }
         }
-
         public async Task ActivateLicenseAsync(Guid tenantId, Guid licenseId, string customerId)
         {
             var query = "activatelicense";
@@ -175,7 +241,6 @@ namespace CodeRower.CCP.Services
                 }
             }
         }
-
         public async Task<IEnumerable<License>> EndMiningAsync(Guid tenantId)
         {
             var query = "endmining";
@@ -201,7 +266,6 @@ namespace CodeRower.CCP.Services
             }
             return minedLicenses;
         }
-
         public async Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId)
         {
             var query = "get_license_log_report";

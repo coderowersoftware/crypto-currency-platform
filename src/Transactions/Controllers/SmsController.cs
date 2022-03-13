@@ -2,8 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CodeRower.CCP.Services;
-using CodeRower.CCP.Controllers.Models;
-using CodeRower.CCP.Controllers.Models.Common;
 
 namespace CodeRower.CCP.Controllers
 {
@@ -20,20 +18,20 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("send")]
         [Authorize]
-        public async Task<IActionResult> SendAsync([FromRoute, Required] Guid tenantId)
+        public async Task<IActionResult> SendAsync([FromRoute, Required] Guid tenantId, [FromQuery, Required] string service)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var result = await _smsService.SendAsync(tenantId, new Guid(userId)).ConfigureAwait(false);
+            var result = await _smsService.SendAsync(tenantId, new Guid(userId), service).ConfigureAwait(false);
 
             return result ? Ok(result) : BadRequest();
         }
 
         [HttpGet("verify")]
         [Authorize]
-        public async Task<IActionResult> SendAsync([FromRoute, Required] Guid tenantId, [FromQuery, Required] string otp)
+        public async Task<IActionResult> VerifyAsync([FromRoute, Required] Guid tenantId, [FromQuery, Required] string otp, [FromQuery, Required] string service)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var result = await _smsService.VerifyAsync(tenantId, new Guid(userId), otp).ConfigureAwait(false);
+            var result = await _smsService.VerifyAsync(tenantId, new Guid(userId), otp, service).ConfigureAwait(false);
 
 
             return result ? Ok(result) : BadRequest();

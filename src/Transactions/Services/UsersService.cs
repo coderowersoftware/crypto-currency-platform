@@ -7,7 +7,7 @@ namespace CodeRower.CCP.Services
 {
     public interface IUsersService
     {
-        Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId);
+        Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId, bool ownerInfo = false);
         Task<List<UserReferral>> GetReferralUsers(Guid tenantId, Guid userId);
     }
 
@@ -20,7 +20,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId)
+        public async Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId, bool ownerInfo = false)
         {
             var query = "get_user_info";
 
@@ -32,6 +32,7 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
+                    cmd.Parameters.AddWithValue("owner_info", NpgsqlDbType.Boolean, ownerInfo);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -42,6 +43,7 @@ namespace CodeRower.CCP.Services
                         userInfo.Id = Convert.ToString(reader["id"]);
                         userInfo.FullName = Convert.ToString(reader["full_name"]);
                         userInfo.AccountPin = Convert.ToString(reader["account_pin"]);
+                        userInfo.CustomerId= Convert.ToString(reader["customerId"]);
                     }
                 }
                 return userInfo;

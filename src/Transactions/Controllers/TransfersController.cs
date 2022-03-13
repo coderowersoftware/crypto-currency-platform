@@ -250,7 +250,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-mint")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId,[FromBody, Required] MintRequest MintRequest)
+        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] MintRequest MintRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -304,7 +304,8 @@ namespace CodeRower.CCP.Controllers
                     PayerId = customerId,
                     PayeeId = customerId,
                     TransactionType = "MINT",
-                    Currency = Currency.COINS
+                    Currency = Currency.COINS,
+                    BaseTransaction = debitTran.transactionid
                 }).ConfigureAwait(false);
 
                 if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
@@ -322,12 +323,10 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var userInfo = await _usersService.GetUserInfoAsync(tenantId, userId).ConfigureAwait(false);
 
-            //if (FarmRequest.AccountPin != userInfo?.AccountPin)
-            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), FarmRequest.AccountPin).ConfigureAwait(false)))
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), FarmRequest.Otp, "locked-to-farm").ConfigureAwait(false)))
             {
-                ModelState.AddModelError(nameof(MintRequest.AccountPin), "Invalid account pin.");
+                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp");
             }
 
             var lockedBalance = (await _transactionsService

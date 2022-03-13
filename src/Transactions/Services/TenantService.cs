@@ -61,6 +61,7 @@ namespace CodeRower.CCP.Services
                         tenantInfo.LicenseCost = Convert.ToDecimal(reader["licenseCost"]);
                         tenantInfo.LicenseCostCurrency = Convert.ToString(reader["licenseCostCurrency"]);
                         tenantInfo.MonthlyMaintenancePct = Convert.ToDecimal(reader["monthlyMaintenancePct"]);
+                        tenantInfo.LicenseCommissionPct = Convert.ToDecimal(reader["licenseCommissionPct"]);
 
                     }
                 }

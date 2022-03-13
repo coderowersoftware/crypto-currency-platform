@@ -30,7 +30,8 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> BuyLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var id = await _miningService.AddLicense(tenantId, Data.Data, userId).ConfigureAwait(false);
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            var id = await _miningService.AddLicense(tenantId, Data.Data, userId, customerId).ConfigureAwait(false);
 
             return Ok(new { licenseId = id });
         }

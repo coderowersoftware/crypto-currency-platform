@@ -7,5 +7,7 @@ namespace CodeRower.CCP.Controllers.Models
         public string? FullName { get; set; }
 
         public string? AccountPin { get; set; }
+
+        public string? CustomerId { get; set; }
     }
 }

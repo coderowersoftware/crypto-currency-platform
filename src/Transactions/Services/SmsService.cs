@@ -9,8 +9,8 @@ namespace CodeRower.CCP.Services
 {
     public interface ISmsService
     {
-        Task<bool> SendAsync(Guid tenantId, Guid userId);
-        Task<bool> VerifyAsync(Guid tenantId, Guid userId, string otp);
+        Task<bool> SendAsync(Guid tenantId, Guid userId, string service);
+        Task<bool> VerifyAsync(Guid tenantId, Guid userId, string otp, string service);
     }
 
     public class SmsService : ISmsService
@@ -22,7 +22,7 @@ namespace CodeRower.CCP.Services
             _configuration = configuration;
         }
 
-        public async Task<bool> SendAsync(Guid tenantId, Guid userId)
+        public async Task<bool> SendAsync(Guid tenantId, Guid userId, string service)
         {
             var query = "sendotp";
 
@@ -35,7 +35,7 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
-                    cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, "twilio");
+                    cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, service);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
@@ -56,7 +56,7 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task<bool> VerifyAsync(Guid tenantId, Guid userId, string otp)
+        public async Task<bool> VerifyAsync(Guid tenantId, Guid userId, string otp, string service)
         {
             var query = "getotp";
             var sentOtp = string.Empty;
@@ -67,6 +67,7 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
+                    cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, service);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
