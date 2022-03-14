@@ -16,6 +16,7 @@ namespace CodeRower.CCP.Controllers.Models
         public decimal LicenseCost { get; internal set; }
         public string? LicenseCostCurrency { get; internal set; }
         public decimal MonthlyMaintenancePct { get; internal set; }
-        public decimal LicenseCommissionPct { get; internal set; }
+        public decimal LicenseCommissionPct { get; internal set; } 
+        public decimal LatestRateInUSD { get; internal set; }
     }
 }

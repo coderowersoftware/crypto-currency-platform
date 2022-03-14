@@ -36,8 +36,10 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] UnlockedTransferRequest TransferRequest)
+        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId, 
+            [FromBody, Required] UnlockedTransferRequest TransferRequest)
         {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
@@ -54,6 +56,12 @@ namespace CodeRower.CCP.Controllers
             if (unlockedBalance < amountTobeDeducted)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+                return BadRequest(ModelState);
+            }
+
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), TransferRequest.Otp, "unlocked-to-wallet").ConfigureAwait(false)))
+            {
+                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
                 return BadRequest(ModelState);
             }
 
@@ -147,12 +155,6 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), TransferRequest.Otp, "wallet-to-wallet").ConfigureAwait(false)))
-            {
-                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
-                return BadRequest(ModelState);
-            }
-
             var toCustomerId = customerInfo.Id;
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
@@ -166,8 +168,9 @@ namespace CodeRower.CCP.Controllers
             var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
             var walletTransferFeeAmount = TransferRequest.Amount * walletTransferFeePct / 100;
             var amountTobeDeducted = TransferRequest.Amount + walletTransferFeeAmount;
+            var latestRate = tenantInfo.LatestRateInUSD;
 
-            if (TransferRequest.Amount <= minWithDrawalLimit)
+            if (TransferRequest.Amount * latestRate < minWithDrawalLimit)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), $"Transfer amount should be greater than minimum transfer amount - ${minWithDrawalLimit}.");
             }
@@ -179,6 +182,12 @@ namespace CodeRower.CCP.Controllers
 
             if (!ModelState.IsValid)
             {
+                return BadRequest(ModelState);
+            }
+
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), TransferRequest.Otp, "wallet-to-wallet").ConfigureAwait(false)))
+            {
+                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
                 return BadRequest(ModelState);
             }
 
@@ -262,14 +271,6 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var userInfo = await _usersService.GetUserInfoAsync(tenantId, userId).ConfigureAwait(false);
-
-            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), MintRequest.Otp, "locked-to-mint").ConfigureAwait(false)))
-            {
-                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
-
-                return BadRequest(ModelState);
-            }
 
             var lockedBalance = (await _transactionsService
                                 .GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED" }, customerId)
@@ -279,10 +280,13 @@ namespace CodeRower.CCP.Controllers
             if (MintRequest.Amount > lockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+                return BadRequest(ModelState);
             }
 
-            if (!ModelState.IsValid)
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), MintRequest.Otp, "locked-to-mint").ConfigureAwait(false)))
             {
+                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
+
                 return BadRequest(ModelState);
             }
 
@@ -333,12 +337,6 @@ namespace CodeRower.CCP.Controllers
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
-            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), FarmRequest.Otp, "locked-to-farm").ConfigureAwait(false)))
-            {
-                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
-                return BadRequest(ModelState);
-            }
-
             var lockedBalance = (await _transactionsService
                                 .GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED" }, customerId)
                                 .ConfigureAwait(false))?.FirstOrDefault()
@@ -347,10 +345,12 @@ namespace CodeRower.CCP.Controllers
             if (FarmRequest.Amount > lockedBalance)
             {
                 ModelState.AddModelError(nameof(MintRequest.Amount), "Insufficient funds.");
+                return BadRequest(ModelState);
             }
 
-            if (!ModelState.IsValid)
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), FarmRequest.Otp, "locked-to-farm").ConfigureAwait(false)))
             {
+                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
                 return BadRequest(ModelState);
             }
 
@@ -392,5 +392,52 @@ namespace CodeRower.CCP.Controllers
 
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
+
+        [HttpPost("wallet-to-cpwallet")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
+        public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] CoinsTransferToCPRequest TransferRequest)
+        {
+            var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
+
+            var walletBalance = (await _transactionsService
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, customerId)
+                                .ConfigureAwait(false))?.FirstOrDefault()
+                                ?.Amount ?? 0;
+
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+            var bankTransferFeePct = tenantInfo?.BankAccountWithdrawalFeePct ?? 0;
+            var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
+            var walletTransferFeeAmount = TransferRequest.Amount * bankTransferFeePct / 100;
+            var amountTobeDeducted = TransferRequest.Amount + walletTransferFeeAmount;
+            var latestRate = tenantInfo.LatestRateInUSD;
+
+            if (TransferRequest.Amount * latestRate < minWithDrawalLimit)
+            {
+                ModelState.AddModelError(nameof(TransferRequest.Amount), $"Transfer amount should be greater than minimum transfer amount - ${minWithDrawalLimit}.");
+            }
+
+            if (amountTobeDeducted > walletBalance)
+            {
+                ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!(await _smsService.VerifyAsync(tenantId, new Guid(userId), TransferRequest.Otp, "wallet-to-cpwallet").ConfigureAwait(false)))
+            {
+                ModelState.AddModelError(nameof(MintRequest.Otp), "Invalid Otp.");
+                return BadRequest(ModelState);
+            }
+
+
+            return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
+        }
+
     }
 }

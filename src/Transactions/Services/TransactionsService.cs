@@ -162,7 +162,6 @@ namespace CodeRower.CCP.Services
             return result;
         }
 
-
         public async Task<WalletTransactionResponse> AddTransaction(Guid tenantId, TransactionRequest request)
         {
             var walletHost = _configuration.GetSection("AppSettings:WalletHost").Value;
