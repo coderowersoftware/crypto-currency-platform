@@ -22,7 +22,7 @@ namespace CodeRower.CCP.Services
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
-        Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest);
+        Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
     }
 
     public class TransactionsService : ITransactionsService
@@ -365,7 +365,7 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest)
+        public async Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken)
         {
             var query = "addtransaction";
             var id = string.Empty;
@@ -394,10 +394,10 @@ namespace CodeRower.CCP.Services
 
             // invoke cp-withdrawal
             var nodeHost = _configuration.GetSection("AppSettings:NodeHost").Value;
-
+            var tokenComponents = bearerToken.Split(' ');
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 new Uri($"{nodeHost}api/tenant/{tenantId.ToString()}/cp-withdrawal"),
-                null,
+                new Dictionary<string, string>() { { tokenComponents[0], tokenComponents[1] } },
                 new
                 {
                     data = new
