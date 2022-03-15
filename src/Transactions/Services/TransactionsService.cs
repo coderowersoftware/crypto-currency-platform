@@ -5,6 +5,10 @@ using Transactions.Facade;
 using Transactions.Domain.Models;
 using Transaction = CodeRower.CCP.Controllers.Models.Transaction;
 using CodeRower.CCP.Controllers.Models.Common;
+using CodeRower.CCP.Controllers.Models.Transfers;
+using Npgsql;
+using System.Data;
+using NpgsqlTypes;
 
 namespace CodeRower.CCP.Services
 {
@@ -18,6 +22,7 @@ namespace CodeRower.CCP.Services
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
+        Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest);
     }
 
     public class TransactionsService : ITransactionsService
@@ -356,6 +361,64 @@ namespace CodeRower.CCP.Services
                             client_secret = clientSecret,
                             data = executeData
                         }).ConfigureAwait(false);
+                }
+            }
+        }
+
+        public async Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest)
+        {
+            var query = "addtransaction";
+            var id = string.Empty;
+
+            // Add transaction
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
+                    cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, transferRequest.Amount);
+                    cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, transferRequest.Amount);
+                    cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, false);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        id = Convert.ToString(reader["transactionId"]);
+                    }
+                }
+            }
+
+            // invoke cp-withdrawal
+            var nodeHost = _configuration.GetSection("AppSettings:NodeHost").Value;
+
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                new Uri($"{nodeHost}api/tenant/{tenantId.ToString()}/cp-withdrawal"),
+                null,
+                new
+                {
+                    data = new
+                    {
+                        amount = transferRequest.Amount,
+                        currency = "USDT.TRC20"
+                    }
+                }).ConfigureAwait(false);
+
+            // update response in db
+            query = "updatetransaction";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, new Guid(id));
+                    cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, responseMessage);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
         }

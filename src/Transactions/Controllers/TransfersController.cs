@@ -435,7 +435,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-
+            await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest).ConfigureAwait(false);
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
