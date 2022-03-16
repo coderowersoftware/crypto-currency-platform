@@ -227,10 +227,9 @@ namespace CodeRower.CCP.Services
                     while (reader.Read())
                     {
                         result = new License();
-                        result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
+
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
                         result.LicenseType = Convert.ToString(reader["licenseType"]);
-                        result.Title = Convert.ToString(reader["title"]);
                         result.LicenseNumber = Convert.ToString(reader["licenseNumber"]);
                         var activatedOn = reader["activatedon"];
                         if (activatedOn != DBNull.Value)
