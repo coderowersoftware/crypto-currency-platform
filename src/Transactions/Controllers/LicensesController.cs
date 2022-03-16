@@ -18,12 +18,15 @@ namespace CodeRower.CCP.Controllers
     {
         private readonly IMiningService _miningService;
         private readonly IMapper _mapper;
+        private readonly ISmsService _smsService;
+
 
         public LicensesController(IMiningService miningService,
-            IMapper mapper)
+            IMapper mapper, ISmsService smsService)
         {
             _miningService = miningService;
             _mapper = mapper;
+            _smsService = smsService;
         }
 
         [HttpPost("buy")]
@@ -50,6 +53,10 @@ namespace CodeRower.CCP.Controllers
                 if (ex.SqlState == "P0003" && ex.Hint == "LicensesLimitReached")
                 {
                     return BadRequest(new { ErrorCode = "LicensesLimitReached", Message = $"More Licenses cannot be registered." });
+                }
+                else if (ex.SqlState == "P0004" && ex.Hint == "LicenseExpired")
+                {
+                    return BadRequest(new { ErrorCode = "LicenseAlreadyExpired", Message = $"Expred License cannnot be registered." });
                 }
             }
             return StatusCode((int)HttpStatusCode.Created);
@@ -92,6 +99,22 @@ namespace CodeRower.CCP.Controllers
                 Limit = QueryOptions.Limit
             };
             return Ok(pagedResult);
+        }
+
+        [HttpGet("get-license")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<License>))]
+        public async Task<IActionResult> GetLicenseById([FromRoute, Required] Guid tenantId, [FromQuery, Required] Guid LicenseId, string otp)
+        {
+            var userId = new Guid(User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value);
+            var result = await _miningService.GetLicenseByLicenseId(tenantId, userId, LicenseId).ConfigureAwait(false);
+
+            if (!(await _smsService.VerifyAsync(tenantId, userId, otp, "get-license").ConfigureAwait(false)))
+            {
+                ModelState.AddModelError(nameof(otp), "Invalid Otp.");
+                return BadRequest(ModelState);
+            }
+
+            return Ok(result);
         }
 
         [HttpGet("logs")]

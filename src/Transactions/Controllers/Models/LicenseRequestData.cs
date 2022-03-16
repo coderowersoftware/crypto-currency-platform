@@ -8,7 +8,7 @@ namespace CodeRower.CCP.Controllers.Models
 
     public class LicenseRequest
     {
-        public Guid LicenseId { get; set; }
+        public Guid LicenseNumber { get; set; }
     }
 
 }

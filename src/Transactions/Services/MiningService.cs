@@ -11,10 +11,10 @@ namespace CodeRower.CCP.Services
     {
         Task MineAsync(Guid tenantId, Guid licenseId, string userId);
         Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId);
+        Task<License?> GetLicenseByLicenseId(Guid tenantId, Guid userId, Guid licenseId);
         Task ActivateLicenseAsync(Guid tenantId, Guid licenseId, string customerId);
         Task RegisterLicense(Guid tenantId, LicenseRequest data, string customerId, string userId);
         Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId, string customerId);
-
         Task<IEnumerable<License>> EndMiningAsync(Guid tenantId);
         Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId);
     }
@@ -112,7 +112,7 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, data.LicenseId);
+                    cmd.Parameters.AddWithValue("license_number", NpgsqlDbType.Uuid, data.LicenseNumber);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
@@ -208,6 +208,70 @@ namespace CodeRower.CCP.Services
                 }
             }
             return results;
+        }
+        public async Task<License?> GetLicenseByLicenseId(Guid tenantId, Guid userId, Guid licenseId)
+        {
+            var query = "getlicensebyid";
+            License result = null;
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
+                    cmd.Parameters.AddWithValue("license_id", NpgsqlDbType.Uuid, licenseId);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        result = new License();
+                        result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
+                        result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
+                        result.LicenseType = Convert.ToString(reader["licenseType"]);
+                        result.Title = Convert.ToString(reader["title"]);
+                        result.LicenseNumber = Convert.ToString(reader["licenseNumber"]);
+                        var activatedOn = reader["activatedon"];
+                        if (activatedOn != DBNull.Value)
+                        {
+                            result.ActivationDate = Convert.ToDateTime(activatedOn);
+                        }
+                        var expiresOn = reader["expireson"];
+                        if (expiresOn != DBNull.Value)
+                        {
+                            result.ExpirationDate = Convert.ToDateTime(expiresOn);
+                        }
+                        var registeredAt = reader["registeredAt"];
+                        if (registeredAt != DBNull.Value)
+                        {
+                            result.RegisteredAt = Convert.ToDateTime(registeredAt);
+                        }
+                        var customerLicenseLogId = reader["customerLicenseLogId"];
+
+                        if (result.ActivationDate.HasValue)
+                        {
+                            if (result.ExpirationDate < DateTime.Now)
+                            {
+                                result.MiningStatus = MiningStatus.expired;
+                            }
+                            else if (customerLicenseLogId == DBNull.Value)
+                            {
+                                result.MiningStatus = MiningStatus.completed;
+                            }
+                            else if (reader["minedat"] == DBNull.Value)
+                            {
+                                result.MiningStatus = MiningStatus.in_progress;
+                            }
+                            else
+                            {
+                                result.MiningStatus = MiningStatus.completed;
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
         }
         public async Task MineAsync(Guid tenantId, Guid licenseId, string userId)
         {
