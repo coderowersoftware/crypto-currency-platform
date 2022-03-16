@@ -112,7 +112,7 @@ namespace CodeRower.CCP.Services
             {
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
-                    cmd.Parameters.AddWithValue("license_number", NpgsqlDbType.Uuid, data.LicenseNumber);
+                    cmd.Parameters.AddWithValue("license_number", NpgsqlDbType.Text, data.LicenseNumber);
                     cmd.Parameters.AddWithValue("customer_id", NpgsqlDbType.Uuid, new Guid(customerId));
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));

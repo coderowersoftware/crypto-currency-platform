@@ -1,14 +1,18 @@
 
+using System.ComponentModel.DataAnnotations;
+
 namespace CodeRower.CCP.Controllers.Models
 {
     public class LicenseRequestData
     {
+        [Required]
         public LicenseRequest Data { get; set; }
     }
 
     public class LicenseRequest
     {
-        public Guid LicenseNumber { get; set; }
+        [Required]
+        public string LicenseNumber { get; set; }
     }
 
 }
