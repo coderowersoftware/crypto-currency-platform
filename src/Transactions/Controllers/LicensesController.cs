@@ -56,8 +56,13 @@ namespace CodeRower.CCP.Controllers
                 }
                 else if (ex.SqlState == "P0004" && ex.Hint == "LicenseExpired")
                 {
-                    return BadRequest(new { ErrorCode = "LicenseAlreadyExpired", Message = $"Expred License cannnot be registered." });
+                    return BadRequest(new { ErrorCode = "LicenseAlreadyExpired", Message = $"Expired License cannnot be registered." });
                 }
+                else if (ex.SqlState == "P0005" && ex.Hint == "LicenseAlreadyRegistered")
+                {
+                    return BadRequest(new { ErrorCode = "LicenseAlreadyRegistered", Message = $"License already registered." });
+                }
+
             }
             return StatusCode((int)HttpStatusCode.Created);
         }
