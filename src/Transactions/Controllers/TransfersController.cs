@@ -142,7 +142,8 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("wallet-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] CoinsTransferRequest TransferRequest)
+        public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId, 
+            [FromBody, Required] CoinsTransferRequest TransferRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -267,7 +268,8 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-mint")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] MintRequest MintRequest)
+        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId, 
+            [FromBody, Required] MintRequest MintRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -332,7 +334,8 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-farm")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] MintRequest FarmRequest)
+        public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId, 
+            [FromBody, Required] MintRequest FarmRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -395,7 +398,8 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("wallet-to-cpwallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId, [FromBody, Required] CoinsTransferToCPRequest TransferRequest)
+        public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId, 
+            [FromBody, Required] CoinsTransferToCPRequest TransferRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;

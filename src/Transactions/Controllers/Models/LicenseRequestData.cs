@@ -12,7 +12,7 @@ namespace CodeRower.CCP.Controllers.Models
     public class LicenseRequest
     {
         [Required]
-        public string LicenseNumber { get; set; }
+        public string? LicenseNumber { get; set; }
     }
 
 }

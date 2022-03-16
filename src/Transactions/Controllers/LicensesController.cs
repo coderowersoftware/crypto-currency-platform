@@ -40,7 +40,8 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseRequestData Data)
+        public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId, 
+            [FromBody, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
@@ -52,21 +53,25 @@ namespace CodeRower.CCP.Controllers
             {
                 if (ex.SqlState == "P0003" && ex.Hint == "LicensesLimitReached")
                 {
-                    return BadRequest(new { ErrorCode = "LicensesLimitReached", Message = $"More Licenses cannot be registered." });
+                    ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "Licenses limit reached. No more licenses can be added.");
                 }
                 else if (ex.SqlState == "P0004" && ex.Hint == "LicenseExpired")
                 {
-                    return BadRequest(new { ErrorCode = "LicenseAlreadyExpired", Message = $"Expired License cannnot be registered." });
+                    ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "Expired License cannnot be registered.");
                 }
                 else if (ex.SqlState == "P0005" && ex.Hint == "LicenseAlreadyRegistered")
                 {
-                    return BadRequest(new { ErrorCode = "LicenseAlreadyRegistered", Message = $"License already registered." });
+                    ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "License already registered.");
                 }
 
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
             }
+
             return StatusCode((int)HttpStatusCode.Created);
         }
-
 
         [HttpPatch("{LicenseId}/activate")]
         public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid tenantId, [FromRoute, Required] Guid LicenseId)
@@ -107,7 +112,7 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpGet("get-license")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<License>))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> GetLicenseById([FromRoute, Required] Guid tenantId, [FromQuery, Required] Guid LicenseId, string otp)
         {
             var userId = new Guid(User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value);
