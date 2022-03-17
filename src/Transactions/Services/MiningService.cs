@@ -58,48 +58,51 @@ namespace CodeRower.CCP.Services
                 }
             }
 
-            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
-            var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
-            var maintenanceFee = tenantInfo.LicenseCost * tenantInfo.MonthlyMaintenancePct / 100;
-
-            var walletTopUp = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            if (data.LicenseType == "POOL")
             {
-                Amount = tenantInfo.LicenseCost + maintenanceFee,
-                IsCredit = true,
-                Reference = $"Payment added to wallet for purchase of License - {id}",
-                PayerId = walletTenant,
-                PayeeId = customerId,
-                TransactionType = "PAYMENT",
-                Currency = Currency.COINS,
-                CurrentBalanceFor = customerId
-            }).ConfigureAwait(false);
+                var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+                var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+                var maintenanceFee = tenantInfo.LicenseCost * tenantInfo.MonthlyMaintenancePct / 100;
+
+                var walletTopUp = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                {
+                    Amount = tenantInfo.LicenseCost + maintenanceFee,
+                    IsCredit = true,
+                    Reference = $"Payment added to wallet for purchase of License - {id}",
+                    PayerId = walletTenant,
+                    PayeeId = customerId,
+                    TransactionType = "PAYMENT",
+                    Currency = Currency.COINS,
+                    CurrentBalanceFor = customerId
+                }).ConfigureAwait(false);
 
 
-            var buyTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-            {
-                Amount = tenantInfo.LicenseCost,
-                IsCredit = false,
-                Reference = $"Payment added to wallet for purchase of License - {id}",
-                PayerId = customerId,
-                PayeeId = walletTenant,
-                TransactionType = "PURCHASE_LICENSE",
-                Currency = Currency.COINS,
-                CurrentBalanceFor = customerId,
-                BaseTransaction = walletTopUp.transactionid
-            }).ConfigureAwait(false);
+                var buyTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                {
+                    Amount = tenantInfo.LicenseCost,
+                    IsCredit = false,
+                    Reference = $"Payment added to wallet for purchase of License - {id}",
+                    PayerId = customerId,
+                    PayeeId = walletTenant,
+                    TransactionType = "PURCHASE_LICENSE",
+                    Currency = Currency.COINS,
+                    CurrentBalanceFor = customerId,
+                    BaseTransaction = walletTopUp.transactionid
+                }).ConfigureAwait(false);
 
-            var maintenanceTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-            {
-                Amount = maintenanceFee,
-                IsCredit = false,
-                Reference = $"Payment received from user {customerId} for purchase of License - {id} , TransactionId - {data.TransactionId}",
-                PayerId = customerId,
-                PayeeId = walletTenant,
-                TransactionType = "MAINTENANCE_FEE",
-                Currency = Currency.COINS,
-                CurrentBalanceFor = customerId,
-                BaseTransaction = walletTopUp.transactionid
-            }).ConfigureAwait(false);
+                var maintenanceTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                {
+                    Amount = maintenanceFee,
+                    IsCredit = false,
+                    Reference = $"Payment received from user {customerId} for purchase of License - {id} , TransactionId - {data.TransactionId}",
+                    PayerId = customerId,
+                    PayeeId = walletTenant,
+                    TransactionType = "MAINTENANCE_FEE",
+                    Currency = Currency.COINS,
+                    CurrentBalanceFor = customerId,
+                    BaseTransaction = walletTopUp.transactionid
+                }).ConfigureAwait(false);
+            }
 
             return id;
 
