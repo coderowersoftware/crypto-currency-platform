@@ -18,5 +18,15 @@ namespace CodeRower.CCP.Controllers.Models
         public decimal MonthlyMaintenancePct { get; internal set; }
         public decimal LicenseCommissionPct { get; internal set; } 
         public decimal LatestRateInUSD { get; internal set; }
+        public string? WalletTenantId { get; internal set; }
+        public string? WalletClientId { get; internal set; }
+        public string? WalletSecret { get; internal set; }
+        public string? TwilioAccountSID { get; internal set; }
+        public string? TwilioAuthToken { get; internal set; }
+        public string? TwilioMessageServiceId { get; internal set; }
+        public string? NodeHost { get; internal set; }
+        public string? WalletHost { get; internal set; }
+        public string? AuthJWTSecret { get; internal set; }
+
     }
 }

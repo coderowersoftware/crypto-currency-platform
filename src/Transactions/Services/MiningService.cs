@@ -61,7 +61,7 @@ namespace CodeRower.CCP.Services
             if (data.LicenseType == LicenseType.POOL)
             {
                 var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
-                var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
+                var walletTenant = tenantInfo.WalletTenantId;
                 var maintenanceFee = tenantInfo.LicenseCost * tenantInfo.MonthlyMaintenancePct / 100;
 
                 var walletTopUp = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
@@ -129,18 +129,16 @@ namespace CodeRower.CCP.Services
             var ownerInfo = await _userService.GetUserInfoAsync(tenantId, userId, true);
             var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
 
-            var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
-
             var maintenanceFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
                 Amount = commissionFee,
                 IsCredit = true,
                 Reference = $"Commission for License registered by user",
-                PayerId = walletTenant,
+                PayerId = tenantInfo.WalletTenantId,
                 PayeeId = ownerInfo.CustomerId,
                 TransactionType = "COMMISSION",
                 Currency = Currency.COINS,
-                CurrentBalanceFor = walletTenant
+                CurrentBalanceFor = tenantInfo.WalletTenantId
             }).ConfigureAwait(false);
         }
         public async Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId)

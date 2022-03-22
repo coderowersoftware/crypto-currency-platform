@@ -18,25 +18,21 @@ namespace CodeRower.CCP.Controllers
     {
         private readonly ITransactionsService _transactionsService;
         private readonly ITenantService _tenantService;
-        private readonly IUsersService _usersService;
-        private readonly IConfiguration _configuration;
         private readonly ICustomerService _customerService;
         private readonly ISmsService _smsService;
 
-        public TransfersController(ITransactionsService transactionsService, IUsersService usersService, ITenantService tenantService,
-            IConfiguration configuration, ICustomerService customerService, ISmsService smsService)
+        public TransfersController(ITransactionsService transactionsService, IUsersService usersService,
+            ITenantService tenantService, ICustomerService customerService, ISmsService smsService)
         {
             _transactionsService = transactionsService;
-            _usersService = usersService;
             _tenantService = tenantService;
-            _configuration = configuration;
             _customerService = customerService;
             _smsService = smsService;
         }
 
         [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId, 
+        public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] UnlockedTransferRequest TransferRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -88,7 +84,7 @@ namespace CodeRower.CCP.Controllers
                     IsCredit = false,
                     Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
                     PayerId = customerId,
-                    PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                    PayeeId = tenantInfo.WalletTenantId,
                     TransactionType = "UNLOCKED",
                     Currency = Currency.COINS,
                     BaseTransaction = debitTran?.transactionid
@@ -104,8 +100,8 @@ namespace CodeRower.CCP.Controllers
                         Amount = unlockToWalletFeeAmount,
                         IsCredit = true,
                         Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
-                        PayerId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
-                        PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                        PayerId = tenantInfo.WalletTenantId,
+                        PayeeId = tenantInfo.WalletTenantId,
                         TransactionType = "UNLOCKED_WALLET_FEE",
                         Currency = Currency.COINS,
                         BaseTransaction = debitTran?.transactionid
@@ -142,7 +138,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("wallet-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId, 
+        public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] CoinsTransferRequest TransferRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -199,7 +195,7 @@ namespace CodeRower.CCP.Controllers
                 IsCredit = false,
                 Reference = $"Transfer to payee {TransferRequest.ToCustomerId}",
                 PayerId = customerId,
-                PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                PayeeId = tenantInfo.WalletTenantId,
                 TransactionType = "WALLET",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
@@ -215,7 +211,7 @@ namespace CodeRower.CCP.Controllers
                     IsCredit = false,
                     Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
                     PayerId = customerId,
-                    PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                    PayeeId = tenantInfo.WalletTenantId,
                     TransactionType = "WALLET",
                     Currency = Currency.COINS,
                     BaseTransaction = debitTran?.transactionid
@@ -231,8 +227,8 @@ namespace CodeRower.CCP.Controllers
                         Amount = walletTransferFeeAmount,
                         IsCredit = true,
                         Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
-                        PayerId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
-                        PayeeId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                        PayerId = tenantInfo.WalletTenantId,
+                        PayeeId = tenantInfo.WalletTenantId,
                         TransactionType = "WALLET_WALLET_FEE",
                         Currency = Currency.COINS,
                         BaseTransaction = debitTran?.transactionid
@@ -247,7 +243,7 @@ namespace CodeRower.CCP.Controllers
                             Amount = TransferRequest.Amount,
                             IsCredit = true,
                             Reference = $"Received from payer {customerId}",
-                            PayerId = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value,
+                            PayerId = tenantInfo.WalletTenantId,
                             PayeeId = toCustomerId,
                             TransactionType = "WALLET",
                             Remark = $"Wallet transfer received from {customerId}",
@@ -268,7 +264,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-mint")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId, 
+        public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] MintRequest MintRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -334,7 +330,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("locked-to-farm")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId, 
+        public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] MintRequest FarmRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -398,7 +394,7 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("wallet-to-cpwallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
-        public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId, 
+        public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] CoinsTransferToCPRequest TransferRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;

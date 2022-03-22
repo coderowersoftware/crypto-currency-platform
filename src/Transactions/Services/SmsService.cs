@@ -16,10 +16,12 @@ namespace CodeRower.CCP.Services
     public class SmsService : ISmsService
     {
         private readonly IConfiguration _configuration;
-
-        public SmsService(IConfiguration configuration)
+        private readonly ITenantService _tenantService;
+       
+        public SmsService(IConfiguration configuration, ITenantService tenantService)
         {
             _configuration = configuration;
+            _tenantService = tenantService;
         }
 
         public async Task<bool> SendAsync(Guid tenantId, Guid userId, string service)
@@ -50,7 +52,7 @@ namespace CodeRower.CCP.Services
                 if (string.IsNullOrEmpty(phoneNumber))
                     return false;
 
-                var status = SendTwilioMessage(phoneNumber, otp);
+                var status = await SendTwilioMessage(tenantId, phoneNumber, otp).ConfigureAwait(false);
 
                 return true;
             }
@@ -82,15 +84,15 @@ namespace CodeRower.CCP.Services
             return otp == sentOtp;
         }
 
-        private string SendTwilioMessage(string phoneNumber, string otp)
+        private async Task<string> SendTwilioMessage(Guid tenantId, string phoneNumber, string otp)
         {
-            var accountSid = _configuration.GetSection($"AppSettings:TWILIO_ACCOUNT_SID").Value;
-            var authToken = _configuration.GetSection($"AppSettings:TWILIO_AUTH_TOKEN").Value;
-            TwilioClient.Init(accountSid, authToken);
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+
+            TwilioClient.Init(tenantInfo.TwilioAccountSID, tenantInfo.TwilioAuthToken);
 
             var messageOptions = new CreateMessageOptions(
                 new PhoneNumber(phoneNumber));
-            messageOptions.MessagingServiceSid = "MG85c3ff083d19790afd098825e75181f8";
+            messageOptions.MessagingServiceSid = tenantInfo.TwilioMessageServiceId;
             messageOptions.Body = $"Your Cloud Chain verification code is {otp}";
 
             var message = MessageResource.Create(messageOptions);

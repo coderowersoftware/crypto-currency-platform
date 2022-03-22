@@ -15,15 +15,13 @@ namespace CodeRower.CCP.Controllers
     {
         private readonly ITransactionsService _transactionsService;
         private readonly IMiningService _miningService;
-        private readonly IConfiguration _configuration;
         private readonly ITenantService _tenantService;
 
         public SchedulerController(ITransactionsService transactionsService, IMiningService miningService, 
-            IConfiguration configuration, ITenantService tenantService)
+            ITenantService tenantService)
         {
             _transactionsService = transactionsService;
             _miningService = miningService;
-            _configuration = configuration;
             _tenantService = tenantService;
         }
 
@@ -35,17 +33,16 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
             if (minedLicenses?.Any() ?? false)
             {
-                var appTenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+                var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
 
-                var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
                 foreach (var license in minedLicenses)
                 {
                     var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? appTenantInfo.OfferDailyCoinRewardForAirDropUserForDays.Value : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? tenantInfo.DailyCoinRewardForAirDropUser.Value : 1m,
                         IsCredit = true,
                         Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
-                        PayerId = walletTenant,
+                        PayerId = tenantInfo.WalletTenantId,
                         PayeeId = license.CustomerId.ToString(),
                         TransactionType = "MINED",
                         Currency = Currency.COINS,
@@ -56,14 +53,14 @@ namespace CodeRower.CCP.Controllers
 
                     var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? appTenantInfo.OfferDailyCoinRewardForAirDropUserForDays.Value : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? tenantInfo.DailyCoinRewardForAirDropUser.Value : 1m,
                         IsCredit = false,
                         Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = license.CustomerId.ToString(),
-                        PayeeId = walletTenant,
+                        PayeeId = tenantInfo.WalletTenantId,
                         TransactionType = "MINED",
                         Currency = Currency.COINS,
-                        CurrentBalanceFor = walletTenant
+                        CurrentBalanceFor = tenantInfo.WalletTenantId
                     }).ConfigureAwait(false);
 
                     transactions.Add(debitTran);
@@ -73,7 +70,7 @@ namespace CodeRower.CCP.Controllers
                         Amount = license.LicenseType.Equals("AIRDROP") ? 0.1m : 1m,
                         IsCredit = true,
                         Reference = $"LOCKED Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
-                        PayerId = walletTenant,
+                        PayerId = tenantInfo.WalletTenantId,
                         PayeeId = license.CustomerId.ToString(),
                         TransactionType = "LOCKED",
                         Currency = Currency.COINS,
