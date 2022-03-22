@@ -67,7 +67,7 @@ namespace CodeRower.CCP.Controllers
 
                     creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals("AIRDROP") ? 0.1m : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? tenantInfo.DailyCoinRewardForAirDropUser.Value : 1m,
                         IsCredit = true,
                         Reference = $"LOCKED Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = tenantInfo.WalletTenantId,

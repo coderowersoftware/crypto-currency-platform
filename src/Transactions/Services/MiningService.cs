@@ -302,7 +302,7 @@ namespace CodeRower.CCP.Services
                         minedLicense.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
                         minedLicense.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
                         minedLicense.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["licensetype"]));
-
+                        minedLicense.LicenseNumber = Convert.ToString(reader["licenseNumber"]);
                         minedLicenses.Add(minedLicense);
                     }
                 }
