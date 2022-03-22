@@ -16,12 +16,15 @@ namespace CodeRower.CCP.Controllers
         private readonly ITransactionsService _transactionsService;
         private readonly IMiningService _miningService;
         private readonly IConfiguration _configuration;
+        private readonly ITenantService _tenantService;
 
-        public SchedulerController(ITransactionsService transactionsService, IMiningService miningService, IConfiguration configuration)
+        public SchedulerController(ITransactionsService transactionsService, IMiningService miningService, 
+            IConfiguration configuration, ITenantService tenantService)
         {
             _transactionsService = transactionsService;
             _miningService = miningService;
             _configuration = configuration;
+            _tenantService = tenantService;
         }
 
         [HttpGet("execute-mining")]
@@ -32,14 +35,16 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
             if (minedLicenses?.Any() ?? false)
             {
+                var appTenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+
                 var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
                 foreach (var license in minedLicenses)
                 {
                     var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals("AIRDROP") ? 0.1m : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? appTenantInfo.OfferDailyCoinRewardForAirDropUserForDays.Value : 1m,
                         IsCredit = true,
-                        Reference = "Mined Coins via " + (license.LicenseType.Equals("AIRDROP") ? "AIRDROP" : "POOL") + $" license - {license.LicenseId}",
+                        Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = walletTenant,
                         PayeeId = license.CustomerId.ToString(),
                         TransactionType = "MINED",
@@ -51,9 +56,9 @@ namespace CodeRower.CCP.Controllers
 
                     var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals("AIRDROP") ? 0.1m : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? appTenantInfo.OfferDailyCoinRewardForAirDropUserForDays.Value : 1m,
                         IsCredit = false,
-                        Reference = "Mined Coins via " + (license.LicenseType.Equals("AIRDROP") ? "AIRDROP" : "POOL") + $" license - {license.LicenseId}",
+                        Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = license.CustomerId.ToString(),
                         PayeeId = walletTenant,
                         TransactionType = "MINED",
@@ -67,10 +72,10 @@ namespace CodeRower.CCP.Controllers
                     {
                         Amount = license.LicenseType.Equals("AIRDROP") ? 0.1m : 1m,
                         IsCredit = true,
-                        Reference = (license.LicenseType.Equals("AIRDROP") ? "UNLOCKED" : "LOCKED") + " Mined Coins via " + (license.LicenseType.Equals("AIRDROP") ? "AIRDROP" : "POOL") + $" license - {license.LicenseId}",
+                        Reference = $"LOCKED Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = walletTenant,
                         PayeeId = license.CustomerId.ToString(),
-                        TransactionType = license.LicenseType.Equals("AIRDROP") ? "UNLOCKED" : "LOCKED",
+                        TransactionType = "LOCKED",
                         Currency = Currency.COINS,
                         CurrentBalanceFor = license.CustomerId.ToString()
                     }).ConfigureAwait(false);

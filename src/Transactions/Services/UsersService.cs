@@ -1,5 +1,6 @@
 using System.Data;
 using CodeRower.CCP.Controllers.Models;
+using CodeRower.CCP.Controllers.Models.Enums;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -43,7 +44,7 @@ namespace CodeRower.CCP.Services
                         userInfo.Id = Convert.ToString(reader["id"]);
                         userInfo.FullName = Convert.ToString(reader["full_name"]);
                         userInfo.AccountPin = Convert.ToString(reader["account_pin"]);
-                        userInfo.CustomerId= Convert.ToString(reader["customerId"]);
+                        userInfo.CustomerId = Convert.ToString(reader["customerId"]);
                     }
                 }
                 return userInfo;
@@ -70,11 +71,10 @@ namespace CodeRower.CCP.Services
                     {
                         var user = new UserReferral();
                         user.ReferralCode = Convert.ToString(reader["referralCode"]);
-                        user.LicenseType = Convert.ToString(reader["licenseType"]);
+                        user.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["licenseType"]));
                         user.CreatedAt = Convert.ToDateTime(reader["createdAt"]);
                         user.NumberOfLicenses = Convert.ToInt32(reader["numberOfLicenses"]);
                         referral.Add(user);
-
                     }
                 }
 

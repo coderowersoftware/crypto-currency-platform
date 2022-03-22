@@ -34,13 +34,23 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
-            var id = await _miningService.AddLicense(tenantId, Data.Data, userId, customerId).ConfigureAwait(false);
 
-            return Ok(new { licenseId = id });
+            //todo
+            //if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
+            //{
+                var id = await _miningService.AddLicense(tenantId, Data.Data, userId, customerId).ConfigureAwait(false);
+
+                return Ok(new { licenseId = id });
+            //}
+
+            //ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
+
+            //return BadRequest(ModelState);
+
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId, 
+        public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId,
             [FromBody, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
@@ -62,6 +72,10 @@ namespace CodeRower.CCP.Controllers
                 else if (ex.SqlState == "P0005" && ex.Hint == "LicenseAlreadyRegistered")
                 {
                     ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "License already registered.");
+                }
+                else if(ex.SqlState == "P0006" && ex.Hint == "LicenseNotExist")
+                {
+                    ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "Something went wrong.");
                 }
 
                 if (!ModelState.IsValid)

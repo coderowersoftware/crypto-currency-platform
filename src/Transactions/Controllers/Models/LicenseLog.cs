@@ -1,3 +1,5 @@
+using CodeRower.CCP.Controllers.Models.Enums;
+
 namespace CodeRower.CCP.Controllers.Models
 {
     public class LicenseLog
@@ -7,7 +9,7 @@ namespace CodeRower.CCP.Controllers.Models
         public DateTime ActivatedOn { get; set; }
         public DateTime? ExpiresOn { get; set; }
         public string Status { get; set; }
-        public string LicenseType { get; set; }
+        public LicenseType LicenseType { get; set; }
         public DateTime MiningStartedAt { get; set; }
         public DateTime? MiningEndedAt { get; set; }
     }

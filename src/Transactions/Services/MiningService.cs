@@ -45,7 +45,7 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Text, data.TransactionId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, new Guid(userId));
-                    cmd.Parameters.AddWithValue("license_type", NpgsqlDbType.Text, data.LicenseType);
+                    cmd.Parameters.AddWithValue("license_type", NpgsqlDbType.Text, data.LicenseType.ToString());
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
@@ -58,7 +58,7 @@ namespace CodeRower.CCP.Services
                 }
             }
 
-            if (data.LicenseType == "POOL")
+            if (data.LicenseType == LicenseType.POOL)
             {
                 var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
                 var walletTenant = _configuration.GetSection($"AppSettings:{tenantId}:CCCWalletTenant").Value;
@@ -167,7 +167,7 @@ namespace CodeRower.CCP.Services
                         License result = new License();
                         result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
-                        result.LicenseType = Convert.ToString(reader["licenseType"]);
+                        result.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["licenseType"]));
                         result.Title = Convert.ToString(reader["title"]);
                         result.Mined = Convert.ToDecimal(reader["total_mined"]);
                         var activatedOn = reader["activatedon"];
@@ -232,7 +232,7 @@ namespace CodeRower.CCP.Services
                         result = new License();
 
                         result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
-                        result.LicenseType = Convert.ToString(reader["licenseType"]);
+                        result.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["licenseType"]));
                         result.LicenseNumber = Convert.ToString(reader["licenseNumber"]);
                         var activatedOn = reader["activatedon"];
                         if (activatedOn != DBNull.Value)
@@ -303,7 +303,7 @@ namespace CodeRower.CCP.Services
                         var minedLicense = new License();
                         minedLicense.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
                         minedLicense.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
-                        minedLicense.LicenseType = Convert.ToString(reader["licensetype"]);
+                        minedLicense.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["licensetype"]));
 
                         minedLicenses.Add(minedLicense);
                     }
@@ -333,7 +333,7 @@ namespace CodeRower.CCP.Services
                         log.ActivatedOn = Convert.ToDateTime(reader["activated_on"]);
                         if (reader["expires_on"] != DBNull.Value) log.ExpiresOn = Convert.ToDateTime(reader["expires_on"]);
                         log.Status = Convert.ToString(reader["status"]);
-                        log.LicenseType = Convert.ToString(reader["license_type"]);
+                        log.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["license_type"]));
                         log.MiningStartedAt = Convert.ToDateTime(reader["created_at"]);
                         if (reader["mined_at"] != DBNull.Value) log.MiningEndedAt = Convert.ToDateTime(reader["mined_at"]);
 

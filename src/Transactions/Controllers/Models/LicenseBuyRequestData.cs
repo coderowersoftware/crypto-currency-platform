@@ -1,4 +1,5 @@
 
+using CodeRower.CCP.Controllers.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace CodeRower.CCP.Controllers.Models
@@ -13,7 +14,9 @@ namespace CodeRower.CCP.Controllers.Models
     {
         [Required]
         public string TransactionId { get; set; }
-        public string LicenseType { get; set; } = "POOL";
+        public LicenseType LicenseType { get; set; } = LicenseType.POOL;
+        //[Required]
+        //public string AuthKey { get; set; }
     }
 
 }
