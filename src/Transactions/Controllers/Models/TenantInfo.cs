@@ -27,6 +27,8 @@ namespace CodeRower.CCP.Controllers.Models
         public string? NodeHost { get; internal set; }
         public string? WalletHost { get; internal set; }
         public string? AuthJWTSecret { get; internal set; }
+        public string? SendGridApiKey{ get; internal set; }
+        public string? SendGridOtpTemplateId { get; internal set; }
 
     }
 }
