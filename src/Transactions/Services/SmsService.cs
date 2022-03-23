@@ -59,8 +59,22 @@ namespace CodeRower.CCP.Services
 
                 var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
 
-                var smsStatus = await SendTwilioMessage(phoneNumber, otp, tenantInfo).ConfigureAwait(false);
-                var emailStatus = await SendEmail(email, otp, tenantInfo).ConfigureAwait(false);
+                try
+                {
+                    var smsStatus = await SendTwilioMessage(phoneNumber, otp, tenantInfo).ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+
+                }
+                try
+                {
+                    var emailStatus = await SendEmail(email, otp, tenantInfo).ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+
+                }
 
                 return true;
             }
