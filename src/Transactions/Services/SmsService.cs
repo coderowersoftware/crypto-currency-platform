@@ -54,7 +54,7 @@ namespace CodeRower.CCP.Services
                     }
                 }
 
-                if (string.IsNullOrEmpty(phoneNumber))
+                if (string.IsNullOrEmpty(otp) || (string.IsNullOrEmpty(phoneNumber) && string.IsNullOrEmpty(email)))
                     return false;
 
                 var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
