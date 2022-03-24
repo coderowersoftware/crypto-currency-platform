@@ -129,7 +129,7 @@ namespace CodeRower.CCP.Services
             var ownerInfo = await _userService.GetUserInfoAsync(tenantId, userId, true);
             var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
 
-            var maintenanceFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            var commissionFeeCreditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
                 Amount = commissionFee,
                 IsCredit = true,
@@ -138,7 +138,31 @@ namespace CodeRower.CCP.Services
                 PayeeId = ownerInfo.CustomerId,
                 TransactionType = "COMMISSION",
                 Currency = Currency.COINS,
+                CurrentBalanceFor = ownerInfo.CustomerId
+            }).ConfigureAwait(false);
+
+            var commissionFeeDebitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            {
+                Amount = commissionFee,
+                IsCredit = false,
+                Reference = $"Commission for License registered by user",
+                PayerId = ownerInfo.CustomerId,
+                PayeeId = tenantInfo.WalletTenantId,
+                TransactionType = "COMMISSION",
+                Currency = Currency.COINS,
                 CurrentBalanceFor = tenantInfo.WalletTenantId
+            }).ConfigureAwait(false);
+
+            var unlockFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+            {
+                Amount = commissionFee,
+                IsCredit = true,
+                Reference = $"Commission UNLOCKED for License registered by user",
+                PayerId = tenantInfo.WalletTenantId,
+                PayeeId = ownerInfo.CustomerId,
+                TransactionType = "UNLOCKED",
+                Currency = Currency.COINS,
+                CurrentBalanceFor = ownerInfo.CustomerId
             }).ConfigureAwait(false);
         }
         public async Task<IEnumerable<License>?> GetLicensesAsync(Guid tenantId, Guid? licenseId, string customerId)
