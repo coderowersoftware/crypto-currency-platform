@@ -170,15 +170,12 @@ namespace CodeRower.CCP.Controllers
             if (TransferRequest.Amount * latestRate < minWithDrawalLimit)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), $"Transfer amount should be greater than minimum transfer amount - ${minWithDrawalLimit}.");
+                return BadRequest(ModelState);
             }
 
             if (amountTobeDeducted > walletBalance)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
-            }
-
-            if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
             }
 
@@ -417,15 +414,12 @@ namespace CodeRower.CCP.Controllers
             if (TransferRequest.Amount * latestRate < minWithDrawalLimit)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), $"Transfer amount should be greater than minimum transfer amount - ${minWithDrawalLimit}.");
+                return BadRequest(ModelState);
             }
 
             if (amountTobeDeducted > walletBalance)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
-            }
-
-            if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
             }
 
