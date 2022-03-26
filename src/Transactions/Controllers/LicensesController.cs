@@ -75,7 +75,7 @@ namespace CodeRower.CCP.Controllers
                 }
                 else if(ex.SqlState == "P0006" && ex.Hint == "LicenseNotExist")
                 {
-                    ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "Something went wrong.");
+                    ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "License number invalid.");
                 }
 
                 if (!ModelState.IsValid)
