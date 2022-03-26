@@ -1,4 +1,6 @@
 using System.Data;
+using System.Net;
+using System.Net.Mail;
 using CodeRower.CCP.Controllers.Models;
 using Npgsql;
 using NpgsqlTypes;
@@ -69,7 +71,7 @@ namespace CodeRower.CCP.Services
                 }
                 try
                 {
-                    var emailStatus = await SendEmail(email, otp, tenantInfo).ConfigureAwait(false);
+                    await SendEmail(email, otp, tenantInfo).ConfigureAwait(false);
                 }
                 catch (Exception)
                 {
@@ -121,18 +123,50 @@ namespace CodeRower.CCP.Services
             return message?.Status.ToString();
         }
 
-        private async Task<string> SendEmail(string email, string otp, TenantInfo tenantInfo)
+        //private async Task<string> SendEmail(string email, string otp, TenantInfo tenantInfo)
+        //{
+        //    var client = new SendGridClient(tenantInfo.SendGridApiKey);
+        //    var from = new EmailAddress(tenantInfo.SendGridEmailFrom);
+        //    var to = new EmailAddress(email);
+
+        //    var data = new { otp = otp };
+
+        //    var msg = MailHelper.CreateSingleTemplateEmail(from, to, tenantInfo.SendGridOtpTemplateId, data);
+        //    var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+
+        //    return response.IsSuccessStatusCode.ToString();
+        //}
+
+        private async Task SendEmail(string email, string otp, TenantInfo tenantInfo)
         {
-            var client = new SendGridClient(tenantInfo.SendGridApiKey);
-            var from = new EmailAddress(tenantInfo.SendGridEmailFrom);
-            var to = new EmailAddress(email);
+            try
+            {
+                MailMessage message = new MailMessage();
+                SmtpClient smtp = new SmtpClient();
+                message.From = new MailAddress(tenantInfo.SendGridEmailFrom);
+                message.To.Add(new MailAddress(email));
+                message.Subject = "One time password";
+                message.IsBodyHtml = true; //to make message body as html  
+                message.Body = $@"<p>Hello,</p>
+    <p>One time password for your current request is:</p>
+    <h1>{otp}</h1>
+    <p>If you didn’t ask process any request, you can ignore this email.</p>
+    <p>Thanks,</p>
+    <p>Your CCMT team</p>";
+                //smtp.Port = 465;
+                smtp.Host = "smtpout.secureserver.net"; //for godaddy  
+                smtp.EnableSsl = true;
+                smtp.UseDefaultCredentials = false;
+                smtp.Credentials = new NetworkCredential(tenantInfo.SendGridEmailFrom, "info@ccmt.com");
+                smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+                smtp.Timeout = 10000;
+                smtp.Send(message);
+            }
+            catch (Exception)
+            {
 
-            var data = new { otp = otp };
+            }
 
-            var msg = MailHelper.CreateSingleTemplateEmail(from, to, tenantInfo.SendGridOtpTemplateId, data);
-            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-
-            return response.IsSuccessStatusCode.ToString();
         }
 
     }
