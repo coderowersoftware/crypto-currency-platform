@@ -29,6 +29,7 @@ namespace CodeRower.CCP.Controllers.Models
         public string? AuthJWTSecret { get; internal set; }
         public string? SendGridApiKey{ get; internal set; }
         public string? SendGridOtpTemplateId { get; internal set; }
+        public string? SendGridEmailFrom { get; internal set; }
 
     }
 }

@@ -124,7 +124,7 @@ namespace CodeRower.CCP.Services
         private async Task<string> SendEmail(string email, string otp, TenantInfo tenantInfo)
         {
             var client = new SendGridClient(tenantInfo.SendGridApiKey);
-            var from = new EmailAddress("no-reply@cloudchainwallet.org");
+            var from = new EmailAddress(tenantInfo.SendGridEmailFrom);
             var to = new EmailAddress(email);
 
             var data = new { otp = otp };

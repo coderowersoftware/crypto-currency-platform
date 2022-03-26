@@ -65,7 +65,7 @@ namespace CodeRower.CCP.Services
                         tenantInfo.TwilioMessageServiceId = Convert.ToString(reader["twilioMessageServiceId"]);
                         tenantInfo.SendGridApiKey = Convert.ToString(reader["sendGridApiKey"]);
                         tenantInfo.SendGridOtpTemplateId = Convert.ToString(reader["sendGridOtpTemplateId"]);
-
+                        tenantInfo.SendGridEmailFrom = Convert.ToString(reader["sendGridEmailFrom"]);
                     }
                 }
                 return tenantInfo;
