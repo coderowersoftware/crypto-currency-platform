@@ -150,7 +150,7 @@ namespace CodeRower.CCP.Services
                 message.Body = $@"<p>Hello,</p>
     <p>One time password for your current request is:</p>
     <h1>{otp}</h1>
-    <p>If you didn’t ask process any request, you can ignore this email.</p>
+    <p>If you did not ask to process any request, you can ignore this email.</p>
     <p>Thanks,</p>
     <p>Your CCMT team</p>";
                 //smtp.Port = 465;
