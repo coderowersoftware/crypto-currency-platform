@@ -17,6 +17,7 @@ namespace CodeRower.CCP.Controllers.Models.Reports
         public int LicenseUsers { get; internal set; }
         public int ActiveLicenseMiners { get; internal set; }
         public int TotalUsers { get; internal set; }
-        public int TotalAirdropUsers{ get; internal set; }
+        public int TotalAirdropUsers { get; internal set; }
+        public int UsedLicenses { get; internal set; }
     }
 }
