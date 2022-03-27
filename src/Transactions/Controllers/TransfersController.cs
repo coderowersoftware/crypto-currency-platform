@@ -162,7 +162,7 @@ namespace CodeRower.CCP.Controllers
 
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             var walletTransferFeePct = tenantInfo?.WalletToWalletFeePct ?? 0;
-            var minWithDrawalLimit = tenantInfo?.MinWithdrawalLimitInUSD ?? 0;
+            var minWithDrawalLimit = 1m;
             var walletTransferFeeAmount = TransferRequest.Amount * walletTransferFeePct / 100;
             var amountTobeDeducted = TransferRequest.Amount + walletTransferFeeAmount;
             var latestRate = tenantInfo.LatestRateInUSD;
