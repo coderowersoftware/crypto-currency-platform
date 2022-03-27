@@ -151,6 +151,15 @@ namespace CodeRower.CCP.Services
                     VirtualValue = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.VirtualValue : 0),
                     Currency = result.First().Currency
                 });
+
+                string[] referral = new string[2] { "COMMISSION", "REFERRAL_SIGNUP_REWARDS" };
+                result.Add(new TransactionTypeBalance
+                {
+                    TransactionType = "TOTAL_REFERRAL",
+                    Amount = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.Amount : 0),
+                    VirtualValue = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.VirtualValue : 0),
+                    Currency = result.First().Currency
+                });
             }
             return result;
         }
