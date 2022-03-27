@@ -84,8 +84,8 @@ namespace CodeRower.CCP.Services
 
         public async Task<bool> VerifyAsync(Guid tenantId, Guid userId, string otp, string service)
         {
-            var query = "getotp";
-            var sentOtp = string.Empty;
+            var query = "verifyotp";
+            var verified = false;
 
             using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
             {
@@ -94,18 +94,14 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
                     cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, service);
+                    cmd.Parameters.AddWithValue("otp", NpgsqlDbType.Text, otp);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
-                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    while (reader.Read())
-                    {
-                        sentOtp = Convert.ToString(reader["otp"]);
-                    }
+                    verified = (bool)await cmd.ExecuteScalarAsync().ConfigureAwait(false);
                 }
             }
 
-            return otp == sentOtp;
+            return verified;
         }
 
         private async Task<string> SendTwilioMessage(string phoneNumber, string otp, TenantInfo tenantInfo)

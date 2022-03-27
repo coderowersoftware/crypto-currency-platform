@@ -125,7 +125,7 @@ namespace CodeRower.CCP.Services
                     {
                         result.TotalUsers = Convert.ToInt32(reader["total_users"]);
                         result.TotalAirdropUsers = Convert.ToInt32(reader["total_airdrop_users"]);
-                        result.PoolLicenseMiners = Convert.ToInt32(reader["total_pool_license_miners"]);
+                        result.LicenseUsers = Convert.ToInt32(reader["total_pool_license_miners"]);
                         result.ActiveLicenseMiners = Convert.ToInt32(reader["total_active_license_miners"]);
                     }
                 }
