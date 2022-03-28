@@ -143,7 +143,7 @@ namespace CodeRower.CCP.Services
             if (result?.Count > 0)
             {
 
-                string[] arr = new string[3] { "WALLET", "LOCKED", "UNLOCKED" };
+                string[] arr = new string[5] { "WALLET", "LOCKED", "UNLOCKED","MINT", "FARM" };
                 result.Add(new TransactionTypeBalance
                 {
                     TransactionType = "TOTAL",
