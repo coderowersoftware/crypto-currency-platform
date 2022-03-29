@@ -25,12 +25,9 @@ namespace CodeRower.CCP.Controllers
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var result = await _userService.GetReferralUsers(tenantId, new Guid(userId)).ConfigureAwait(false);
 
-            result = result?.Skip(QueryOptions?.Offset ?? 0).Take(QueryOptions?.Limit ?? 10).ToList();
-
-
             var pagedResult = new PagedResponse<UserReferral>()
             {
-                Rows = result,
+                Rows = result?.Skip(QueryOptions?.Offset ?? 0).Take(QueryOptions?.Limit ?? 10),
                 Count = result.Count,
                 Offset = QueryOptions?.Offset ?? 0,
                 Limit = QueryOptions?.Limit ?? 10
