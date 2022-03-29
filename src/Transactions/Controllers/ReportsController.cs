@@ -29,8 +29,8 @@ namespace CodeRower.CCP.Controllers
 
             var pagedResult = new PagedResponse<Miner>()
             {
-                Rows = topMiners,
-                Count = topMiners.Count,
+                Rows = topMiners.Item1,
+                Count = topMiners.Item2,
                 Offset = QueryOptions?.Offset ?? 0,
                 Limit = QueryOptions?.Limit ?? 10
             };

@@ -8,7 +8,7 @@ namespace CodeRower.CCP.Services
 {
     public interface IReportsService
     {
-        Task<List<Miner>> GetTopMiners(Guid tenantId, QueryOptions? queryOptions);
+        Task<(IEnumerable<Miner>, int)> GetTopMiners(Guid tenantId, QueryOptions? queryOptions);
         Task<Licenses?> GetLicensesInfoAsync(Guid tenantId);
         Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync(Guid tenantId);
         Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId, Guid tenantId);
@@ -27,7 +27,7 @@ namespace CodeRower.CCP.Services
             _transactionsService = transactionsService;
         }
 
-        public async Task<List<Miner>> GetTopMiners(Guid tenantId, QueryOptions? queryOptions)
+        public async Task<(IEnumerable<Miner>, int)> GetTopMiners(Guid tenantId, QueryOptions? queryOptions)
         {
             var query = "get_top_miners";
 
@@ -37,11 +37,11 @@ namespace CodeRower.CCP.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
-                    
+
                     if (conn.State != ConnectionState.Open) conn.Open();
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
-                    while(reader.Read())
+                    while (reader.Read())
                     {
                         Miner result = new Miner();
                         result.UserId = Convert.ToString(reader["user_id"]);
@@ -57,24 +57,22 @@ namespace CodeRower.CCP.Services
                 }
             }
 
-            topMiners = topMiners.Skip(queryOptions?.Offset ?? 0).Take(queryOptions?.Limit ?? 3).ToList();
+            var count = topMiners.Count;
+            var top = queryOptions?.Limit ?? 4;
+
+            if (queryOptions?.Limit > 10)
+                top = 10;
+
+            var miners = topMiners.Skip(queryOptions?.Offset ?? 0).Take(top);
+
             // Update Locked and unlocked coin amounts
-            // List<Task> transactionTypeBalances = new List<Task>();
-            foreach (var miner in topMiners)
+            foreach (var miner in miners)
             {
                 var amounts = await _transactionsService.GetBalancesByTransactionTypes(tenantId, new List<string> { "LOCKED", "UNLOCKED" }, miner.CustomerId).ConfigureAwait(false);
                 miner.LockedAmount = amounts?.FirstOrDefault(amt => "LOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
                 miner.UnlockedAmount = amounts?.FirstOrDefault(amt => "UNLOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
-                // transactionTypeBalances.Add(_transactionsService.GetBalancesByTransactionTypes(new List<string> { "LOCKED", "UNLOCKED" }, miner.UserId)
-                //     .ContinueWith(task => 
-                //     {
-                //         var response = task.Result;
-                //         miner.LockedAmount = response?.FirstOrDefault(amt => "LOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
-                // miner.UnlockedAmount = response?.FirstOrDefault(amt => "UNLOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
-                //     }));
             }
-            //await Task.WhenAll(transactionTypeBalances).ConfigureAwait(false);
-            return topMiners;
+            return (topMiners, count);
         }
 
         public async Task<Licenses?> GetLicensesInfoAsync(Guid tenantId)
@@ -138,7 +136,7 @@ namespace CodeRower.CCP.Services
             result.Used = licenseInfoResult?.Used ?? 0;
             result.Remaining = licenseInfoResult?.Remaining ?? 0;
             result.Purchased = licenseInfoResult?.Purchased ?? 0;
-            
+
             var balancesResult = await farmMintWalletBalances.ConfigureAwait(false);
             result.CoinsInFarming = balancesResult?.FirstOrDefault(b => b.TransactionType == "FARM")?.Amount ?? 0;
             result.CoinsInMinting = balancesResult?.FirstOrDefault(b => b.TransactionType == "MINT")?.Amount ?? 0;
@@ -182,9 +180,9 @@ namespace CodeRower.CCP.Services
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
                 {
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
-                    if(startDate.HasValue)
+                    if (startDate.HasValue)
                         cmd.Parameters.AddWithValue("from_date", NpgsqlDbType.Date, startDate);
-                    if(endDate.HasValue)
+                    if (endDate.HasValue)
                         cmd.Parameters.AddWithValue("to_date", NpgsqlDbType.Date, endDate);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
@@ -194,20 +192,20 @@ namespace CodeRower.CCP.Services
                     {
                         CoinValue coinValue = new CoinValue();
                         coinValue.Date = Convert.ToDateTime(reader["created_at"]);
-                        if(reader["value_usd"] != DBNull.Value)
+                        if (reader["value_usd"] != DBNull.Value)
                             coinValue.Value = Convert.ToDecimal(reader["value_usd"]);
-                        
+
                         coinValues.Add(coinValue);
                     }
                 }
             }
             var total = coinValues.Count();
-            for(int ctr = 1; ctr < total; ctr++)
+            for (int ctr = 1; ctr < total; ctr++)
             {
-                if(!coinValues[ctr].Value.HasValue
-                    && coinValues[ctr-1].Value.HasValue)
+                if (!coinValues[ctr].Value.HasValue
+                    && coinValues[ctr - 1].Value.HasValue)
                 {
-                    coinValues[ctr].Value = coinValues[ctr-1].Value;
+                    coinValues[ctr].Value = coinValues[ctr - 1].Value;
                 }
             }
             return coinValues;
