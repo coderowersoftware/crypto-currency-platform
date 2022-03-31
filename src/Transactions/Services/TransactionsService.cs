@@ -22,7 +22,7 @@ namespace CodeRower.CCP.Services
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
-        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
+        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken, string transactionType);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
     }
 
@@ -375,7 +375,8 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken)
+        public async Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId,
+            CoinsTransferToCPRequest transferRequest, string bearerToken, string transactionType)
         {
             var query = "addtransaction";
             var id = string.Empty;
@@ -391,7 +392,8 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
                     cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, transferRequest.Amount);
                     cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, false);
-                    cmd.Parameters.AddWithValue("message", NpgsqlDbType.Text, transferRequest.Message);
+                    cmd.Parameters.AddWithValue("message_", NpgsqlDbType.Text, transferRequest.Message);
+                    cmd.Parameters.AddWithValue("transaction_type", NpgsqlDbType.Text, transactionType);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
