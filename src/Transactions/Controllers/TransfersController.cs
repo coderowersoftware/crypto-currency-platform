@@ -433,8 +433,8 @@ namespace CodeRower.CCP.Controllers
 
             var bearerToken = Request.Headers.Authorization.FirstOrDefault()?.ToString();
 
-            await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken).ConfigureAwait(false);
-            return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
+            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken).ConfigureAwait(false);
+            return transaction != null ? Ok(transaction.transactionid) : NoContent();
         }
 
     }

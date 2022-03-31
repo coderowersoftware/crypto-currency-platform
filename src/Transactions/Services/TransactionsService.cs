@@ -22,7 +22,7 @@ namespace CodeRower.CCP.Services
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
-        Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
+        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
     }
 
@@ -162,7 +162,7 @@ namespace CodeRower.CCP.Services
                     Currency = result.First().Currency
                 });
 
-                if (!isCredit.HasValue)
+                if (!isCredit.HasValue && !string.IsNullOrEmpty(customerId))
                 {
                     var pendingAmount = await GetPendingTransactionAmount(tenantId, new Guid(customerId)).ConfigureAwait(false);
                     var walletAmount = result.Where(item => item.TransactionType == "WALLET").FirstOrDefault()?.Amount ?? 0;
@@ -375,7 +375,7 @@ namespace CodeRower.CCP.Services
             }
         }
 
-        public async Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken)
+        public async Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken)
         {
             var query = "addtransaction";
             var id = string.Empty;
@@ -415,6 +415,7 @@ namespace CodeRower.CCP.Services
                     {
                         amount = transferRequest.Amount,
                         currency = "USDT.TRC20",
+                        transactionId = id
                     }
                 }).ConfigureAwait(false);
 
@@ -432,6 +433,9 @@ namespace CodeRower.CCP.Services
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
+
+            WalletTransactionResponse response = new WalletTransactionResponse() { transactionid = id };
+            return response;
         }
 
         public async Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId)
