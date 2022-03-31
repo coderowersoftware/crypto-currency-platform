@@ -457,7 +457,8 @@ namespace CodeRower.CCP.Services
 
                     while (reader.Read())
                     {
-                        amount = Convert.ToDecimal(reader["amount"]);
+                        if (reader["amount"] != DBNull.Value)
+                            amount = Convert.ToDecimal(reader["amount"]);
                     }
                 }
             }
