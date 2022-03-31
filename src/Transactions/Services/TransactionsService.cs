@@ -20,7 +20,7 @@ namespace CodeRower.CCP.Services
         Task<List<AutoCompleteResponse>> GetTransactionTypes(Guid tenantId);
         Task<List<AutoCompleteResponse>> GetCurrencies(Guid tenantId);
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
-        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
+        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
         Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken, string transactionType);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
@@ -93,7 +93,7 @@ namespace CodeRower.CCP.Services
         }
 
         public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes,
-            string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null)
+            string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null)
         {
             var queryString = string.Empty;
 
@@ -162,9 +162,9 @@ namespace CodeRower.CCP.Services
                     Currency = result.First().Currency
                 });
 
-                if (!isCredit.HasValue && !string.IsNullOrEmpty(customerId))
+                if (!isCredit.HasValue && !string.IsNullOrEmpty(userId))
                 {
-                    var pendingAmount = await GetPendingTransactionAmount(tenantId, new Guid(customerId)).ConfigureAwait(false);
+                    var pendingAmount = await GetPendingTransactionAmount(tenantId, new Guid(userId)).ConfigureAwait(false);
                     var walletAmount = result.Where(item => item.TransactionType == "WALLET").FirstOrDefault()?.Amount ?? 0;
 
                     result.Add(new TransactionTypeBalance
@@ -409,7 +409,7 @@ namespace CodeRower.CCP.Services
             // invoke cp-withdrawal
             var tokenComponents = bearerToken.Split(' ');
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
-                new Uri($"{tenantInfo.NodeHost}api/tenant/{tenantId}/cp-withdrawal"),
+                new Uri($"{tenantInfo.NodeHost}/api/tenant/{tenantId}/cp-withdrawal"),
                 new Dictionary<string, string>() { { tokenComponents[0], tokenComponents[1] } },
                 new
                 {
@@ -419,7 +419,9 @@ namespace CodeRower.CCP.Services
                         currency = "USDT.TRC20",
                         transactionId = id
                     }
-                }).ConfigureAwait(false);
+                }, true,null,null,bearerToken).ConfigureAwait(false);
+
+          
 
             // update response in db
             query = "updatetransaction";
@@ -429,6 +431,9 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, new Guid(id));
                     cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, responseMessage);
+
+                    if(string.IsNullOrEmpty(responseMessage))
+                        cmd.Parameters.AddWithValue("status_", NpgsqlDbType.Json, "failed");
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 

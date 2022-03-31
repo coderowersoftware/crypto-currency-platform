@@ -8,13 +8,14 @@ namespace Transactions.Facade
 {
     public interface IRestApiFacade
     {
-        Task<string> SendAsync(HttpMethod httpMethod, 
-            Uri uri, 
+        Task<string> SendAsync(HttpMethod httpMethod,
+            Uri uri,
             IDictionary<string, string> headers,
             object payload,
             bool isAuthTokenRequired = false,
             Uri? authUri = null,
-            IDictionary<string, string>? creds = null);
+            IDictionary<string, string>? creds = null,
+            string token = null);
     }
 
     public class RestApiFacade : IRestApiFacade
@@ -29,28 +30,29 @@ namespace Transactions.Facade
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
         }
 
-        public async Task<string> SendAsync(HttpMethod httpMethod, 
-            Uri uri, 
+        public async Task<string> SendAsync(HttpMethod httpMethod,
+            Uri uri,
             IDictionary<string, string> headers,
             object payload,
             bool isAuthTokenRequired = false,
             Uri? authUri = null,
-            IDictionary<string, string>? creds = null)
+            IDictionary<string, string>? creds = null,
+            string? token = null)
         {
-            using(HttpRequestMessage requestMessage = new HttpRequestMessage { RequestUri = uri, Method = httpMethod })
+            using (HttpRequestMessage requestMessage = new HttpRequestMessage { RequestUri = uri, Method = httpMethod })
             {
                 requestMessage.Headers.Add(HttpRequestHeader.Accept.ToString(), "application/json");
                 requestMessage.Headers.Add(HttpRequestHeader.Connection.ToString(), "keep-alive");
-                foreach(var header in headers ?? new Dictionary<string, string>())
+                foreach (var header in headers ?? new Dictionary<string, string>())
                 {
                     requestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
-                if(isAuthTokenRequired)
+                if (isAuthTokenRequired)
                 {
-                    requestMessage.Headers.Add(HttpRequestHeader.Authorization.ToString(), $"Bearer {await GetAuthToken(authUri, creds).ConfigureAwait(false)}");
+                    requestMessage.Headers.Add(HttpRequestHeader.Authorization.ToString(), token);
                 }
 
-                if(httpMethod == HttpMethod.Post
+                if (httpMethod == HttpMethod.Post
                     || httpMethod == HttpMethod.Put
                     || httpMethod == HttpMethod.Patch)
                 {
@@ -59,13 +61,13 @@ namespace Transactions.Facade
 
                 HttpResponseMessage responseMessage = await _httpClient.SendAsync(requestMessage).ConfigureAwait(false);
 
-                if(responseMessage != null)
+                if (responseMessage != null)
                 {
-                    if(responseMessage.IsSuccessStatusCode || responseMessage.StatusCode == HttpStatusCode.BadRequest)
+                    if (responseMessage.IsSuccessStatusCode || responseMessage.StatusCode == HttpStatusCode.BadRequest)
                     {
                         return await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
                     }
-                    else if(responseMessage.StatusCode == HttpStatusCode.NotFound
+                    else if (responseMessage.StatusCode == HttpStatusCode.NotFound
                         || responseMessage.StatusCode == HttpStatusCode.NoContent)
                     {
                         return string.Empty;
@@ -77,20 +79,20 @@ namespace Transactions.Facade
 
         private async Task<string> GetAuthToken(Uri? authUri, IDictionary<string, string>? creds)
         {
-            if(authUri == null || creds == null) throw new ArgumentNullException(nameof(creds));
-            using(HttpRequestMessage request = new HttpRequestMessage { RequestUri = authUri, Method = HttpMethod.Post })
+            if (authUri == null || creds == null) throw new ArgumentNullException(nameof(creds));
+            using (HttpRequestMessage request = new HttpRequestMessage { RequestUri = authUri, Method = HttpMethod.Post })
             {
                 request.Headers.Add(HttpRequestHeader.Accept.ToString(), "application/json");
                 request.Content = new StringContent(JsonConvert.SerializeObject(creds), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
-                if(response != null)
+                if (response != null)
                 {
-                    if(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.BadRequest)
+                    if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.BadRequest)
                     {
                         return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     }
-                    else if(response.StatusCode == HttpStatusCode.NotFound
+                    else if (response.StatusCode == HttpStatusCode.NotFound
                         || response.StatusCode == HttpStatusCode.NoContent)
                     {
                         return string.Empty;

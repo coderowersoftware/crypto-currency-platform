@@ -400,7 +400,7 @@ namespace CodeRower.CCP.Controllers
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             var transactionsBalance = await _transactionsService
-                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, customerId)
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, userId: userId)
                                 .ConfigureAwait(false);
 
             var effectiveBalance = transactionsBalance.Where(item => item.TransactionType == "EFFECTIVE_BALANCE")?
@@ -433,7 +433,7 @@ namespace CodeRower.CCP.Controllers
 
             var bearerToken = Request.Headers.Authorization.FirstOrDefault()?.ToString();
 
-            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken,"CP_WITHDRAWAL").ConfigureAwait(false);
+            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken, "CP_WITHDRAWAL").ConfigureAwait(false);
             return transaction != null ? Ok(transaction.transactionid) : NoContent();
         }
 
