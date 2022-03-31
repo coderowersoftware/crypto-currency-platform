@@ -421,25 +421,24 @@ namespace CodeRower.CCP.Services
                     }
                 }, true,null,null,bearerToken).ConfigureAwait(false);
 
-          
+            
+            //// update response in db
+            //query = "updatetransaction";
+            //using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            //{
+            //    using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+            //    {
+            //        cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, new Guid(id));
+            //        cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, responseMessage);
 
-            // update response in db
-            query = "updatetransaction";
-            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
-            {
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-                {
-                    cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, new Guid(id));
-                    cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, responseMessage);
+            //        if(string.IsNullOrEmpty(responseMessage))
+            //            cmd.Parameters.AddWithValue("status_", NpgsqlDbType.Text, "failed");
 
-                    if(string.IsNullOrEmpty(responseMessage))
-                        cmd.Parameters.AddWithValue("status_", NpgsqlDbType.Json, "failed");
+            //        if (conn.State != ConnectionState.Open) conn.Open();
 
-                    if (conn.State != ConnectionState.Open) conn.Open();
-
-                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-            }
+            //        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            //    }
+            //}
 
             WalletTransactionResponse response = new WalletTransactionResponse() { transactionid = id };
             return response;
