@@ -23,6 +23,7 @@ namespace CodeRower.CCP.Services
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
         Task AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
+        Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
     }
 
     public class TransactionsService : ITransactionsService
@@ -143,7 +144,7 @@ namespace CodeRower.CCP.Services
             if (result?.Count > 0)
             {
 
-                string[] arr = new string[5] { "WALLET", "LOCKED", "UNLOCKED","MINT", "FARM" };
+                string[] arr = new string[5] { "WALLET", "LOCKED", "UNLOCKED", "MINT", "FARM" };
                 result.Add(new TransactionTypeBalance
                 {
                     TransactionType = "TOTAL",
@@ -160,7 +161,32 @@ namespace CodeRower.CCP.Services
                     VirtualValue = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.VirtualValue : 0),
                     Currency = result.First().Currency
                 });
+
+                if (!isCredit.HasValue)
+                {
+                    var pendingAmount = await GetPendingTransactionAmount(tenantId, new Guid(customerId)).ConfigureAwait(false);
+                    var walletAmount = result.Where(item => item.TransactionType == "WALLET").FirstOrDefault()?.Amount ?? 0;
+
+                    result.Add(new TransactionTypeBalance
+                    {
+                        TransactionType = "UNSETTLED_BALANCE",
+                        Amount = pendingAmount,
+                        VirtualValue = 0,
+                        Currency = result.First().Currency
+                    });
+
+                    result.Add(new TransactionTypeBalance
+                    {
+                        TransactionType = "EFFECTIVE_BALANCE",
+                        Amount = walletAmount - pendingAmount,
+                        VirtualValue = 0,
+                        Currency = result.First().Currency
+                    });
+
+                }
             }
+
+
             return result;
         }
 
@@ -364,8 +390,8 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
                     cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
                     cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, transferRequest.Amount);
-                    cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, transferRequest.Amount);
                     cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, false);
+                    cmd.Parameters.AddWithValue("message", NpgsqlDbType.Text, transferRequest.Message);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
@@ -388,7 +414,7 @@ namespace CodeRower.CCP.Services
                     data = new
                     {
                         amount = transferRequest.Amount,
-                        currency = "USDT.TRC20"
+                        currency = "USDT.TRC20",
                     }
                 }).ConfigureAwait(false);
 
@@ -406,6 +432,34 @@ namespace CodeRower.CCP.Services
                     await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
+        }
+
+        public async Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId)
+        {
+            var query = "getpendingtransactionamount";
+            decimal amount = 0;
+
+            // Add transaction
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+                    cmd.Parameters.AddWithValue("user_id", NpgsqlDbType.Uuid, userId);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        amount = Convert.ToDecimal(reader["amount"]);
+                    }
+                }
+            }
+
+            return amount;
+
         }
     }
 }

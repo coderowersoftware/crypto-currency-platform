@@ -399,10 +399,12 @@ namespace CodeRower.CCP.Controllers
 
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
-            var walletBalance = (await _transactionsService
+            var transactionsBalance = await _transactionsService
                                 .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, customerId)
-                                .ConfigureAwait(false))?.FirstOrDefault()
-                                ?.Amount ?? 0;
+                                .ConfigureAwait(false);
+
+            var effectiveBalance = transactionsBalance.Where(item => item.TransactionType == "EFFECTIVE_BALANCE")?
+                                    .FirstOrDefault()?.Amount ?? 0;
 
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             var bankTransferFeePct = tenantInfo?.BankAccountWithdrawalFeePct ?? 0;
@@ -417,7 +419,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (amountTobeDeducted > walletBalance)
+            if (amountTobeDeducted > effectiveBalance)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
                 return BadRequest(ModelState);

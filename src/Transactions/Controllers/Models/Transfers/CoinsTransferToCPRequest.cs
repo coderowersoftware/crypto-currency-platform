@@ -8,5 +8,7 @@ namespace CodeRower.CCP.Controllers.Models.Transfers
         public decimal Amount { get; set; }
         [Required]
         public string Otp { get; set; }
+
+        public string Message { get; set; }
     }
 }
