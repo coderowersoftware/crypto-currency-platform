@@ -64,6 +64,7 @@ namespace CodeRower.CCP.Controllers
             [FromQuery(Name = "Filter[OnBehalfOfId]")] string? OnBehalfOfId,
             [FromQuery(Name = "Filter[OnBehalfOfName]")] string? OnBehalfOfName,
             [FromQuery(Name = "Filter[BaseTransaction]")] string? BaseTransaction,
+            [FromQuery(Name = "Filter[CustomerId]")] string? CustomerId,
             [FromQuery] QueryOptions? QueryOptions = null)
         {
             var defaultOrderBy = "createdAt_DESC";
@@ -76,11 +77,20 @@ namespace CodeRower.CCP.Controllers
                 QueryOptions.OrderBy = defaultOrderBy;
             }
 
-            if (string.IsNullOrWhiteSpace(PayerId))
-                PayerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            if (string.IsNullOrEmpty(CustomerId))
+            {
 
-            if (string.IsNullOrWhiteSpace(PayeeId))
-                PayeeId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+                if (string.IsNullOrWhiteSpace(PayerId))
+                    PayerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
+                if (string.IsNullOrWhiteSpace(PayeeId))
+                    PayeeId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            }
+            else
+            {
+                PayerId = CustomerId;
+                PayeeId = CustomerId;
+            }
 
             var transactionFilter = new TransactionFilter
             {
