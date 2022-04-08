@@ -170,12 +170,11 @@ namespace CodeRower.CCP.Controllers
 
             if (string.IsNullOrEmpty(CustomerId))
             {
+                if (string.IsNullOrWhiteSpace(PayerId))
+                    PayerId = customerId;
 
-            if (string.IsNullOrWhiteSpace(PayerId))
-                PayerId = customerId;
-
-            if (string.IsNullOrWhiteSpace(PayeeId))
-                PayeeId = customerId;
+                if (string.IsNullOrWhiteSpace(PayeeId))
+                    PayeeId = customerId;
             }
             else
             {
