@@ -136,7 +136,7 @@ namespace CodeRower.CCP.Services
                 {
                     Amount = commissionFee,
                     IsCredit = true,
-                    Reference = $"Commission for License registered by user",
+                    Reference = $"Commission for License - {data.LicenseNumber} registered by user",
                     PayerId = tenantInfo.WalletTenantId,
                     PayeeId = ownerInfo.CustomerId,
                     TransactionType = "COMMISSION",
@@ -148,7 +148,7 @@ namespace CodeRower.CCP.Services
                 {
                     Amount = commissionFee,
                     IsCredit = false,
-                    Reference = $"Commission for License registered by user",
+                    Reference = $"Commission for License - {data.LicenseNumber} registered by user",
                     PayerId = ownerInfo.CustomerId,
                     PayeeId = tenantInfo.WalletTenantId,
                     TransactionType = "COMMISSION",
@@ -160,7 +160,7 @@ namespace CodeRower.CCP.Services
                 {
                     Amount = commissionFee,
                     IsCredit = true,
-                    Reference = $"Commission UNLOCKED for License registered by user",
+                    Reference = $"Commission UNLOCKED for License - {data.LicenseNumber} registered by user",
                     PayerId = tenantInfo.WalletTenantId,
                     PayeeId = ownerInfo.CustomerId,
                     TransactionType = "UNLOCKED",
