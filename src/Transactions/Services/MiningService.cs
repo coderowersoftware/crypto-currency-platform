@@ -85,7 +85,8 @@ namespace CodeRower.CCP.Services
                     PayeeId = customerId,
                     TransactionType = "PAYMENT",
                     Currency = Currency.COINS,
-                    CurrentBalanceFor = customerId
+                    CurrentBalanceFor = customerId,
+                    Remark = licenseId
                 }).ConfigureAwait(false);
 
 
@@ -99,7 +100,8 @@ namespace CodeRower.CCP.Services
                     TransactionType = "PURCHASE_LICENSE",
                     Currency = Currency.COINS,
                     CurrentBalanceFor = customerId,
-                    BaseTransaction = walletTopUp.transactionid
+                    BaseTransaction = walletTopUp.transactionid,
+                    Remark = licenseId
                 }).ConfigureAwait(false);
 
                 var maintenanceTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
@@ -112,7 +114,8 @@ namespace CodeRower.CCP.Services
                     TransactionType = "MAINTENANCE_FEE",
                     Currency = Currency.COINS,
                     CurrentBalanceFor = customerId,
-                    BaseTransaction = walletTopUp.transactionid
+                    BaseTransaction = walletTopUp.transactionid,
+                    Remark = licenseId
                 }).ConfigureAwait(false);
 
                 return licenseId;
