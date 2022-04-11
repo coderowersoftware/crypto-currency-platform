@@ -15,8 +15,8 @@ namespace CodeRower.CCP.Controllers.Models
         [Required]
         public string TransactionId { get; set; }
         public LicenseType LicenseType { get; set; } = LicenseType.POOL;
-        //[Required]
-        //public string AuthKey { get; set; }
+        [Required]
+        public string AuthKey { get; set; }
     }
 
 }

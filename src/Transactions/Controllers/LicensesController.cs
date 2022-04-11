@@ -35,18 +35,16 @@ namespace CodeRower.CCP.Controllers
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
-            //todo
-            //if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
-            //{
+            if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
+            {
                 var id = await _miningService.AddLicense(tenantId, Data.Data, userId, customerId).ConfigureAwait(false);
 
                 return Ok(new { licenseId = id });
-            //}
+            }
 
-            //ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
+            ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
 
-            //return BadRequest(ModelState);
-
+            return BadRequest(ModelState);
         }
 
         [HttpPost("register")]
