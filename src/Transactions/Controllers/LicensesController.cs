@@ -30,16 +30,34 @@ namespace CodeRower.CCP.Controllers
         }
 
         [HttpPost("buy")]
-        public async Task<IActionResult> BuyLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
+        public async Task<IActionResult> BuyAirdropLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
-            var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
             if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
             {
-                var id = await _miningService.AddLicense(tenantId, Data.Data, userId, customerId).ConfigureAwait(false);
+                Data.Data.LicenseType = Models.Enums.LicenseType.AIRDROP;
+
+                var id = await _miningService.AddLicense(tenantId, Data.Data, userId).ConfigureAwait(false);
 
                 return Ok(new { licenseId = id });
+            }
+
+            ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
+
+            return BadRequest(ModelState);
+        }
+
+        [HttpPost("checkout")]
+        public async Task<IActionResult> BuyPoolLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
+        {
+
+            if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
+            {
+                Data.Data.LicenseType = Models.Enums.LicenseType.POOL;
+                var id = await _miningService.AddPoolLicense(tenantId, Data.Data).ConfigureAwait(false);
+                
+                return string.IsNullOrEmpty(id)? BadRequest() : Ok(new { licenseId = id });
             }
 
             ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
@@ -71,7 +89,7 @@ namespace CodeRower.CCP.Controllers
                 {
                     ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "License already registered.");
                 }
-                else if(ex.SqlState == "P0006" && ex.Hint == "LicenseNotExist")
+                else if (ex.SqlState == "P0006" && ex.Hint == "LicenseNotExist")
                 {
                     ModelState.AddModelError(nameof(Data.Data.LicenseNumber), "License number invalid.");
                 }
