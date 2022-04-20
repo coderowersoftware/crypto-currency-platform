@@ -4,6 +4,7 @@
     {
         public Guid TransactionBookId { get; set; }
         public decimal Amount { get; set; }
+        public decimal FeeAmount { get; set; }
         public string GatewayTransactionId { get; set; }
         public string GatewayResponse { get; set; }
         public string CallbackStatus { get; set; }

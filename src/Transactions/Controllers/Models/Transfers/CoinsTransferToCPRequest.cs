@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace CodeRower.CCP.Controllers.Models.Transfers
@@ -10,5 +11,10 @@ namespace CodeRower.CCP.Controllers.Models.Transfers
         public string Otp { get; set; }
 
         public string Message { get; set; }
+
+        [JsonIgnore]
+        public decimal FeeAmount { get; set; }
+        [JsonIgnore]
+        public string TransactionType { get; set; }
     }
 }

@@ -68,7 +68,7 @@ namespace CodeRower.CCP.Services
         {
             var transaction = await _transactionsService.GetTransactionBookById(tenantId, data.TransactionId).ConfigureAwait(false);
 
-            if (transaction != null && transaction.Status == "success")
+            if (transaction != null)
             {
                 var licenseId = await AddLicense(tenantId, data, transaction.UserId).ConfigureAwait(false);
 

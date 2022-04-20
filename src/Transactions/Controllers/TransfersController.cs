@@ -394,7 +394,7 @@ namespace CodeRower.CCP.Controllers
 
         [Authorize]
         [HttpPost("wallet-to-cpwallet")]
-        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
+        [SwaggerResponse((int)HttpStatusCode.OK)]
         public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] CoinsTransferToCPRequest TransferRequest)
         {
@@ -435,9 +435,12 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
+            TransferRequest.FeeAmount = walletTransferFeeAmount;
+            TransferRequest.TransactionType = "CP_WITHDRAWAL";
+
             var bearerToken = Request.Headers.Authorization.FirstOrDefault()?.ToString();
 
-            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken, "CP_WITHDRAWAL").ConfigureAwait(false);
+            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken).ConfigureAwait(false);
             return transaction != null ? Ok(transaction.transactionid) : NoContent();
         }
 

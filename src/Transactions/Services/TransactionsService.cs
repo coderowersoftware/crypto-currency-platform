@@ -22,7 +22,7 @@ namespace CodeRower.CCP.Services
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
-        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken, string transactionType);
+        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
         Task<WalletTransactionResponse> SettleWalletToCpWalletTransaction(Guid tenantId, Guid transactionId);
         Task<TransactionBook> GetTransactionBookById(Guid tenantId, Guid transactionId);
@@ -379,7 +379,7 @@ namespace CodeRower.CCP.Services
         }
 
         public async Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId,
-            CoinsTransferToCPRequest transferRequest, string bearerToken, string transactionType)
+            CoinsTransferToCPRequest transferRequest, string bearerToken)
         {
             var query = "addtransaction";
             var id = string.Empty;
@@ -396,7 +396,8 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, transferRequest.Amount);
                     cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, false);
                     cmd.Parameters.AddWithValue("message_", NpgsqlDbType.Text, transferRequest.Message);
-                    cmd.Parameters.AddWithValue("transaction_type", NpgsqlDbType.Text, transactionType);
+                    cmd.Parameters.AddWithValue("transaction_type", NpgsqlDbType.Text, transferRequest.TransactionType);
+                    cmd.Parameters.AddWithValue("fee_amount", NpgsqlDbType.Numeric, transferRequest.FeeAmount);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
@@ -419,7 +420,7 @@ namespace CodeRower.CCP.Services
                     data = new
                     {
                         amount = transferRequest.Amount,
-                        currency =  tenantInfo.LicenseCostCurrency,
+                        currency = tenantInfo.LicenseCostCurrency,
                         transactionId = id
                     }
                 }, true, null, null, bearerToken).ConfigureAwait(false);
@@ -462,6 +463,7 @@ namespace CodeRower.CCP.Services
                         if (reader["updatedAt"] != DBNull.Value)
                             transactionBook.UpdatedAt = Convert.ToDateTime(reader["updatedAt"]);
 
+                        transactionBook.FeeAmount = Convert.ToDecimal(reader["feeAmount"]);
                         transactionBook.UserId = Convert.ToString(reader["userId"]);
                         transactionBook.CustomerId = Convert.ToString(reader["customerId"]);
                     }
@@ -524,7 +526,7 @@ namespace CodeRower.CCP.Services
             var transaction = await GetTransactionBookById(tenantId, transactionId).ConfigureAwait(false);
             WalletTransactionResponse response = null;
 
-            if (transaction != null && transaction.Status == "success")
+            if (transaction != null)
             {
                 response = await AddTransaction(tenantId, new TransactionRequest
                 {
@@ -537,6 +539,20 @@ namespace CodeRower.CCP.Services
                     Currency = Controllers.Models.Enums.Currency.COINS,
                     CurrentBalanceFor = transaction.CustomerId,
                     Remark = transaction.TransactionBookId.ToString()
+                }).ConfigureAwait(false);
+
+                var walletFee = await AddTransaction(tenantId, new TransactionRequest
+                {
+                    Amount = transaction.FeeAmount,
+                    IsCredit = false,
+                    Reference = $"Fee for transfer from Wallet to CP",
+                    PayerId = transaction.CustomerId,
+                    PayeeId = tenantId.ToString(),
+                    TransactionType = "WALLET_CPWALLET_FEE",
+                    Currency = Controllers.Models.Enums.Currency.COINS,
+                    CurrentBalanceFor = transaction.CustomerId,
+                    Remark = transaction.TransactionBookId.ToString(),
+                    BaseTransaction = response.transactionid
                 }).ConfigureAwait(false);
 
                 var transactionBook = new TransactionBook()
