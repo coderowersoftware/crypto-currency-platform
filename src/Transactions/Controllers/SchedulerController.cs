@@ -17,7 +17,7 @@ namespace CodeRower.CCP.Controllers
         private readonly IMiningService _miningService;
         private readonly ITenantService _tenantService;
 
-        public SchedulerController(ITransactionsService transactionsService, IMiningService miningService, 
+        public SchedulerController(ITransactionsService transactionsService, IMiningService miningService,
             ITenantService tenantService)
         {
             _transactionsService = transactionsService;
@@ -34,12 +34,14 @@ namespace CodeRower.CCP.Controllers
             if (minedLicenses?.Any() ?? false)
             {
                 var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+                var airDropReward = tenantInfo.DailyCoinRewardForAirDropUser.Value / tenantInfo.LatestRateInUSD;
+                var miningCoin = tenantInfo.DailyCoinRewardForPoolUser.Value / tenantInfo.LatestRateInUSD;
 
                 foreach (var license in minedLicenses)
                 {
                     var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? tenantInfo.DailyCoinRewardForAirDropUser.Value : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
                         IsCredit = true,
                         Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = tenantInfo.WalletTenantId,
@@ -53,7 +55,7 @@ namespace CodeRower.CCP.Controllers
 
                     var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? tenantInfo.DailyCoinRewardForAirDropUser.Value : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
                         IsCredit = false,
                         Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = license.CustomerId.ToString(),
@@ -67,7 +69,7 @@ namespace CodeRower.CCP.Controllers
 
                     creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? tenantInfo.DailyCoinRewardForAirDropUser.Value : 1m,
+                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
                         IsCredit = true,
                         Reference = $"LOCKED Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
                         PayerId = tenantInfo.WalletTenantId,

@@ -2,7 +2,7 @@
 {
     public class TransactionBook
     {
-        public string TransactionBookId { get; set; }
+        public Guid TransactionBookId { get; set; }
         public decimal Amount { get; set; }
         public string GatewayTransactionId { get; set; }
         public string GatewayResponse { get; set; }

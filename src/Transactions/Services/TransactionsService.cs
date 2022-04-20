@@ -24,6 +24,9 @@ namespace CodeRower.CCP.Services
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
         Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken, string transactionType);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
+        Task<WalletTransactionResponse> SettleWalletToCpWalletTransaction(Guid tenantId, Guid transactionId);
+        Task<TransactionBook> GetTransactionBookById(Guid tenantId, Guid transactionId);
+        Task UpdateTransactionBook(Guid tenantId, TransactionBook transactionBook);
     }
 
     public class TransactionsService : ITransactionsService
@@ -416,32 +419,75 @@ namespace CodeRower.CCP.Services
                     data = new
                     {
                         amount = transferRequest.Amount,
-                        currency = "USDT.TRC20",
+                        currency =  tenantInfo.LicenseCostCurrency,
                         transactionId = id
                     }
-                }, true,null,null,bearerToken).ConfigureAwait(false);
-
-            
-            //// update response in db
-            //query = "updatetransaction";
-            //using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
-            //{
-            //    using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-            //    {
-            //        cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, new Guid(id));
-            //        cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, responseMessage);
-
-            //        if(string.IsNullOrEmpty(responseMessage))
-            //            cmd.Parameters.AddWithValue("status_", NpgsqlDbType.Text, "failed");
-
-            //        if (conn.State != ConnectionState.Open) conn.Open();
-
-            //        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-            //    }
-            //}
+                }, true, null, null, bearerToken).ConfigureAwait(false);
 
             WalletTransactionResponse response = new WalletTransactionResponse() { transactionid = id };
             return response;
+        }
+
+        public async Task<TransactionBook> GetTransactionBookById(Guid tenantId, Guid transactionId)
+        {
+            var query = "gettransactionbyid";
+            TransactionBook transactionBook = null;
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+                    cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, transactionId);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        transactionBook = new TransactionBook();
+                        transactionBook.TransactionBookId = new Guid(Convert.ToString(reader["transactionBookId"]));
+                        transactionBook.Amount = Convert.ToDecimal(reader["amount"]);
+                        transactionBook.GatewayTransactionId = Convert.ToString(reader["gatewayTransactionId"]);
+                        transactionBook.GatewayResponse = Convert.ToString(reader["gatewayResponse"]);
+                        transactionBook.CallbackStatus = Convert.ToString(reader["callbackStatus"]);
+                        transactionBook.CallbackResponse = Convert.ToString(reader["callbackResponse"]);
+                        transactionBook.Status = Convert.ToString(reader["status"]);
+                        transactionBook.IsCredit = Convert.ToBoolean(reader["isCredit"]);
+                        transactionBook.WalletTransactionStatus = Convert.ToString(reader["walletTransactionStatus"]);
+                        transactionBook.WalletResponse = Convert.ToString(reader["walletResponse"]);
+                        transactionBook.CreatedAt = Convert.ToDateTime(reader["createdAt"]);
+
+                        if (reader["updatedAt"] != DBNull.Value)
+                            transactionBook.UpdatedAt = Convert.ToDateTime(reader["updatedAt"]);
+
+                        transactionBook.UserId = Convert.ToString(reader["userId"]);
+                        transactionBook.CustomerId = Convert.ToString(reader["customerId"]);
+                    }
+                }
+            }
+
+            return transactionBook;
+        }
+
+        public async Task UpdateTransactionBook(Guid tenantId, TransactionBook transactionBook)
+        {
+            // update response in db
+            var query = "updatetransaction";
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, transactionBook.TransactionBookId);
+                    cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, transactionBook.WalletResponse);
+                    cmd.Parameters.AddWithValue("wallet_status", NpgsqlDbType.Json, transactionBook.WalletTransactionStatus);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
         }
 
         public async Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId)
@@ -471,6 +517,40 @@ namespace CodeRower.CCP.Services
 
             return amount;
 
+        }
+
+        public async Task<WalletTransactionResponse> SettleWalletToCpWalletTransaction(Guid tenantId, Guid transactionId)
+        {
+            var transaction = await GetTransactionBookById(tenantId, transactionId).ConfigureAwait(false);
+            WalletTransactionResponse response = null;
+
+            if (transaction != null && transaction.Status == "success")
+            {
+                response = await AddTransaction(tenantId, new TransactionRequest
+                {
+                    Amount = transaction.Amount,
+                    IsCredit = false,
+                    Reference = $"Payment withdraw from wallet",
+                    PayerId = transaction.CustomerId,
+                    PayeeId = tenantId.ToString(),
+                    TransactionType = "WALLET",
+                    Currency = Controllers.Models.Enums.Currency.COINS,
+                    CurrentBalanceFor = transaction.CustomerId,
+                    Remark = transaction.TransactionBookId.ToString()
+                }).ConfigureAwait(false);
+
+                var transactionBook = new TransactionBook()
+                {
+                    TransactionBookId = transaction.TransactionBookId,
+                    WalletResponse = JsonConvert.SerializeObject(response),
+                    WalletTransactionStatus = "success"
+                };
+
+                await UpdateTransactionBook(tenantId, transactionBook).ConfigureAwait(false);
+
+            }
+
+            return response;
         }
     }
 }

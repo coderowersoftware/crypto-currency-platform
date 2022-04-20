@@ -12,7 +12,6 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace CodeRower.CCP.Controllers
 {
     [ApiController]
-    [Authorize]
     [Route("api/tenant/{tenantId}/transfers")]
     public class TransfersController : Controller
     {
@@ -30,6 +29,7 @@ namespace CodeRower.CCP.Controllers
             _smsService = smsService;
         }
 
+        [Authorize]
         [HttpPost("unlocked-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId,
@@ -136,6 +136,7 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
+        [Authorize]
         [HttpPost("wallet-to-wallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId,
@@ -259,6 +260,7 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
+        [Authorize]
         [HttpPost("locked-to-mint")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId,
@@ -325,6 +327,7 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
+        [Authorize]
         [HttpPost("locked-to-farm")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId,
@@ -389,6 +392,7 @@ namespace CodeRower.CCP.Controllers
             return transactions.Any() ? Ok(new ListResponse<WalletTransactionResponse> { Rows = transactions }) : NoContent();
         }
 
+        [Authorize]
         [HttpPost("wallet-to-cpwallet")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(ListResponse<Transaction>))]
         public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId,
@@ -435,6 +439,23 @@ namespace CodeRower.CCP.Controllers
 
             var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken, "CP_WITHDRAWAL").ConfigureAwait(false);
             return transaction != null ? Ok(transaction.transactionid) : NoContent();
+        }
+
+        [HttpPost("wallet-to-cpwallet/settle")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(WalletTransactionResponse))]
+        public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId,
+            [FromBody, Required] CoinsTransferToCPSettleRequestData Data)
+        {
+            if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
+            {
+                var transaction = await _transactionsService.SettleWalletToCpWalletTransaction(tenantId, new Guid(Data.Data.TransactionId)).ConfigureAwait(false);
+
+                return Ok(transaction);
+            }
+
+            ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
+
+            return BadRequest(ModelState);
         }
 
     }

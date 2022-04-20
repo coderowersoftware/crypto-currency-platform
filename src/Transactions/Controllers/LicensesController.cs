@@ -12,7 +12,6 @@ using CodeRower.CCP.Services;
 namespace CodeRower.CCP.Controllers
 {
     [ApiController]
-    [Authorize]
     [Route("api/tenant/{tenantId}/licenses")]
     public class LicensesController : Controller
     {
@@ -29,6 +28,7 @@ namespace CodeRower.CCP.Controllers
             _smsService = smsService;
         }
 
+        [Authorize]
         [HttpPost("buy")]
         public async Task<IActionResult> BuyAirdropLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
@@ -65,6 +65,7 @@ namespace CodeRower.CCP.Controllers
             return BadRequest(ModelState);
         }
 
+        [Authorize]
         [HttpPost("register")]
         public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId,
             [FromBody, Required] LicenseRequestData Data)
@@ -103,6 +104,7 @@ namespace CodeRower.CCP.Controllers
             return StatusCode((int)HttpStatusCode.Created);
         }
 
+        [Authorize]
         [HttpPatch("{LicenseId}/activate")]
         public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid tenantId, [FromRoute, Required] Guid LicenseId)
         {
@@ -122,6 +124,7 @@ namespace CodeRower.CCP.Controllers
             return StatusCode((int)HttpStatusCode.NoContent);
         }
 
+        [Authorize]
         [HttpGet("")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<License>))]
         public async Task<IActionResult> GetLicensesAsync([FromRoute, Required] Guid tenantId, [FromQuery(Name = "Filter[LicenseId]")] Guid? LicenseId,
@@ -141,6 +144,7 @@ namespace CodeRower.CCP.Controllers
             return Ok(pagedResult);
         }
 
+        [Authorize]
         [HttpGet("get-license")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> GetLicenseById([FromRoute, Required] Guid tenantId, [FromQuery, Required] Guid LicenseId, string otp)
@@ -157,6 +161,7 @@ namespace CodeRower.CCP.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpGet("logs")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(PagedResponse<LicenseLog>))]
         public async Task<IActionResult> GetLicenseLogs([FromRoute, Required] Guid tenantId,

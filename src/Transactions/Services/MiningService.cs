@@ -4,6 +4,7 @@ using NpgsqlTypes;
 using CodeRower.CCP.Controllers.Models;
 using CodeRower.CCP.Controllers.Models.Enums;
 using License = CodeRower.CCP.Controllers.Models.License;
+using Newtonsoft.Json;
 
 namespace CodeRower.CCP.Services
 {
@@ -65,9 +66,9 @@ namespace CodeRower.CCP.Services
 
         public async Task<string> AddPoolLicense(Guid tenantId, LicenseBuyRequest data)
         {
-            var transaction = await GetTransactionById(tenantId, data.TransactionId).ConfigureAwait(false);
+            var transaction = await _transactionsService.GetTransactionBookById(tenantId, data.TransactionId).ConfigureAwait(false);
 
-            if (transaction != null)
+            if (transaction != null && transaction.Status == "success")
             {
                 var licenseId = await AddLicense(tenantId, data, transaction.UserId).ConfigureAwait(false);
 
@@ -84,7 +85,7 @@ namespace CodeRower.CCP.Services
                     PayerId = walletTenant,
                     PayeeId = customerId,
                     TransactionType = "PAYMENT",
-                    Currency = Currency.COINS,
+                    Currency = Currency.USD,
                     CurrentBalanceFor = customerId,
                     Remark = licenseId
                 }).ConfigureAwait(false);
@@ -92,13 +93,13 @@ namespace CodeRower.CCP.Services
 
                 var buyTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = tenantInfo.LicenseCost * tenantInfo.LatestRateInUSD,
+                    Amount = tenantInfo.LicenseCost,
                     IsCredit = false,
                     Reference = $"Payment added to wallet for purchase of License - {licenseId}",
                     PayerId = customerId,
                     PayeeId = walletTenant,
                     TransactionType = "PURCHASE_LICENSE",
-                    Currency = Currency.COINS,
+                    Currency = Currency.USD,
                     CurrentBalanceFor = customerId,
                     BaseTransaction = walletTopUp.transactionid,
                     Remark = licenseId
@@ -106,17 +107,26 @@ namespace CodeRower.CCP.Services
 
                 var maintenanceTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = maintenanceFee * tenantInfo.LatestRateInUSD,
+                    Amount = maintenanceFee,
                     IsCredit = false,
                     Reference = $"Payment received from user {customerId} for purchase of License - {licenseId} , TransactionId - {data.TransactionId}",
                     PayerId = customerId,
                     PayeeId = walletTenant,
                     TransactionType = "MAINTENANCE_FEE",
-                    Currency = Currency.COINS,
+                    Currency = Currency.USD,
                     CurrentBalanceFor = customerId,
                     BaseTransaction = walletTopUp.transactionid,
                     Remark = licenseId
                 }).ConfigureAwait(false);
+
+                var transactionBook = new TransactionBook()
+                {
+                    TransactionBookId = data.TransactionId,
+                    WalletResponse = JsonConvert.SerializeObject(walletTopUp),
+                    WalletTransactionStatus = "success"
+                };
+
+                await _transactionsService.UpdateTransactionBook(tenantId, transactionBook).ConfigureAwait(false);
 
                 return licenseId;
 
@@ -124,45 +134,6 @@ namespace CodeRower.CCP.Services
             return null;
         }
 
-        private async Task<TransactionBook> GetTransactionById(Guid tenantId, string transactionId)
-        {
-            var query = "gettransactionbyid";
-            TransactionBook transactionBook = null;
-
-            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
-            {
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
-                {
-                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
-                    cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, new Guid(transactionId));
-
-                    if (conn.State != ConnectionState.Open) conn.Open();
-
-                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    while (reader.Read())
-                    {
-                        transactionBook = new TransactionBook();
-                        transactionBook.TransactionBookId = Convert.ToString(reader["transactionBookId"]);
-                        transactionBook.Amount = Convert.ToDecimal(reader["amount"]);
-                        transactionBook.GatewayTransactionId = Convert.ToString(reader["gatewayTransactionId"]);
-                        transactionBook.GatewayResponse = Convert.ToString(reader["gatewayResponse"]);
-                        transactionBook.CallbackStatus = Convert.ToString(reader["callbackStatus"]);
-                        transactionBook.CallbackResponse = Convert.ToString(reader["callbackResponse"]);
-                        transactionBook.Status = Convert.ToString(reader["status"]);
-                        transactionBook.IsCredit = Convert.ToBoolean(reader["isCredit"]);
-                        //transactionBook.WalletTransactionStatus = Convert.ToString(reader["transactionBookId"]);
-                        //transactionBook.WalletResponse = Convert.ToString(reader["transactionBookId"]);
-                        transactionBook.CreatedAt = Convert.ToDateTime(reader["createdAt"]);
-                        //transactionBook.UpdatedAt = Convert.ToDateTime(reader["updatedAt"]);
-                        transactionBook.UserId = Convert.ToString(reader["userId"]);
-                        transactionBook.CustomerId = Convert.ToString(reader["customerId"]);
-                    }
-                }
-            }
-
-            return transactionBook;
-        }
         public async Task RegisterLicense(Guid tenantId, LicenseRequest data, string customerId, string userId)
         {
             var query = "registerlicense";
@@ -187,10 +158,11 @@ namespace CodeRower.CCP.Services
             if (ownerInfo != null)
             {
                 var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
+                var commissionFeeInCoins = commissionFee / tenantInfo.LatestRateInUSD;
 
                 var commissionFeeCreditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = commissionFee,
+                    Amount = commissionFeeInCoins,
                     IsCredit = true,
                     Reference = $"Commission for License - {data.LicenseNumber} registered by user",
                     PayerId = tenantInfo.WalletTenantId,
@@ -202,7 +174,7 @@ namespace CodeRower.CCP.Services
 
                 var commissionFeeDebitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = commissionFee,
+                    Amount = commissionFeeInCoins,
                     IsCredit = false,
                     Reference = $"Commission for License - {data.LicenseNumber} registered by user",
                     PayerId = ownerInfo.CustomerId,
@@ -214,7 +186,7 @@ namespace CodeRower.CCP.Services
 
                 var unlockFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = commissionFee,
+                    Amount = commissionFeeInCoins,
                     IsCredit = true,
                     Reference = $"Commission UNLOCKED for License - {data.LicenseNumber} registered by user",
                     PayerId = tenantInfo.WalletTenantId,

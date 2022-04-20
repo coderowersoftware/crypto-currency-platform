@@ -66,6 +66,8 @@ namespace CodeRower.CCP.Services
                         tenantInfo.SendGridApiKey = Convert.ToString(reader["sendGridApiKey"]);
                         tenantInfo.SendGridOtpTemplateId = Convert.ToString(reader["sendGridOtpTemplateId"]);
                         tenantInfo.SendGridEmailFrom = Convert.ToString(reader["sendGridEmailFrom"]);
+                        tenantInfo.SmtpEmailPassword = Convert.ToString(reader["smtpEmailPassword"]);
+                        tenantInfo.DailyCoinRewardForPoolUser = Convert.ToDecimal(reader["dailyCoinRewardForPoolUser"]);
                     }
                 }
                 return tenantInfo;

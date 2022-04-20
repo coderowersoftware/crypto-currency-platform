@@ -16,7 +16,7 @@ namespace CodeRower.CCP.Controllers.Models
         public decimal LicenseCost { get; internal set; }
         public string? LicenseCostCurrency { get; internal set; }
         public decimal MonthlyMaintenancePct { get; internal set; }
-        public decimal LicenseCommissionPct { get; internal set; } 
+        public decimal LicenseCommissionPct { get; internal set; }
         public decimal LatestRateInUSD { get; internal set; }
         public string? WalletTenantId { get; internal set; }
         public string? WalletClientId { get; internal set; }
@@ -27,9 +27,10 @@ namespace CodeRower.CCP.Controllers.Models
         public string? NodeHost { get; internal set; }
         public string? WalletHost { get; internal set; }
         public string? AuthJWTSecret { get; internal set; }
-        public string? SendGridApiKey{ get; internal set; }
+        public string? SendGridApiKey { get; internal set; }
         public string? SendGridOtpTemplateId { get; internal set; }
         public string? SendGridEmailFrom { get; internal set; }
-
+        public string? SmtpEmailPassword { get; internal set; }
+        public decimal? DailyCoinRewardForPoolUser { get; internal set; }
     }
 }

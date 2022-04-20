@@ -153,7 +153,7 @@ namespace CodeRower.CCP.Services
                 smtp.Host = "smtpout.secureserver.net"; //for godaddy  
                 smtp.EnableSsl = true;
                 smtp.UseDefaultCredentials = false;
-                smtp.Credentials = new NetworkCredential(tenantInfo.SendGridEmailFrom, "info@ccmt.com");
+                smtp.Credentials = new NetworkCredential(tenantInfo.SendGridEmailFrom, tenantInfo.SmtpEmailPassword);
                 smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
                 smtp.Timeout = 10000;
                 smtp.Send(message);
