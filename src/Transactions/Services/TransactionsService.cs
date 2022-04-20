@@ -481,7 +481,7 @@ namespace CodeRower.CCP.Services
                 {
                     cmd.Parameters.AddWithValue("transaction_id", NpgsqlDbType.Uuid, transactionBook.TransactionBookId);
                     cmd.Parameters.AddWithValue("wallet_response", NpgsqlDbType.Json, transactionBook.WalletResponse);
-                    cmd.Parameters.AddWithValue("wallet_status", NpgsqlDbType.Json, transactionBook.WalletTransactionStatus);
+                    cmd.Parameters.AddWithValue("wallet_status", NpgsqlDbType.Text, transactionBook.WalletTransactionStatus);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
