@@ -24,7 +24,11 @@ namespace CodeRower.CCP.Controllers.Models
         /// Amount
         /// </summary>
         [DataMember(Name = "amount", EmitDefaultValue = false)]
-        public decimal Amount { get; set; }
+        public decimal Amount
+        {
+            get => Amount;
+            set => Amount = decimal.Round(Amount, 4);
+        }
 
         /// <summary>
         /// Virtual Value
