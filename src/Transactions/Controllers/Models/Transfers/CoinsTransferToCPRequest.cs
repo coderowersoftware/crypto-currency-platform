@@ -9,12 +9,8 @@ namespace CodeRower.CCP.Controllers.Models.Transfers
         public decimal Amount { get; set; }
         [Required]
         public string Otp { get; set; }
-
-        public string Message { get; set; }
-
-        [JsonIgnore]
-        public decimal FeeAmount { get; set; }
-        [JsonIgnore]
-        public string TransactionType { get; set; }
+        public string? Message { get; set; }
+        public decimal? FeeAmount { get; set; }
+        public string? TransactionType { get; set; }
     }
 }
