@@ -187,6 +187,8 @@ namespace CodeRower.CCP.Services
                     });
 
                 }
+
+                result.ForEach(item => item.Amount = decimal.Round(item.Amount, 4));
             }
 
 
