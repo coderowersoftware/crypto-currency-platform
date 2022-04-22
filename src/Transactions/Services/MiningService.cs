@@ -66,7 +66,7 @@ namespace CodeRower.CCP.Services
 
         public async Task<string> AddPoolLicense(Guid tenantId, LicenseBuyRequest data)
         {
-            var transaction = await _transactionsService.GetTransactionBookById(tenantId, data.TransactionId).ConfigureAwait(false);
+            var transaction = await _transactionsService.GetTransactionBookById(tenantId, new Guid(data.TransactionId)).ConfigureAwait(false);
 
             if (transaction != null)
             {
@@ -121,7 +121,7 @@ namespace CodeRower.CCP.Services
 
                 var transactionBook = new TransactionBook()
                 {
-                    TransactionBookId = data.TransactionId,
+                    TransactionBookId = new Guid(data.TransactionId),
                     WalletResponse = JsonConvert.SerializeObject(walletTopUp),
                     WalletTransactionStatus = "success"
                 };

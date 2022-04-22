@@ -13,7 +13,7 @@ namespace CodeRower.CCP.Controllers.Models
     public class LicenseBuyRequest
     {
         [Required]
-        public Guid TransactionId { get; set; }
+        public string TransactionId { get; set; }
         public LicenseType LicenseType { get; set; } = LicenseType.POOL;
         [Required]
         public string AuthKey { get; set; }
