@@ -3,12 +3,13 @@ using CodeRower.CCP.Controllers.Models.Common;
 using CodeRower.CCP.Controllers.Models.Reports;
 using Npgsql;
 using NpgsqlTypes;
+using Transactions.Controllers.Models.Reports;
 
 namespace CodeRower.CCP.Services
 {
     public interface IReportsService
     {
-        Task<(IEnumerable<Miner>, int)> GetTopMiners(Guid tenantId, QueryOptions? queryOptions);
+        Task<MinersReponse> GetTopMiners(Guid tenantId, QueryOptions? queryOptions);
         Task<Licenses?> GetLicensesInfoAsync(Guid tenantId);
         Task<OverallLicenseDetails?> GetOverallLicenseDetailsAsync(Guid tenantId);
         Task<PurchasedLicenses> GetMyPurchasedLicensesAsync(string? userId, Guid tenantId);
@@ -27,7 +28,7 @@ namespace CodeRower.CCP.Services
             _transactionsService = transactionsService;
         }
 
-        public async Task<(IEnumerable<Miner>, int)> GetTopMiners(Guid tenantId, QueryOptions? queryOptions)
+        public async Task<MinersReponse> GetTopMiners(Guid tenantId, QueryOptions? queryOptions)
         {
             var query = "get_top_miners";
 
@@ -72,7 +73,8 @@ namespace CodeRower.CCP.Services
                 miner.LockedAmount = amounts?.FirstOrDefault(amt => "LOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
                 miner.UnlockedAmount = amounts?.FirstOrDefault(amt => "UNLOCKED".Equals(amt.TransactionType.Trim(), StringComparison.InvariantCultureIgnoreCase))?.Amount ?? 0;
             }
-            return (topMiners, count);
+
+            return new MinersReponse { Miners = miners, Count = count };
         }
 
         public async Task<Licenses?> GetLicensesInfoAsync(Guid tenantId)
