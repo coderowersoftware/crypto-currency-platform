@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using CodeRower.CCP.Controllers.Domain;
 using CodeRower.CCP.Controllers.Models;
 using CodeRower.CCP.Controllers.Models.Common;
 using CodeRower.CCP.Controllers.Models.Enums;
@@ -423,7 +424,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (amountTobeDeducted > effectiveBalance)
+            if (amountTobeDeducted > effectiveBalance * latestRate)
             {
                 ModelState.AddModelError(nameof(TransferRequest.Amount), "Insufficient funds.");
                 return BadRequest(ModelState);
@@ -435,12 +436,20 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            TransferRequest.FeeAmount = walletTransferFeeAmount;
-            TransferRequest.TransactionType = "CP_WITHDRAWAL";
+            CoinsTransferToCPRequestDTO request = new CoinsTransferToCPRequestDTO()
+            {
+                Amount = TransferRequest.Amount,
+                FeeAmount = walletTransferFeeAmount,
+                Message = TransferRequest.Message,
+                AmountInCC = TransferRequest.Amount / latestRate,
+                FeeAmountInCC = walletTransferFeeAmount / latestRate,
+                Currency = tenantInfo.LicenseCostCurrency,
+                TransactionType = "CP_WITHDRAWAL"
+            };
 
             var bearerToken = Request.Headers.Authorization.FirstOrDefault()?.ToString();
 
-            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), TransferRequest, bearerToken).ConfigureAwait(false);
+            var transaction = await _transactionsService.AddToTransactionBooks(tenantId, new Guid(userId), request, bearerToken).ConfigureAwait(false);
             return transaction != null ? Ok(transaction.transactionid) : NoContent();
         }
 

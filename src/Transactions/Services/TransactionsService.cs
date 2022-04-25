@@ -9,6 +9,7 @@ using CodeRower.CCP.Controllers.Models.Transfers;
 using Npgsql;
 using System.Data;
 using NpgsqlTypes;
+using CodeRower.CCP.Controllers.Domain;
 
 namespace CodeRower.CCP.Services
 {
@@ -22,7 +23,7 @@ namespace CodeRower.CCP.Services
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
         Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
-        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequest transferRequest, string bearerToken);
+        Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequestDTO transferRequest, string bearerToken);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
         Task<WalletTransactionResponse> SettleWalletToCpWalletTransaction(Guid tenantId, Guid transactionId);
         Task<TransactionBook> GetTransactionBookById(Guid tenantId, Guid transactionId);
@@ -381,7 +382,7 @@ namespace CodeRower.CCP.Services
         }
 
         public async Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId,
-            CoinsTransferToCPRequest transferRequest, string bearerToken)
+            CoinsTransferToCPRequestDTO transferRequest, string bearerToken)
         {
             var query = "addtransaction";
             var id = string.Empty;
@@ -400,6 +401,9 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("message_", NpgsqlDbType.Text, transferRequest.Message);
                     cmd.Parameters.AddWithValue("transaction_type", NpgsqlDbType.Text, transferRequest.TransactionType);
                     cmd.Parameters.AddWithValue("fee_amount", NpgsqlDbType.Numeric, transferRequest.FeeAmount);
+                    cmd.Parameters.AddWithValue("amount_incc", NpgsqlDbType.Numeric, transferRequest.AmountInCC);
+                    cmd.Parameters.AddWithValue("fee_amount_incc", NpgsqlDbType.Numeric, transferRequest.FeeAmountInCC);
+                    cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Text, transferRequest.Currency);
 
                     if (conn.State != ConnectionState.Open) conn.Open();
 
@@ -468,6 +472,13 @@ namespace CodeRower.CCP.Services
                         transactionBook.FeeAmount = Convert.ToDecimal(reader["feeAmount"]);
                         transactionBook.UserId = Convert.ToString(reader["userId"]);
                         transactionBook.CustomerId = Convert.ToString(reader["customerId"]);
+
+                        if (reader["amountInCC"] != DBNull.Value)
+                            transactionBook.AmountInCC = Convert.ToDecimal(reader["amountInCC"]);
+                        if (reader["feeAmountInCC"] != DBNull.Value)
+                            transactionBook.FeeAmountInCC = Convert.ToDecimal(reader["feeAmountInCC"]);
+                        if (reader["currency"] != DBNull.Value)
+                            transactionBook.Currency = Convert.ToString(reader["currency"]);
                     }
                 }
             }
@@ -532,7 +543,7 @@ namespace CodeRower.CCP.Services
             {
                 response = await AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = transaction.Amount,
+                    Amount = transaction.AmountInCC,
                     IsCredit = false,
                     Reference = $"Payment withdraw from wallet",
                     PayerId = transaction.CustomerId,
@@ -545,7 +556,7 @@ namespace CodeRower.CCP.Services
 
                 var walletFee = await AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = transaction.FeeAmount,
+                    Amount = transaction.FeeAmountInCC,
                     IsCredit = false,
                     Reference = $"Fee for transfer from Wallet to CP",
                     PayerId = transaction.CustomerId,

@@ -17,5 +17,8 @@
         public DateTime? UpdatedAt { get; set; }
         public string UserId { get; set; }
         public string CustomerId { get; set; }
+        public decimal AmountInCC { get; set; }
+        public decimal FeeAmountInCC { get; set; }
+        public string Currency { get; set; }
     }
 }
