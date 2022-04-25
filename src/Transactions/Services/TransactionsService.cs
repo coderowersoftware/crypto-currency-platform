@@ -421,7 +421,7 @@ namespace CodeRower.CCP.Services
                 {
                     data = new
                     {
-                        amount = transferRequest.Amount,
+                        amount = transferRequest.Amount + transferRequest.FeeAmount,
                         currency = tenantInfo.LicenseCostCurrency,
                         transactionId = id
                     }
