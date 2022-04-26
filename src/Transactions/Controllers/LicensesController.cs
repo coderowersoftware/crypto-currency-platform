@@ -67,14 +67,16 @@ namespace CodeRower.CCP.Controllers
 
         [Authorize]
         [HttpPost("register")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId,
             [FromBody, Required] LicenseRequestData Data)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            License result = null;
             try
             {
-                await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
+               result =  await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {
@@ -101,17 +103,20 @@ namespace CodeRower.CCP.Controllers
                 }
             }
 
-            return StatusCode((int)HttpStatusCode.Created);
+            return Ok(result);
         }
 
         [Authorize]
         [HttpPatch("{LicenseId}/activate")]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid tenantId, [FromRoute, Required] Guid LicenseId)
         {
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+            License result = null;
+
             try
             {
-                await _miningService.ActivateLicenseAsync(tenantId, LicenseId, customerId).ConfigureAwait(false);
+                result = await _miningService.ActivateLicenseAsync(tenantId, LicenseId, customerId).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {
@@ -121,7 +126,7 @@ namespace CodeRower.CCP.Controllers
                 }
             }
 
-            return StatusCode((int)HttpStatusCode.NoContent);
+            return Ok(result);
         }
 
         [Authorize]

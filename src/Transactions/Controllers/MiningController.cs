@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using CodeRower.CCP.Controllers.Models.Mining;
 using CodeRower.CCP.Services;
+using Swashbuckle.AspNetCore.Annotations;
+using CodeRower.CCP.Controllers.Models;
 
 namespace CodeRower.CCP.Controllers
 {
@@ -25,12 +27,14 @@ namespace CodeRower.CCP.Controllers
 
         [HttpPost("begin")]
         [Authorize]
+        [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> MineAsync([FromRoute, Required] Guid tenantId,[FromBody, Required] MineRequestData MineRequest)
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
+            License result = null;
             try
             {
-                await _miningService.MineAsync(tenantId, MineRequest.Data.LicenseId.Value, userId).ConfigureAwait(false);
+                result = await _miningService.MineAsync(tenantId, MineRequest.Data.LicenseId.Value, userId).ConfigureAwait(false);
             }
             catch(PostgresException ex)
             {
@@ -39,8 +43,8 @@ namespace CodeRower.CCP.Controllers
                     return BadRequest(new { ErrorCode = "MiningAlreadyInProgress", Message = $"Mining for license {MineRequest.Data.LicenseId.Value} is already in progress."});
                 }
             }
-            
-            return StatusCode((int) HttpStatusCode.Created);
+
+            return Ok(result);
         }
 
     }
