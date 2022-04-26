@@ -150,7 +150,10 @@ namespace CodeRower.CCP.Services
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-                    result = MapLicense(reader);
+                    while (reader.Read())
+                    {
+                        result = MapLicense(reader);
+                    }
                 }
             }
 
@@ -333,7 +336,10 @@ namespace CodeRower.CCP.Services
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-                    result =  MapLicense(reader);
+                    while (reader.Read())
+                    {
+                        result = MapLicense(reader);
+                    }
                 }
             }
 
@@ -354,7 +360,10 @@ namespace CodeRower.CCP.Services
                     if (conn.State != ConnectionState.Open) conn.Open();
 
                     var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-                    result = MapLicense(reader);
+                    while (reader.Read())
+                    {
+                        result = MapLicense(reader);
+                    }
                 }
             }
 
