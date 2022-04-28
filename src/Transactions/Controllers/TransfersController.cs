@@ -69,7 +69,7 @@ namespace CodeRower.CCP.Controllers
                 IsCredit = false,
                 Reference = $"Transfer to payee {customerId}",
                 PayerId = customerId,
-                PayeeId = customerId,
+                PayeeId = tenantInfo.WalletTenantId,
                 TransactionType = "UNLOCKED",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
@@ -86,7 +86,7 @@ namespace CodeRower.CCP.Controllers
                     Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
                     PayerId = customerId,
                     PayeeId = tenantInfo.WalletTenantId,
-                    TransactionType = "UNLOCKED",
+                    TransactionType = "UNLOCKED_WALLET_FEE",
                     Currency = Currency.COINS,
                     BaseTransaction = debitTran?.transactionid
                 }).ConfigureAwait(false);
@@ -95,42 +95,42 @@ namespace CodeRower.CCP.Controllers
                 {
                     transactions.Add(debitFeeTran);
 
-                    // Credit fee
-                    var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                    //// Credit fee
+                    //var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                    //{
+                    //    Amount = unlockToWalletFeeAmount,
+                    //    IsCredit = true,
+                    //    Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
+                    //    PayerId = tenantInfo.WalletTenantId,
+                    //    PayeeId = tenantInfo.WalletTenantId,
+                    //    TransactionType = "UNLOCKED_WALLET_FEE",
+                    //    Currency = Currency.COINS,
+                    //    BaseTransaction = debitTran?.transactionid
+                    //}).ConfigureAwait(false);
+
+                    //if (!string.IsNullOrWhiteSpace(creditFeeTran?.transactionid))
+                    //{
+                    //    transactions.Add(creditFeeTran);
+
+                    // Credit to other account
+                    var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = unlockToWalletFeeAmount,
+                        Amount = TransferRequest.Amount,
                         IsCredit = true,
-                        Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
+                        Reference = "Transferred from UNLOCKED coins to WALLET",
                         PayerId = tenantInfo.WalletTenantId,
-                        PayeeId = tenantInfo.WalletTenantId,
-                        TransactionType = "UNLOCKED_WALLET_FEE",
+                        PayeeId = customerId,
+                        TransactionType = "WALLET",
                         Currency = Currency.COINS,
                         BaseTransaction = debitTran?.transactionid
                     }).ConfigureAwait(false);
 
-                    if (!string.IsNullOrWhiteSpace(creditFeeTran?.transactionid))
+                    if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                     {
-                        transactions.Add(creditFeeTran);
-
-                        // Credit to other account
-                        var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                        {
-                            Amount = TransferRequest.Amount,
-                            IsCredit = true,
-                            Reference = "Transferred from UNLOCKED coins to WALLET",
-                            PayerId = customerId,
-                            PayeeId = customerId,
-                            TransactionType = "WALLET",
-                            Currency = Currency.COINS,
-                            BaseTransaction = debitTran?.transactionid
-                        }).ConfigureAwait(false);
-
-                        if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
-                        {
-                            transactions.Add(creditTran);
-                        }
-
+                        transactions.Add(creditTran);
                     }
+
+                    //}
                 }
             }
 
@@ -211,7 +211,7 @@ namespace CodeRower.CCP.Controllers
                     Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
                     PayerId = customerId,
                     PayeeId = tenantInfo.WalletTenantId,
-                    TransactionType = "WALLET",
+                    TransactionType = "WALLET_WALLET_FEE",
                     Currency = Currency.COINS,
                     BaseTransaction = debitTran?.transactionid
                 }).ConfigureAwait(false);
@@ -220,41 +220,41 @@ namespace CodeRower.CCP.Controllers
                 {
                     transactions.Add(debitFeeTran);
 
-                    // Credit fee to tenant
-                    var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                    //// Credit fee to tenant
+                    //var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                    //{
+                    //    Amount = walletTransferFeeAmount,
+                    //    IsCredit = true,
+                    //    Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
+                    //    PayerId = tenantInfo.WalletTenantId,
+                    //    PayeeId = tenantInfo.WalletTenantId,
+                    //    TransactionType = "WALLET_WALLET_FEE",
+                    //    Currency = Currency.COINS,
+                    //    BaseTransaction = debitTran?.transactionid
+                    //}).ConfigureAwait(false);
+
+                    //if (!string.IsNullOrWhiteSpace(creditFeeTran?.transactionid))
+                    //{
+                    //transactions.Add(creditFeeTran);
+                    // Credit to other account
+                    var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
-                        Amount = walletTransferFeeAmount,
+                        Amount = TransferRequest.Amount,
                         IsCredit = true,
-                        Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
+                        Reference = $"Received from payer {customerId}",
                         PayerId = tenantInfo.WalletTenantId,
-                        PayeeId = tenantInfo.WalletTenantId,
-                        TransactionType = "WALLET_WALLET_FEE",
+                        PayeeId = toCustomerId,
+                        TransactionType = "WALLET",
+                        Remark = $"Wallet transfer received from {customerId}",
                         Currency = Currency.COINS,
                         BaseTransaction = debitTran?.transactionid
                     }).ConfigureAwait(false);
 
-                    if (!string.IsNullOrWhiteSpace(creditFeeTran?.transactionid))
+                    if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
                     {
-                        transactions.Add(creditFeeTran);
-                        // Credit to other account
-                        var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                        {
-                            Amount = TransferRequest.Amount,
-                            IsCredit = true,
-                            Reference = $"Received from payer {customerId}",
-                            PayerId = tenantInfo.WalletTenantId,
-                            PayeeId = toCustomerId,
-                            TransactionType = "WALLET",
-                            Remark = $"Wallet transfer received from {customerId}",
-                            Currency = Currency.COINS,
-                            BaseTransaction = debitTran?.transactionid
-                        }).ConfigureAwait(false);
-
-                        if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))
-                        {
-                            transactions.Add(creditTran);
-                        }
+                        transactions.Add(creditTran);
                     }
+                    //}
                 }
             }
 
@@ -288,6 +288,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             // Debit locked
@@ -297,7 +298,7 @@ namespace CodeRower.CCP.Controllers
                 IsCredit = false,
                 Reference = $"Transfer to payee {customerId}",
                 PayerId = customerId,
-                PayeeId = customerId,
+                PayeeId = tenantInfo.WalletTenantId,
                 TransactionType = "LOCKED",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
@@ -311,8 +312,8 @@ namespace CodeRower.CCP.Controllers
                 {
                     Amount = MintRequest.Amount,
                     IsCredit = true,
-                    Reference = debitTran.transactionid,
-                    PayerId = customerId,
+                    Reference = "Transfer successfully to MINT",
+                    PayerId = tenantInfo.WalletTenantId,
                     PayeeId = customerId,
                     TransactionType = "MINT",
                     Currency = Currency.COINS,
@@ -354,6 +355,7 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
             List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             // Debit locked
@@ -363,7 +365,7 @@ namespace CodeRower.CCP.Controllers
                 IsCredit = false,
                 Reference = $"Transfer to payee {customerId}",
                 PayerId = customerId,
-                PayeeId = customerId,
+                PayeeId = tenantInfo.WalletTenantId,
                 TransactionType = "LOCKED",
                 Currency = Currency.COINS
             }).ConfigureAwait(false);
@@ -377,11 +379,12 @@ namespace CodeRower.CCP.Controllers
                 {
                     Amount = FarmRequest.Amount,
                     IsCredit = true,
-                    Reference = debitTran.transactionid,
-                    PayerId = customerId,
+                    Reference = "Transfer successfull to FARM",
+                    PayerId = tenantInfo.WalletTenantId,
                     PayeeId = customerId,
                     TransactionType = "FARM",
-                    Currency = Currency.COINS
+                    Currency = Currency.COINS,
+                    BaseTransaction = debitTran.transactionid
                 }).ConfigureAwait(false);
 
                 if (!string.IsNullOrWhiteSpace(creditTran?.transactionid))

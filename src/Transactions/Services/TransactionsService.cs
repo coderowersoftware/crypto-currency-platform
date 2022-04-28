@@ -131,7 +131,7 @@ namespace CodeRower.CCP.Services
 
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
 
-            Uri uri = new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/get-balances-for-transaction-types?{queryString}");
+            Uri uri = new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/get-current-balances-for-transaction-types?{queryString}");
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 uri,
@@ -148,23 +148,23 @@ namespace CodeRower.CCP.Services
             if (result?.Count > 0)
             {
 
-                string[] arr = new string[5] { "WALLET", "LOCKED", "UNLOCKED", "MINT", "FARM" };
-                result.Add(new TransactionTypeBalance
-                {
-                    TransactionType = "TOTAL",
-                    Amount = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.Amount : 0),
-                    VirtualValue = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.VirtualValue : 0),
-                    Currency = result.First().Currency
-                });
+                //string[] arr = new string[5] { "WALLET", "LOCKED", "UNLOCKED", "MINT", "FARM" };
+                //result.Add(new TransactionTypeBalance
+                //{
+                //    TransactionType = "TOTAL",PORTFOLIO
+                //    Amount = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.Amount : 0),
+                //    VirtualValue = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.VirtualValue : 0),
+                //    Currency = result.First().Currency
+                //});
 
-                string[] referral = new string[2] { "COMMISSION", "REFERRAL_SIGNUP_REWARDS" };
-                result.Add(new TransactionTypeBalance
-                {
-                    TransactionType = "TOTAL_REFERRAL",
-                    Amount = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.Amount : 0),
-                    VirtualValue = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.VirtualValue : 0),
-                    Currency = result.First().Currency
-                });
+                //string[] referral = new string[2] { "COMMISSION", "REFERRAL_SIGNUP_REWARDS" };
+                //result.Add(new TransactionTypeBalance
+                //{
+                //    TransactionType = "TOTAL_REFERRAL",
+                //    Amount = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.Amount : 0),
+                //    VirtualValue = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.VirtualValue : 0),
+                //    Currency = result.First().Currency
+                //});
 
                 if (!isCredit.HasValue && !string.IsNullOrEmpty(userId))
                 {
@@ -537,6 +537,8 @@ namespace CodeRower.CCP.Services
         public async Task<WalletTransactionResponse> SettleWalletToCpWalletTransaction(Guid tenantId, Guid transactionId)
         {
             var transaction = await GetTransactionBookById(tenantId, transactionId).ConfigureAwait(false);
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+            
             WalletTransactionResponse response = null;
 
             if (transaction != null)
@@ -547,7 +549,7 @@ namespace CodeRower.CCP.Services
                     IsCredit = false,
                     Reference = $"Payment withdraw from wallet",
                     PayerId = transaction.CustomerId,
-                    PayeeId = tenantId.ToString(),
+                    PayeeId = tenantInfo.WalletTenantId,
                     TransactionType = "WALLET",
                     Currency = Controllers.Models.Enums.Currency.COINS,
                     CurrentBalanceFor = transaction.CustomerId,
@@ -560,7 +562,7 @@ namespace CodeRower.CCP.Services
                     IsCredit = false,
                     Reference = $"Fee for transfer from Wallet to CP",
                     PayerId = transaction.CustomerId,
-                    PayeeId = tenantId.ToString(),
+                    PayeeId = tenantInfo.WalletTenantId,
                     TransactionType = "WALLET_CPWALLET_FEE",
                     Currency = Controllers.Models.Enums.Currency.COINS,
                     CurrentBalanceFor = transaction.CustomerId,

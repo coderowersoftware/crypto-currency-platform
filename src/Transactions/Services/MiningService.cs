@@ -95,7 +95,7 @@ namespace CodeRower.CCP.Services
                 {
                     Amount = tenantInfo.LicenseCost,
                     IsCredit = false,
-                    Reference = $"Payment added to wallet for purchase of License - {licenseId}",
+                    Reference = $"Payment for purchase of License - {licenseId}",
                     PayerId = customerId,
                     PayeeId = walletTenant,
                     TransactionType = "PURCHASE_LICENSE",
@@ -109,7 +109,7 @@ namespace CodeRower.CCP.Services
                 {
                     Amount = maintenanceFee,
                     IsCredit = false,
-                    Reference = $"Payment received from user {customerId} for purchase of License - {licenseId} , TransactionId - {data.TransactionId}",
+                    Reference = $"Maintenance fee from user {customerId} for License - {licenseId} , TransactionId - {data.TransactionId}",
                     PayerId = customerId,
                     PayeeId = walletTenant,
                     TransactionType = "MAINTENANCE_FEE",
@@ -177,29 +177,29 @@ namespace CodeRower.CCP.Services
                     CurrentBalanceFor = ownerInfo.CustomerId
                 }).ConfigureAwait(false);
 
-                var commissionFeeDebitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                {
-                    Amount = commissionFeeInCoins,
-                    IsCredit = false,
-                    Reference = $"Commission for License - {data.LicenseNumber} registered by user",
-                    PayerId = ownerInfo.CustomerId,
-                    PayeeId = tenantInfo.WalletTenantId,
-                    TransactionType = "COMMISSION",
-                    Currency = Currency.COINS,
-                    CurrentBalanceFor = tenantInfo.WalletTenantId
-                }).ConfigureAwait(false);
+                //var commissionFeeDebitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                //{
+                //    Amount = commissionFeeInCoins,
+                //    IsCredit = false,
+                //    Reference = $"Commission for License - {data.LicenseNumber} registered by user",
+                //    PayerId = ownerInfo.CustomerId,
+                //    PayeeId = tenantInfo.WalletTenantId,
+                //    TransactionType = "COMMISSION",
+                //    Currency = Currency.COINS,
+                //    CurrentBalanceFor = tenantInfo.WalletTenantId
+                //}).ConfigureAwait(false);
 
-                var unlockFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                {
-                    Amount = commissionFeeInCoins,
-                    IsCredit = true,
-                    Reference = $"Commission UNLOCKED for License - {data.LicenseNumber} registered by user",
-                    PayerId = tenantInfo.WalletTenantId,
-                    PayeeId = ownerInfo.CustomerId,
-                    TransactionType = "UNLOCKED",
-                    Currency = Currency.COINS,
-                    CurrentBalanceFor = ownerInfo.CustomerId
-                }).ConfigureAwait(false);
+                //var unlockFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                //{
+                //    Amount = commissionFeeInCoins,
+                //    IsCredit = true,
+                //    Reference = $"Commission UNLOCKED for License - {data.LicenseNumber} registered by user",
+                //    PayerId = tenantInfo.WalletTenantId,
+                //    PayeeId = ownerInfo.CustomerId,
+                //    TransactionType = "UNLOCKED",
+                //    Currency = Currency.COINS,
+                //    CurrentBalanceFor = ownerInfo.CustomerId
+                //}).ConfigureAwait(false);
             }
 
             return result;

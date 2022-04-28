@@ -53,33 +53,33 @@ namespace CodeRower.CCP.Controllers
 
                     transactions.Add(creditTran);
 
-                    var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                    {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
-                        IsCredit = false,
-                        Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
-                        PayerId = license.CustomerId.ToString(),
-                        PayeeId = tenantInfo.WalletTenantId,
-                        TransactionType = "MINED",
-                        Currency = Currency.COINS,
-                        CurrentBalanceFor = tenantInfo.WalletTenantId
-                    }).ConfigureAwait(false);
+                    //var debitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                    //{
+                    //    Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
+                    //    IsCredit = false,
+                    //    Reference = $"Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
+                    //    PayerId = license.CustomerId.ToString(),
+                    //    PayeeId = tenantInfo.WalletTenantId,
+                    //    TransactionType = "MINED",
+                    //    Currency = Currency.COINS,
+                    //    CurrentBalanceFor = tenantInfo.WalletTenantId
+                    //}).ConfigureAwait(false);
 
-                    transactions.Add(debitTran);
+                    //transactions.Add(debitTran);
 
-                    creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                    {
-                        Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
-                        IsCredit = true,
-                        Reference = $"LOCKED Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
-                        PayerId = tenantInfo.WalletTenantId,
-                        PayeeId = license.CustomerId.ToString(),
-                        TransactionType = "LOCKED",
-                        Currency = Currency.COINS,
-                        CurrentBalanceFor = license.CustomerId.ToString()
-                    }).ConfigureAwait(false);
+                    //creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
+                    //{
+                    //    Amount = license.LicenseType.Equals(LicenseType.AIRDROP) ? airDropReward : miningCoin,
+                    //    IsCredit = true,
+                    //    Reference = $"LOCKED Mined Coins via {license.LicenseType} license - {license.LicenseNumber}",
+                    //    PayerId = tenantInfo.WalletTenantId,
+                    //    PayeeId = license.CustomerId.ToString(),
+                    //    TransactionType = "LOCKED",
+                    //    Currency = Currency.COINS,
+                    //    CurrentBalanceFor = license.CustomerId.ToString()
+                    //}).ConfigureAwait(false);
 
-                    transactions.Add(creditTran);
+                    //transactions.Add(creditTran);
                 }
             }
             return transactions.Any() ? Ok(transactions) : NoContent();
