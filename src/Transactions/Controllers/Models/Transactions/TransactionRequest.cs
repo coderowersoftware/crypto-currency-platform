@@ -19,7 +19,7 @@ namespace CodeRower.CCP.Controllers.Models
         [DataMember(Name = "currency", EmitDefaultValue = false)]
         public Currency? Currency { get; set; }
 
-        public TransactionRequest(){}
+        public TransactionRequest() { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransactionInput" /> class.
@@ -51,7 +51,7 @@ namespace CodeRower.CCP.Controllers.Models
             string? productName = default(string), string? sku = default(string),
             string? payerName = default(string), string? payeeName = default(string),
             string? onBehalfOfId = default(string), string? onBehalfOfName = default(string),
-            string? additionalData = default(string), string? baseTransaction = default(string) )
+            string? additionalData = default(string), string? baseTransaction = default(string))
         {
             this.TransactionType = transactionType;
             this.Amount = amount;
@@ -197,6 +197,36 @@ namespace CodeRower.CCP.Controllers.Models
         /// </summary>
         [DataMember(Name = "currentBalanceFor", EmitDefaultValue = false)]
         public string CurrentBalanceFor { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Service
+        /// </summary>
+        [DataMember(Name = "service", EmitDefaultValue = false)]
+        public string Service { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Provider
+        /// </summary>
+        [DataMember(Name = "provider", EmitDefaultValue = false)]
+        public string Provider { get; set; }
+
+        /// <summary>
+        /// Gets or Sets Vendor
+        /// </summary>
+        [DataMember(Name = "vendor", EmitDefaultValue = false)]
+        public string Vendor { get; set; }
+
+        /// <summary>
+        /// Gets or Sets ExecuteCommissionAmount
+        /// </summary>
+        [DataMember(Name = "executeCommissionFor", EmitDefaultValue = false)]
+        public string ExecuteCommissionFor { get; set; }
+
+        /// <summary>
+        /// Gets or Sets ExecuteCommissionAmount
+        /// </summary>
+        [DataMember(Name = "executeCommissionAmount", EmitDefaultValue = false)]
+        public decimal? ExecuteCommissionAmount { get; set; }
 
         /// <summary>
         /// Returns the string presentation of the object

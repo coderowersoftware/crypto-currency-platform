@@ -21,7 +21,7 @@ namespace CodeRower.CCP.Services
         Task<List<AutoCompleteResponse>> GetTransactionTypes(Guid tenantId);
         Task<List<AutoCompleteResponse>> GetCurrencies(Guid tenantId);
         Task<Transaction> GetTransactionById(Guid tenantId, string id);
-        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes, string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null);
+        Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes = null, string? customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null);
         Task ExecuteFarmingMintingAsync(Guid tenantId, string relativeUri, string typeOfExecution);
         Task<WalletTransactionResponse> AddToTransactionBooks(Guid tenantId, Guid userId, CoinsTransferToCPRequestDTO transferRequest, string bearerToken);
         Task<decimal> GetPendingTransactionAmount(Guid tenantId, Guid userId);
@@ -96,10 +96,11 @@ namespace CodeRower.CCP.Services
             return JsonConvert.DeserializeObject<Transaction>(responseMessage);
         }
 
-        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes,
-            string customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null)
+        public async Task<List<TransactionTypeBalance>> GetBalancesByTransactionTypes(Guid tenantId, List<string>? TransactionTypes = null,
+            string? customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null)
         {
             var queryString = string.Empty;
+            var proc = "get-current-balances-for-transaction-types";
 
             if (TransactionTypes?.Count > 0)
             {
@@ -122,16 +123,18 @@ namespace CodeRower.CCP.Services
             if (fromDate.HasValue)
             {
                 queryString = $"{queryString}filter[fromDate]={fromDate.Value.Date}&";
+                proc = "get-balances-for-transaction-types";
             }
 
             if (toDate.HasValue)
             {
                 queryString = $"{queryString}filter[toDate]={toDate.Value.Date}&";
+                proc = "get-balances-for-transaction-types";
             }
 
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
 
-            Uri uri = new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/get-current-balances-for-transaction-types?{queryString}");
+            Uri uri = new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/{proc}?{queryString}");
 
             var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
                 uri,
@@ -147,25 +150,6 @@ namespace CodeRower.CCP.Services
 
             if (result?.Count > 0)
             {
-
-                //string[] arr = new string[5] { "WALLET", "LOCKED", "UNLOCKED", "MINT", "FARM" };
-                //result.Add(new TransactionTypeBalance
-                //{
-                //    TransactionType = "TOTAL",PORTFOLIO
-                //    Amount = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.Amount : 0),
-                //    VirtualValue = result.Sum(item => Array.Exists(arr, element => element == item.TransactionType) ? item.VirtualValue : 0),
-                //    Currency = result.First().Currency
-                //});
-
-                //string[] referral = new string[2] { "COMMISSION", "REFERRAL_SIGNUP_REWARDS" };
-                //result.Add(new TransactionTypeBalance
-                //{
-                //    TransactionType = "TOTAL_REFERRAL",
-                //    Amount = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.Amount : 0),
-                //    VirtualValue = result.Sum(item => Array.Exists(referral, element => element == item.TransactionType) ? item.VirtualValue : 0),
-                //    Currency = result.First().Currency
-                //});
-
                 if (!isCredit.HasValue && !string.IsNullOrEmpty(userId))
                 {
                     var pendingAmount = await GetPendingTransactionAmount(tenantId, new Guid(userId)).ConfigureAwait(false);

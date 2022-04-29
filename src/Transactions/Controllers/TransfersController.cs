@@ -95,23 +95,6 @@ namespace CodeRower.CCP.Controllers
                 {
                     transactions.Add(debitFeeTran);
 
-                    //// Credit fee
-                    //var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                    //{
-                    //    Amount = unlockToWalletFeeAmount,
-                    //    IsCredit = true,
-                    //    Reference = $"Fee deducted for transfer unlocked coins to Wallet to payee {customerId}",
-                    //    PayerId = tenantInfo.WalletTenantId,
-                    //    PayeeId = tenantInfo.WalletTenantId,
-                    //    TransactionType = "UNLOCKED_WALLET_FEE",
-                    //    Currency = Currency.COINS,
-                    //    BaseTransaction = debitTran?.transactionid
-                    //}).ConfigureAwait(false);
-
-                    //if (!string.IsNullOrWhiteSpace(creditFeeTran?.transactionid))
-                    //{
-                    //    transactions.Add(creditFeeTran);
-
                     // Credit to other account
                     var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
@@ -130,7 +113,6 @@ namespace CodeRower.CCP.Controllers
                         transactions.Add(creditTran);
                     }
 
-                    //}
                 }
             }
 
@@ -220,22 +202,6 @@ namespace CodeRower.CCP.Controllers
                 {
                     transactions.Add(debitFeeTran);
 
-                    //// Credit fee to tenant
-                    //var creditFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                    //{
-                    //    Amount = walletTransferFeeAmount,
-                    //    IsCredit = true,
-                    //    Reference = $"Fee deducted for wallet to wallet Transfer to payee {TransferRequest.ToCustomerId}",
-                    //    PayerId = tenantInfo.WalletTenantId,
-                    //    PayeeId = tenantInfo.WalletTenantId,
-                    //    TransactionType = "WALLET_WALLET_FEE",
-                    //    Currency = Currency.COINS,
-                    //    BaseTransaction = debitTran?.transactionid
-                    //}).ConfigureAwait(false);
-
-                    //if (!string.IsNullOrWhiteSpace(creditFeeTran?.transactionid))
-                    //{
-                    //transactions.Add(creditFeeTran);
                     // Credit to other account
                     var creditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                     {
@@ -254,7 +220,6 @@ namespace CodeRower.CCP.Controllers
                     {
                         transactions.Add(creditTran);
                     }
-                    //}
                 }
             }
 

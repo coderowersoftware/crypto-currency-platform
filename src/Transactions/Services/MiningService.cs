@@ -162,44 +162,27 @@ namespace CodeRower.CCP.Services
 
             if (ownerInfo != null)
             {
-                var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
-                var commissionFeeInCoins = commissionFee / tenantInfo.LatestRateInUSD;
+                //var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
+                //var commissionFeeInCoins = commissionFee / tenantInfo.LatestRateInUSD;
 
                 var commissionFeeCreditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
                 {
-                    Amount = commissionFeeInCoins,
+                    Amount = 0,
                     IsCredit = true,
                     Reference = $"Commission for License - {data.LicenseNumber} registered by user",
                     PayerId = tenantInfo.WalletTenantId,
-                    PayeeId = ownerInfo.CustomerId,
+                    PayeeId = customerId,
                     TransactionType = "COMMISSION",
                     Currency = Currency.COINS,
-                    CurrentBalanceFor = ownerInfo.CustomerId
+                    CurrentBalanceFor = ownerInfo.CustomerId,
+                    Service  = "PURCHASE_LICENSE",
+                    Provider = "ANY",
+                    Vendor = "CCC",
+                    ExecuteCommissionFor = customerId,
+                    ExecuteCommissionAmount = tenantInfo.LicenseCost
+
                 }).ConfigureAwait(false);
 
-                //var commissionFeeDebitTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                //{
-                //    Amount = commissionFeeInCoins,
-                //    IsCredit = false,
-                //    Reference = $"Commission for License - {data.LicenseNumber} registered by user",
-                //    PayerId = ownerInfo.CustomerId,
-                //    PayeeId = tenantInfo.WalletTenantId,
-                //    TransactionType = "COMMISSION",
-                //    Currency = Currency.COINS,
-                //    CurrentBalanceFor = tenantInfo.WalletTenantId
-                //}).ConfigureAwait(false);
-
-                //var unlockFeeTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                //{
-                //    Amount = commissionFeeInCoins,
-                //    IsCredit = true,
-                //    Reference = $"Commission UNLOCKED for License - {data.LicenseNumber} registered by user",
-                //    PayerId = tenantInfo.WalletTenantId,
-                //    PayeeId = ownerInfo.CustomerId,
-                //    TransactionType = "UNLOCKED",
-                //    Currency = Currency.COINS,
-                //    CurrentBalanceFor = ownerInfo.CustomerId
-                //}).ConfigureAwait(false);
             }
 
             return result;
