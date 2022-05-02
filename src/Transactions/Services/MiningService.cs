@@ -172,7 +172,7 @@ namespace CodeRower.CCP.Services
                 Vendor = "CCC",
                 ProductId = data.LicenseNumber,
                 ExecuteCommissionFor = customerId,
-                ExecuteCommissionAmount = tenantInfo.LicenseCost
+                ExecuteCommissionAmount = tenantInfo.LicenseCost/tenantInfo.LatestRateInUSD
 
             }).ConfigureAwait(false);
 
