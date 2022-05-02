@@ -26,14 +26,12 @@ namespace CodeRower.CCP.Services
         private readonly IConfiguration _configuration;
         private readonly ITenantService _tenantService;
         private readonly ITransactionsService _transactionsService;
-        private readonly IUsersService _userService;
         public MiningService(IConfiguration configuration, ITenantService tenantService,
-            ITransactionsService transactionsService, IUsersService userService)
+            ITransactionsService transactionsService)
         {
             _configuration = configuration;
             _tenantService = tenantService;
             _transactionsService = transactionsService;
-            _userService = userService;
         }
 
         public async Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId)
@@ -158,32 +156,25 @@ namespace CodeRower.CCP.Services
             }
 
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
-            var ownerInfo = await _userService.GetUserInfoAsync(tenantId, userId, true);
 
-            if (ownerInfo != null)
+            var commissionFeeCreditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
             {
-                //var commissionFee = tenantInfo.LicenseCost * tenantInfo.LicenseCommissionPct / 100;
-                //var commissionFeeInCoins = commissionFee / tenantInfo.LatestRateInUSD;
+                Amount = 0,
+                IsCredit = true,
+                Reference = $"Commission for License - {data.LicenseNumber} registered by user",
+                PayerId = tenantInfo.WalletTenantId,
+                PayeeId = customerId,
+                TransactionType = "REGISTER_LICENSE",
+                Currency = Currency.COINS,
+                CurrentBalanceFor = customerId,
+                Service = "PURCHASE_LICENSE",
+                Provider = "ANY",
+                Vendor = "CCC",
+                ProductId = data.LicenseNumber,
+                ExecuteCommissionFor = customerId,
+                ExecuteCommissionAmount = tenantInfo.LicenseCost
 
-                var commissionFeeCreditTran = await _transactionsService.AddTransaction(tenantId, new TransactionRequest
-                {
-                    Amount = 0,
-                    IsCredit = true,
-                    Reference = $"Commission for License - {data.LicenseNumber} registered by user",
-                    PayerId = tenantInfo.WalletTenantId,
-                    PayeeId = customerId,
-                    TransactionType = "COMMISSION",
-                    Currency = Currency.COINS,
-                    CurrentBalanceFor = ownerInfo.CustomerId,
-                    Service  = "PURCHASE_LICENSE",
-                    Provider = "ANY",
-                    Vendor = "CCC",
-                    ExecuteCommissionFor = customerId,
-                    ExecuteCommissionAmount = tenantInfo.LicenseCost
-
-                }).ConfigureAwait(false);
-
-            }
+            }).ConfigureAwait(false);
 
             return result;
         }
