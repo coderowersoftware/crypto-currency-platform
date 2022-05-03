@@ -49,8 +49,8 @@ namespace CodeRower.CCP.Controllers
 
             var pagedResult = new PagedResponse<UserCommission>()
             {
-                Rows = referralCommissions,
-                Count = referralCommissions.Count(),
+                Rows = referralCommissions?.Skip(QueryOptions.Offset).Take(QueryOptions.Limit),
+                Count = referralCommissions?.Count(),
                 Offset = QueryOptions?.Offset ?? 0,
                 Limit = QueryOptions?.Limit ?? 10
             };
