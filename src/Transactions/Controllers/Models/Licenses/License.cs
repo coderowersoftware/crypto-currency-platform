@@ -14,5 +14,9 @@ namespace CodeRower.CCP.Controllers.Models
         public DateTime? RegisteredAt { get; set; }
         public MiningStatus? MiningStatus { get; set; }
         public LicenseType LicenseType { get; set; }
+
+        public string ParentCustomerId { get; set; }
+        public string ParentCustomerName { get; set; }
+        public string CustomerName{ get; set; }
     }
 }

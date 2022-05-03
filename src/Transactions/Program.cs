@@ -64,6 +64,7 @@ builder.Services.AddSingleton<IUsersService, UsersService>();
 builder.Services.AddSingleton<ICustomerService, CustomerService>();
 builder.Services.AddSingleton<ITenantService, TenantService>();
 builder.Services.AddSingleton<ISmsService, SmsService>();
+builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
 
 //Configure other services up here
 var configurationOptions = new ConfigurationOptions

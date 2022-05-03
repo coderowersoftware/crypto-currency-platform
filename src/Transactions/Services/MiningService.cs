@@ -5,6 +5,7 @@ using CodeRower.CCP.Controllers.Models;
 using CodeRower.CCP.Controllers.Models.Enums;
 using License = CodeRower.CCP.Controllers.Models.License;
 using Newtonsoft.Json;
+using Transactions.Domain.Models;
 
 namespace CodeRower.CCP.Services
 {
@@ -19,6 +20,7 @@ namespace CodeRower.CCP.Services
         Task<string> AddPoolLicense(Guid tenantId, LicenseBuyRequest data);
         Task<IEnumerable<License>> EndMiningAsync(Guid tenantId);
         Task<IEnumerable<LicenseLog>> GetLicenseLogsAsync(Guid tenantId, Guid customerId, Guid? licenseId);
+        Task<IEnumerable<License>?> GetAllRegisteredLicensesAsync(Guid tenantId);
     }
 
     public class MiningService : IMiningService
@@ -26,12 +28,14 @@ namespace CodeRower.CCP.Services
         private readonly IConfiguration _configuration;
         private readonly ITenantService _tenantService;
         private readonly ITransactionsService _transactionsService;
+        private readonly IAuditLogService _auditLogService;
         public MiningService(IConfiguration configuration, ITenantService tenantService,
-            ITransactionsService transactionsService)
+            ITransactionsService transactionsService, IAuditLogService auditLogService)
         {
             _configuration = configuration;
             _tenantService = tenantService;
             _transactionsService = transactionsService;
+            _auditLogService = auditLogService;
         }
 
         public async Task<string> AddLicense(Guid tenantId, LicenseBuyRequest data, string userId)
@@ -83,7 +87,7 @@ namespace CodeRower.CCP.Services
                     PayerId = walletTenant,
                     PayeeId = customerId,
                     TransactionType = "PAYMENT",
-                    Currency = Currency.USD,
+                    Currency = Controllers.Models.Enums.Currency.USD,
                     CurrentBalanceFor = customerId,
                     Remark = licenseId
                 }).ConfigureAwait(false);
@@ -97,7 +101,7 @@ namespace CodeRower.CCP.Services
                     PayerId = customerId,
                     PayeeId = walletTenant,
                     TransactionType = "PURCHASE_LICENSE",
-                    Currency = Currency.USD,
+                    Currency = Controllers.Models.Enums.Currency.USD,
                     CurrentBalanceFor = customerId,
                     BaseTransaction = walletTopUp.transactionid,
                     Remark = licenseId
@@ -111,7 +115,7 @@ namespace CodeRower.CCP.Services
                     PayerId = customerId,
                     PayeeId = walletTenant,
                     TransactionType = "MAINTENANCE_FEE",
-                    Currency = Currency.USD,
+                    Currency = Controllers.Models.Enums.Currency.USD,
                     CurrentBalanceFor = customerId,
                     BaseTransaction = walletTopUp.transactionid,
                     Remark = licenseId
@@ -161,18 +165,18 @@ namespace CodeRower.CCP.Services
             {
                 Amount = 0,
                 IsCredit = true,
-                Reference = $"Commission for License - {data.LicenseNumber} registered by user",
+                Reference = $"License - {data.LicenseNumber} registered",
                 PayerId = tenantInfo.WalletTenantId,
                 PayeeId = customerId,
                 TransactionType = "REGISTER_LICENSE",
-                Currency = Currency.COINS,
+                Currency = Controllers.Models.Enums.Currency.COINS,
                 CurrentBalanceFor = customerId,
                 Service = "PURCHASE_LICENSE",
                 Provider = "ANY",
                 Vendor = "CCC",
                 ProductId = data.LicenseNumber,
                 ExecuteCommissionFor = customerId,
-                ExecuteCommissionAmount = tenantInfo.LicenseCost/tenantInfo.LatestRateInUSD
+                ExecuteCommissionAmount = tenantInfo.LicenseCost / tenantInfo.LatestRateInUSD
 
             }).ConfigureAwait(false);
 
@@ -363,6 +367,8 @@ namespace CodeRower.CCP.Services
                         minedLicense.LicenseType = (LicenseType)Enum.Parse(typeof(LicenseType), Convert.ToString(reader["licensetype"]));
                         minedLicense.LicenseNumber = Convert.ToString(reader["licenseNumber"]);
                         minedLicenses.Add(minedLicense);
+
+
                     }
                 }
             }
@@ -399,6 +405,119 @@ namespace CodeRower.CCP.Services
                 }
             }
             return licenseLogs;
+        }
+
+        public async Task<IEnumerable<License>?> GetAllRegisteredLicensesAsync(Guid tenantId)
+        {
+            var query = "getallregisteredlicenses";
+            List<License> results = new List<License>();
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        License result = new License();
+                        result.CustomerId = new Guid(Convert.ToString(reader["customerid"]));
+                        result.CustomerName = Convert.ToString(reader["customername"]);
+                        result.LicenseId = new Guid(Convert.ToString(reader["licenseid"]));
+                        result.LicenseNumber = Convert.ToString(reader["licenseNumber"]);
+                        result.ParentCustomerId = Convert.ToString(reader["parentcustomerid"]);
+                        result.ParentCustomerName = Convert.ToString(reader["parentcustomername"]);
+                        result.RegisteredAt = Convert.ToDateTime(reader["registeredAt"]);
+
+                        results.Add(result);
+                    }
+                }
+            }
+
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+
+            var exchangeRates = await GetExchangeRates(tenantId);
+
+            foreach (var item in results)
+            {
+                var query1 = "cloudchaintechnology_synccommission";
+                string transactionId = null;
+                var exchangeRate = exchangeRates.FirstOrDefault(rate => rate.CreatedAt <= item.RegisteredAt)?.ValueInUSD ?? 1;
+
+                using (NpgsqlConnection conn = new NpgsqlConnection(_configuration["AppSettings:ConnectionStrings:Postgres_WALLET"]))
+                {
+                    using (NpgsqlCommand cmd = new NpgsqlCommand(query1, conn) { CommandType = CommandType.StoredProcedure })
+                    {
+                        cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(tenantInfo.WalletTenantId));
+                        cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, "COINS");
+                        cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, 15 / exchangeRate);
+                        cmd.Parameters.AddWithValue("transactiontype_identifier", NpgsqlDbType.Text, "COMMISSION");
+                        cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, true);
+                        cmd.Parameters.AddWithValue("reference_", NpgsqlDbType.Varchar, $"Commission for License - {item.LicenseNumber} registered by user");
+                        cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
+                        cmd.Parameters.AddWithValue("created_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
+                        cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
+                        cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
+                        cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, tenantInfo.WalletTenantId);
+
+                        if (!string.IsNullOrWhiteSpace(item.ParentCustomerId))
+                            cmd.Parameters.AddWithValue("payee_id", NpgsqlDbType.Varchar, item.ParentCustomerId);
+
+                        cmd.Parameters.AddWithValue("payee_name", NpgsqlDbType.Varchar, item.ParentCustomerName);
+                        cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, item.ParentCustomerId);
+                        cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, item.CustomerId.ToString());
+                        cmd.Parameters.AddWithValue("onbehalfof_name", NpgsqlDbType.Varchar, item.CustomerName);
+                        cmd.Parameters.AddWithValue("additional_data", NpgsqlDbType.Varchar, "DataCorrection-Prod");
+                        cmd.Parameters.AddWithValue("product_id", NpgsqlDbType.Varchar, item.LicenseNumber);
+                        //cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, "");
+                        //cmd.Parameters.AddWithValue("vendor_", NpgsqlDbType.Text, "PAYPOINT");
+                        //cmd.Parameters.AddWithValue("provider_", NpgsqlDbType.Text, "BANKS");
+                        //cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, "TestAbc123");
+
+                        if (conn.State != ConnectionState.Open) conn.Open();
+                        var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                        while (reader.Read())
+                        {
+                            transactionId = Convert.ToString(reader["transactionid"]);
+                        }
+                    }
+
+                }
+            }
+
+            return results;
+        }
+
+        public async Task<IEnumerable<ExchangeRate>?> GetExchangeRates(Guid tenantId)
+        {
+            var query = "getexchangerates";
+            List<ExchangeRate> results = new List<ExchangeRate>();
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration.GetSection("AppSettings:ConnectionStrings:Postgres_CCP").Value))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, tenantId);
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        ExchangeRate result = new ExchangeRate();
+                        result.Id = new Guid(Convert.ToString(reader["id"]));
+                        result.ValueInUSD = Convert.ToDecimal(reader["valueInUSD"]);
+                        result.CreatedAt = Convert.ToDateTime(reader["createdAt"]);
+                        result.CreatedById = Convert.ToString(reader["createdById"]);
+
+                        results.Add(result);
+                    }
+                }
+            }
+
+            return results;
         }
     }
 }

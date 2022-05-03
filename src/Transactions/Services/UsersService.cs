@@ -1,8 +1,11 @@
 using System.Data;
 using CodeRower.CCP.Controllers.Models;
+using CodeRower.CCP.Controllers.Models.Common;
 using CodeRower.CCP.Controllers.Models.Enums;
+using Newtonsoft.Json;
 using Npgsql;
 using NpgsqlTypes;
+using Transactions.Facade;
 
 namespace CodeRower.CCP.Services
 {
@@ -10,15 +13,20 @@ namespace CodeRower.CCP.Services
     {
         Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId, bool ownerInfo = false);
         Task<List<UserReferral>> GetReferralUsers(Guid tenantId, Guid userId);
+        Task<List<UserCommission>> GetReferralCommission(Guid tenantId, QueryOptions? queryOptions, string customerId, string levelIdentifier);
     }
 
     public class UsersService : IUsersService
     {
         private readonly IConfiguration _configuration;
+        private readonly IRestApiFacade _restApiFacade;
+        private readonly ITenantService _tenantService;
 
-        public UsersService(IConfiguration configuration)
+        public UsersService(IConfiguration configuration, IRestApiFacade restApiFacade, ITenantService tenantService)
         {
             _configuration = configuration;
+            _restApiFacade = restApiFacade;
+            _tenantService = tenantService;
         }
 
         public async Task<UserInfo?> GetUserInfoAsync(Guid tenantId, string userId, bool ownerInfo = false)
@@ -80,6 +88,34 @@ namespace CodeRower.CCP.Services
 
                 return referral;
             }
+        }
+
+        public async Task<List<UserCommission>> GetReferralCommission(Guid tenantId, QueryOptions? queryOptions, string customerId, string levelIdentifier)
+        {
+            var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
+
+            Uri uri = new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/get-commission-for-levels?limit={queryOptions.Limit}&offset={queryOptions.Offset}&orderByRank=DESC&orderByCount=DESC");
+
+            var levelData = new
+            {
+                userId = customerId,
+                level = levelIdentifier
+            };
+
+            var responseMessage = await _restApiFacade.SendAsync(HttpMethod.Post,
+                uri,
+                null,
+                new
+                {
+                    application_id = tenantInfo.WalletTenantId,
+                    client_id = tenantInfo.WalletClientId,
+                    client_secret = tenantInfo.WalletSecret,
+                    data = levelData
+                }).ConfigureAwait(false);
+
+            var result = JsonConvert.DeserializeObject<List<UserCommission>>(responseMessage);
+
+            return result;
         }
     }
 }

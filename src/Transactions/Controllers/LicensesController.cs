@@ -187,5 +187,15 @@ namespace CodeRower.CCP.Controllers
             };
             return Ok(pagedResult);
         }
+
+
+        //[HttpGet("all-internal")]
+        //public async Task<IActionResult> GetAllRegisteredLicenses([FromRoute, Required] Guid tenantId)
+        //{
+
+        //    var results = await _miningService.GetAllRegisteredLicensesAsync(tenantId).ConfigureAwait(false);
+          
+        //    return Ok(results);
+        //}
     }
 }

@@ -5,7 +5,6 @@ using Transactions.Facade;
 using Transactions.Domain.Models;
 using Transaction = CodeRower.CCP.Controllers.Models.Transaction;
 using CodeRower.CCP.Controllers.Models.Common;
-using CodeRower.CCP.Controllers.Models.Transfers;
 using Npgsql;
 using System.Data;
 using NpgsqlTypes;
@@ -35,12 +34,15 @@ namespace CodeRower.CCP.Services
         private readonly IRestApiFacade _restApiFacade;
         private readonly ITenantService _tenantService;
         private readonly IConfiguration _configuration;
+        private readonly IAuditLogService _auditLogService;
 
-        public TransactionsService(IRestApiFacade restApiFacade, ITenantService tenantService, IConfiguration configuration)
+        public TransactionsService(IRestApiFacade restApiFacade, ITenantService tenantService,
+            IConfiguration configuration, IAuditLogService auditLogService)
         {
             _restApiFacade = restApiFacade;
             _tenantService = tenantService;
             _configuration = configuration;
+            _auditLogService = auditLogService;
         }
 
         public async Task<List<AutoCompleteResponse>> GetTransactionTypes(Guid tenantId)
@@ -351,16 +353,28 @@ namespace CodeRower.CCP.Services
 
                 if (executeData != null)
                 {
-                    await _restApiFacade.SendAsync(HttpMethod.Post,
-                        new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/{relativeUri}"),
-                        null,
-                        new
-                        {
-                            application_id = tenantInfo.WalletTenantId,
-                            client_id = tenantInfo.WalletClientId,
-                            client_secret = tenantInfo.WalletSecret,
-                            data = executeData
-                        }).ConfigureAwait(false);
+                    var response = await _restApiFacade.SendAsync(HttpMethod.Post,
+                         new Uri($"{tenantInfo.WalletHost}api/tenant/{tenantInfo.WalletTenantId}/{relativeUri}"),
+                         null,
+                         new
+                         {
+                             application_id = tenantInfo.WalletTenantId,
+                             client_id = tenantInfo.WalletClientId,
+                             client_secret = tenantInfo.WalletSecret,
+                             data = executeData
+                         }).ConfigureAwait(false);
+
+
+                    //var log = new AuditLog
+                    //{
+                    //    EntityId = "",
+                    //    EntityName = typeOfExecution,
+                    //    Action = "create",
+                    //    Values = "",
+                    //    UserId = "bot"
+                    //};
+
+                    //await _auditLogService.AddAuditLog(log);
                 }
             }
         }
@@ -522,7 +536,7 @@ namespace CodeRower.CCP.Services
         {
             var transaction = await GetTransactionBookById(tenantId, transactionId).ConfigureAwait(false);
             var tenantInfo = await _tenantService.GetTenantInfo(tenantId).ConfigureAwait(false);
-            
+
             WalletTransactionResponse response = null;
 
             if (transaction != null)
