@@ -204,9 +204,17 @@ namespace CodeRower.CCP.Services
                         currentBalanceFor = request.CurrentBalanceFor,
                         amount = request.Amount,
                         reference = request.Reference,
-                        isCredit = request.IsCredit
+                        isCredit = request.IsCredit,
+                        service = request.Service,
+                        provider = request.Provider,
+                        vendor = request.Vendor,
+                        productId = request.ProductId,
+                        executeCommissionFor = request.ExecuteCommissionFor,
+                        executeCommissionAmount = request.ExecuteCommissionAmount
+
                     }
                 }).ConfigureAwait(false);
+
 
             return JsonConvert.DeserializeObject<WalletTransactionResponse>(responseMessage);
         }
