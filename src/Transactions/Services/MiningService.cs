@@ -210,7 +210,6 @@ namespace CodeRower.CCP.Services
             }
             return results;
         }
-
         private License MapLicense(NpgsqlDataReader reader)
         {
             License result = new License();
@@ -323,7 +322,6 @@ namespace CodeRower.CCP.Services
 
             return result;
         }
-
         public async Task<License> ActivateLicenseAsync(Guid tenantId, Guid licenseId, string customerId)
         {
             License result = null;
@@ -406,7 +404,6 @@ namespace CodeRower.CCP.Services
             }
             return licenseLogs;
         }
-
         public async Task<IEnumerable<License>?> GetAllRegisteredLicensesAsync(Guid tenantId)
         {
             var query = "getallregisteredlicenses";
@@ -442,56 +439,117 @@ namespace CodeRower.CCP.Services
 
             foreach (var item in results)
             {
-                var query1 = "cloudchaintechnology_synccommission";
-                string transactionId = null;
-                var exchangeRate = exchangeRates.FirstOrDefault(rate => rate.CreatedAt <= item.RegisteredAt)?.ValueInUSD ?? 1;
-
-                using (NpgsqlConnection conn = new NpgsqlConnection(_configuration["AppSettings:ConnectionStrings:Postgres_WALLET"]))
-                {
-                    using (NpgsqlCommand cmd = new NpgsqlCommand(query1, conn) { CommandType = CommandType.StoredProcedure })
-                    {
-                        cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(tenantInfo.WalletTenantId));
-                        cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, "COINS");
-                        cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, 15 / exchangeRate);
-                        cmd.Parameters.AddWithValue("transactiontype_identifier", NpgsqlDbType.Text, "COMMISSION");
-                        cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, true);
-                        cmd.Parameters.AddWithValue("reference_", NpgsqlDbType.Varchar, $"Commission for License - {item.LicenseNumber} registered by user");
-                        cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
-                        cmd.Parameters.AddWithValue("created_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
-                        cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
-                        cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
-                        cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, tenantInfo.WalletTenantId);
-
-                        if (!string.IsNullOrWhiteSpace(item.ParentCustomerId))
-                            cmd.Parameters.AddWithValue("payee_id", NpgsqlDbType.Varchar, item.ParentCustomerId);
-
-                        cmd.Parameters.AddWithValue("payee_name", NpgsqlDbType.Varchar, item.ParentCustomerName);
-                        cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, item.ParentCustomerId);
-                        cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, item.CustomerId.ToString());
-                        cmd.Parameters.AddWithValue("onbehalfof_name", NpgsqlDbType.Varchar, item.CustomerName);
-                        cmd.Parameters.AddWithValue("additional_data", NpgsqlDbType.Varchar, "DataCorrection-Prod");
-                        cmd.Parameters.AddWithValue("product_id", NpgsqlDbType.Varchar, item.LicenseNumber);
-                        //cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, "");
-                        //cmd.Parameters.AddWithValue("vendor_", NpgsqlDbType.Text, "PAYPOINT");
-                        //cmd.Parameters.AddWithValue("provider_", NpgsqlDbType.Text, "BANKS");
-                        //cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, "TestAbc123");
-
-                        if (conn.State != ConnectionState.Open) conn.Open();
-                        var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-                        while (reader.Read())
-                        {
-                            transactionId = Convert.ToString(reader["transactionid"]);
-                        }
-                    }
-
-                }
+                var id = InsertTransaction(item, exchangeRates, tenantInfo);
+                //var id = await SyncCommission(item, exchangeRates, tenantInfo);
             }
 
             return results;
         }
 
-        public async Task<IEnumerable<ExchangeRate>?> GetExchangeRates(Guid tenantId)
+        private async Task<string> SyncCommission(License item, IEnumerable<ExchangeRate> exchangeRates, TenantInfo tenantInfo)
+        {
+            var query1 = "cloudchaintechnology_synccommission";
+            string transactionId = null;
+            var exchangeRate = exchangeRates.FirstOrDefault(rate => rate.CreatedAt <= item.RegisteredAt)?.ValueInUSD ?? 1;
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration["AppSettings:ConnectionStrings:Postgres_WALLET"]))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query1, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(tenantInfo.WalletTenantId));
+                    cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, "COINS");
+                    cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, 15 / exchangeRate);
+                    cmd.Parameters.AddWithValue("transactiontype_identifier", NpgsqlDbType.Text, "COMMISSION");
+                    cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, true);
+                    cmd.Parameters.AddWithValue("reference_", NpgsqlDbType.Varchar, $"Commission for License - {item.LicenseNumber} registered by user");
+                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
+                    cmd.Parameters.AddWithValue("created_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
+                    cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
+                    cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
+                    cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, tenantInfo.WalletTenantId);
+                    cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, $"ExchangeRate @ {exchangeRate}");
+
+                    if (!string.IsNullOrWhiteSpace(item.ParentCustomerId))
+                    {
+                        cmd.Parameters.AddWithValue("payee_id", NpgsqlDbType.Varchar, item.ParentCustomerId);
+                        cmd.Parameters.AddWithValue("payee_name", NpgsqlDbType.Varchar, item.ParentCustomerName);
+                    }
+
+                    cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, item.ParentCustomerId);
+                    cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, item.CustomerId.ToString());
+                    cmd.Parameters.AddWithValue("onbehalfof_name", NpgsqlDbType.Varchar, item.CustomerName);
+                    cmd.Parameters.AddWithValue("additional_data", NpgsqlDbType.Varchar, "DataCorrection-Prod");
+                    cmd.Parameters.AddWithValue("product_id", NpgsqlDbType.Varchar, item.LicenseNumber);
+                    //cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, "");
+                    //cmd.Parameters.AddWithValue("vendor_", NpgsqlDbType.Text, "PAYPOINT");
+                    //cmd.Parameters.AddWithValue("provider_", NpgsqlDbType.Text, "BANKS");
+
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        transactionId = Convert.ToString(reader["transactionid"]);
+                    }
+                }
+
+            }
+
+            return transactionId;
+        }
+
+        private async Task<string> InsertTransaction(License item, IEnumerable<ExchangeRate> exchangeRates, TenantInfo tenantInfo)
+        {
+            var query1 = "cloudchaintechnology_inserttransaction";
+            string transactionId = null;
+            var exchangeRate = exchangeRates.FirstOrDefault(rate => rate.CreatedAt <= item.RegisteredAt)?.ValueInUSD ?? 1;
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(_configuration["AppSettings:ConnectionStrings:Postgres_WALLET"]))
+            {
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query1, conn) { CommandType = CommandType.StoredProcedure })
+                {
+                    cmd.Parameters.AddWithValue("tenant_id", NpgsqlDbType.Uuid, new Guid(tenantInfo.WalletTenantId));
+                    cmd.Parameters.AddWithValue("currency_", NpgsqlDbType.Unknown, "COINS");
+                    cmd.Parameters.AddWithValue("amount_", NpgsqlDbType.Numeric, 0);
+                    cmd.Parameters.AddWithValue("transactiontype_identifier", NpgsqlDbType.Text, "REGISTER_LICENSE");
+                    cmd.Parameters.AddWithValue("is_credit", NpgsqlDbType.Boolean, true);
+                    cmd.Parameters.AddWithValue("reference_", NpgsqlDbType.Varchar, $"License - {item.LicenseNumber} registered");
+                    cmd.Parameters.AddWithValue("created_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
+                    cmd.Parameters.AddWithValue("created_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
+                    cmd.Parameters.AddWithValue("updated_by_id", NpgsqlDbType.Uuid, new Guid("e4b592dc-9076-4b09-a65f-344a88371af2"));
+                    cmd.Parameters.AddWithValue("updated_at", NpgsqlDbType.TimestampTz, item.RegisteredAt);
+                    cmd.Parameters.AddWithValue("payer_id", NpgsqlDbType.Varchar, tenantInfo.WalletTenantId);
+                    cmd.Parameters.AddWithValue("remark_", NpgsqlDbType.Varchar, $"ExchangeRate @ {exchangeRate}");
+                    cmd.Parameters.AddWithValue("payee_id", NpgsqlDbType.Varchar, item.CustomerId.ToString());
+                    cmd.Parameters.AddWithValue("payee_name", NpgsqlDbType.Varchar, item.CustomerName);
+
+                    cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, item.CustomerId.ToString());
+                    cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, item.CustomerId.ToString());
+                    cmd.Parameters.AddWithValue("onbehalfof_name", NpgsqlDbType.Varchar, item.CustomerName);
+                    cmd.Parameters.AddWithValue("additional_data", NpgsqlDbType.Varchar, "DataCorrection-Prod");
+                    cmd.Parameters.AddWithValue("product_id", NpgsqlDbType.Varchar, item.LicenseNumber);
+                    cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, "PURCHASE_LICENSE");
+                    cmd.Parameters.AddWithValue("vendor_", NpgsqlDbType.Text, "CCC");
+                    cmd.Parameters.AddWithValue("provider_", NpgsqlDbType.Text, "ANY");
+                    cmd.Parameters.AddWithValue("execute_commission_for", NpgsqlDbType.Text, item.CustomerId.ToString());
+                    cmd.Parameters.AddWithValue("execute_commission_amount", NpgsqlDbType.Numeric, tenantInfo.LicenseCost / exchangeRate);
+
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+                    while (reader.Read())
+                    {
+                        transactionId = Convert.ToString(reader["transactionid"]);
+                    }
+                }
+
+            }
+
+            return transactionId;
+        }
+        public async Task<IEnumerable<ExchangeRate>> GetExchangeRates(Guid tenantId)
         {
             var query = "getexchangerates";
             List<ExchangeRate> results = new List<ExchangeRate>();

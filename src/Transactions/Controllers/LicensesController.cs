@@ -194,7 +194,7 @@ namespace CodeRower.CCP.Controllers
         //{
 
         //    var results = await _miningService.GetAllRegisteredLicensesAsync(tenantId).ConfigureAwait(false);
-          
+
         //    return Ok(results);
         //}
     }
