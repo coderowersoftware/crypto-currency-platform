@@ -176,6 +176,7 @@ namespace CodeRower.CCP.Services
                 Vendor = "CCC",
                 ProductId = data.LicenseNumber,
                 ExecuteCommissionFor = customerId,
+                Remark = $"ExchangeRate @ {tenantInfo.LatestRateInUSD}",
                 ExecuteCommissionAmount = tenantInfo.LicenseCost / tenantInfo.LatestRateInUSD
 
             }).ConfigureAwait(false);
