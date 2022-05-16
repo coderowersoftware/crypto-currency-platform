@@ -20,14 +20,16 @@ namespace CodeRower.CCP.Controllers
         private readonly ITenantService _tenantService;
         private readonly ICustomerService _customerService;
         private readonly ISmsService _smsService;
+        private readonly IMiningService _miningService;
 
         public TransfersController(ITransactionsService transactionsService, IUsersService usersService,
-            ITenantService tenantService, ICustomerService customerService, ISmsService smsService)
+            ITenantService tenantService, ICustomerService customerService, ISmsService smsService, IMiningService miningService)
         {
             _transactionsService = transactionsService;
             _tenantService = tenantService;
             _customerService = customerService;
             _smsService = smsService;
+            _miningService = miningService;
         }
 
         [Authorize]
@@ -134,6 +136,14 @@ namespace CodeRower.CCP.Controllers
         {
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
+
+            var customerLicenses = await _miningService.GetLicensesAsync(tenantId, null, customerId).ConfigureAwait(false);
+
+            if (!customerLicenses.Any(item => item.LicenseType == LicenseType.POOL))
+            {
+                ModelState.AddModelError("CustomerId", "Please upgrade to Pool License Miner to transfer.");
+                return BadRequest(ModelState);
+            }
 
             var customerInfo = await _customerService.GetCustomerInfoAsync(tenantId, null, TransferRequest.ToCustomerId).ConfigureAwait(false);
 
@@ -389,7 +399,15 @@ namespace CodeRower.CCP.Controllers
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
-            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
+            var customerLicenses = await _miningService.GetLicensesAsync(tenantId, null, customerId).ConfigureAwait(false);
+
+            if (!customerLicenses.Any(item => item.LicenseType == LicenseType.POOL))
+            {
+                ModelState.AddModelError("CustomerId", "Please upgrade to Pool License Miner to withdraw.");
+                return BadRequest(ModelState);
+            }
+
+            List < WalletTransactionResponse > transactions = new List<WalletTransactionResponse>();
 
             var transactionsBalance = await _transactionsService
                                 .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, userId: userId)
