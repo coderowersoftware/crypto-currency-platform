@@ -217,7 +217,10 @@ namespace CodeRower.CCP.Controllers
 
         [HttpGet("transactiontype-balances")]
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(List<TransactionTypeBalance>))]
-        public async Task<IActionResult> GetBalancesByTransactionTypes([FromRoute, Required] Guid tenantId, [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
+        public async Task<IActionResult> GetBalancesByTransactionTypes([FromRoute, Required] Guid tenantId, 
+            [FromQuery(Name = "Filter[TransactionTypes][]")] List<string>? TransactionTypes, 
+            [FromQuery(Name = "Filter[FromDate]")] DateTime? FromDate = null, 
+            [FromQuery(Name = "Filter[ToDate]")] DateTime? ToDate = null)
         {
             var balances = await _transactionsService.GetBalancesByTransactionTypes(tenantId, TransactionTypes, fromDate: FromDate, toDate: ToDate).ConfigureAwait(false);
             var listResult = new ListResponse<TransactionTypeBalance>

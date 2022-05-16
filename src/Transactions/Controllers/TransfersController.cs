@@ -407,10 +407,10 @@ namespace CodeRower.CCP.Controllers
                 return BadRequest(ModelState);
             }
 
-            List < WalletTransactionResponse > transactions = new List<WalletTransactionResponse>();
+            List<WalletTransactionResponse> transactions = new List<WalletTransactionResponse>();
 
             var transactionsBalance = await _transactionsService
-                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, userId: userId)
+                                .GetBalancesByTransactionTypes(tenantId, new List<string> { "WALLET" }, customerId, userId: userId)
                                 .ConfigureAwait(false);
 
             var effectiveBalance = transactionsBalance.Where(item => item.TransactionType == "EFFECTIVE_BALANCE")?
