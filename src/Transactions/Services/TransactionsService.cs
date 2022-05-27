@@ -102,7 +102,7 @@ namespace CodeRower.CCP.Services
             string? customerId = null, bool? isCredit = null, DateTime? fromDate = null, DateTime? toDate = null, string userId = null)
         {
             var queryString = string.Empty;
-            var proc = "get-current-balances-for-transaction-types";
+            var proc = "get-balances-for-transaction-types";
 
             if (TransactionTypes?.Count > 0)
             {
@@ -115,6 +115,7 @@ namespace CodeRower.CCP.Services
             if (!string.IsNullOrWhiteSpace(customerId))
             {
                 queryString = $"{queryString}filter[userId]={customerId}&";
+                proc = "get-current-balances-for-transaction-types";
             }
 
             if (isCredit.HasValue)
