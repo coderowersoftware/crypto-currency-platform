@@ -30,6 +30,8 @@ namespace CodeRower.CCP.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> MineAsync([FromRoute, Required] Guid tenantId,[FromBody, Required] MineRequestData MineRequest)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             License result = null;
             try

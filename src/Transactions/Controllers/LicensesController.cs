@@ -32,6 +32,8 @@ namespace CodeRower.CCP.Controllers
         [HttpPost("buy")]
         public async Task<IActionResult> BuyAirdropLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
 
             if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
@@ -51,13 +53,14 @@ namespace CodeRower.CCP.Controllers
         [HttpPost("checkout")]
         public async Task<IActionResult> BuyPoolLicense([FromRoute, Required] Guid tenantId, [FromBody, Required] LicenseBuyRequestData Data)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
 
             if (Data.Data.AuthKey == "b0126d73-c22a-4275-b4b6-bfca60ac3eaf")
             {
                 Data.Data.LicenseType = Models.Enums.LicenseType.POOL;
                 var id = await _miningService.AddPoolLicense(tenantId, Data.Data).ConfigureAwait(false);
-                
-                return string.IsNullOrEmpty(id)? BadRequest() : Ok(new { licenseId = id });
+
+                return string.IsNullOrEmpty(id) ? BadRequest() : Ok(new { licenseId = id });
             }
 
             ModelState.AddModelError(nameof(Data.Data.AuthKey), "Auth Key is required.");
@@ -71,12 +74,14 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> RegisterLicense([FromRoute, Required] Guid tenantId,
             [FromBody, Required] LicenseRequestData Data)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)."});
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             License result = null;
             try
             {
-               result =  await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
+                result = await _miningService.RegisterLicense(tenantId, Data.Data, customerId, userId).ConfigureAwait(false);
             }
             catch (PostgresException ex)
             {
@@ -111,6 +116,8 @@ namespace CodeRower.CCP.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, Type = typeof(License))]
         public async Task<IActionResult> ActivateLicenseAsync([FromRoute, Required] Guid tenantId, [FromRoute, Required] Guid LicenseId)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
             License result = null;
 

@@ -38,6 +38,8 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferUnlockedCoinsAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] UnlockedTransferRequest TransferRequest)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
@@ -134,6 +136,8 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferWalletCoinsAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] CoinsTransferRequest TransferRequest)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
@@ -249,6 +253,8 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferToMintAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] MintRequest MintRequest)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
@@ -323,6 +329,8 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferToFarmAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] MintRequest FarmRequest)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 
@@ -396,6 +404,8 @@ namespace CodeRower.CCP.Controllers
         public async Task<IActionResult> TransferWalletCoinsToCPAsync([FromRoute, Required] Guid tenantId,
             [FromBody, Required] CoinsTransferToCPRequest TransferRequest)
         {
+            return BadRequest(new { ErrorCode = "Maintenance", Message = "The portal is under maintenance, all the transactions will be blocked until 2 PM, 5th June (Sunday)." });
+
             var userId = User?.Claims?.FirstOrDefault(c => c.Type == "id")?.Value;
             var customerId = User?.Claims?.FirstOrDefault(c => c.Type == "customerId")?.Value;
 

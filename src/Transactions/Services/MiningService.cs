@@ -440,8 +440,18 @@ namespace CodeRower.CCP.Services
 
             foreach (var item in results)
             {
-                var id = InsertTransaction(item, exchangeRates, tenantInfo);
-                //var id = await SyncCommission(item, exchangeRates, tenantInfo);
+                try
+                {
+                    var id = await InsertTransaction(item, exchangeRates, tenantInfo);
+                    //var id = await SyncCommission(item, exchangeRates, tenantInfo);
+                    var str = string.Empty;
+                }
+                catch(Exception ex)
+                {
+
+                }
+
+
             }
 
             return results;
@@ -528,7 +538,7 @@ namespace CodeRower.CCP.Services
                     cmd.Parameters.AddWithValue("current_balance_for", NpgsqlDbType.Varchar, item.CustomerId.ToString());
                     cmd.Parameters.AddWithValue("onbehalfof_id", NpgsqlDbType.Varchar, item.CustomerId.ToString());
                     cmd.Parameters.AddWithValue("onbehalfof_name", NpgsqlDbType.Varchar, item.CustomerName);
-                    cmd.Parameters.AddWithValue("additional_data", NpgsqlDbType.Varchar, "DataCorrection-Prod");
+                    cmd.Parameters.AddWithValue("additional_data", NpgsqlDbType.Varchar, "DataCorrection-Prod-30-5");
                     cmd.Parameters.AddWithValue("product_id", NpgsqlDbType.Varchar, item.LicenseNumber);
                     cmd.Parameters.AddWithValue("service_", NpgsqlDbType.Text, "PURCHASE_LICENSE");
                     cmd.Parameters.AddWithValue("vendor_", NpgsqlDbType.Text, "CCC");
